@@ -1,0 +1,7 @@
+export const environment = {
+  production: false,
+  supabaseUrl: 'https://<project-id>.supabase.co',
+  supabasePublishableKey: '<publishable-key>',
+  apiUrl: 'http://localhost:3000',
+  wsUrl: 'http://localhost:3000',
+};
