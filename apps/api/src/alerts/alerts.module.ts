@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
-import { BullModule } from '@nestjs/bullmq';
 import { AlertsController } from './alerts/alerts.controller';
 import { AlertsService } from './alerts/alerts.service';
-import { AlertsProcessor } from './alerts.processor';
+import { QueueModule } from '../queue/queue.module';
 
 @Module({
-  imports: [BullModule.registerQueue({ name: 'alerts' })],
+  imports: [QueueModule],
   controllers: [AlertsController],
-  providers: [AlertsService, AlertsProcessor],
+  providers: [AlertsService],
+  exports: [AlertsService],
 })
 export class AlertsModule {}

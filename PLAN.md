@@ -18,29 +18,34 @@ pulseticker/
 ├── .env.example
 ├── README.md
 └── apps/
-    ├── api/                  ← NestJS → Render
+    ├── api/                   ← NestJS → Render
     │   └── src/
     │       ├── main.ts
     │       ├── app.module.ts
-    │       ├── supabase/     ← shared DB client (@Global module)
-    │       ├── auth/         ← JwtStrategy + JwtAuthGuard
-    │       ├── watchlist/    ← CRUD controller + service
-    │       ├── finnhub/      ← Finnhub WS client (singleton)
-    │       ├── gateway/      ← Socket.io PricesGateway
-    │       ├── alerts/       ← controller + service + BullMQ processor
-    │       └── health/       ← GET /health for Render keep-alive
-    └── web/                  ← Angular standalone → Vercel
+    │       ├── common/types/  ← shared types (e.g. AuthedRequest)
+    │       ├── supabase/      ← shared DB client (@Global module)
+    │       ├── auth/          ← SupabaseAuthGuard (jose JWKS, ES256)
+    │       ├── watchlist/     ← CRUD controller + service
+    │       ├── finnhub/       ← Finnhub WS client (singleton)
+    │       ├── gateway/       ← Socket.io PricesGateway (+ spec)
+    │       ├── alerts/        ← controller + service + BullMQ processor (+ spec)
+    │       └── health/        ← terminus health checks (supabase + redis + memory)
+    └── web/                  ← Angular standalone (zoneless + signals) → Vercel
         └── src/app/
+            ├── app.ts                                ← root component (keep-alive ping)
+            ├── app.config.ts                         ← provideZonelessChangeDetection()
             ├── core/
-            │   ├── guards/auth.guard.ts
-            │   ├── services/auth.service.ts
-            │   ├── services/socket.service.ts
+            │   ├── guards/auth.guard.ts              ← protects /dashboard, /alerts
+            │   ├── guards/public-only.guard.ts       ← bounces authed users off /
+            │   ├── services/auth.service.ts          ← Supabase client + INITIAL_SESSION
+            │   ├── services/socket.service.ts        ← typed Socket.io wrapper
             │   ├── services/api.service.ts
             │   └── interceptors/auth.interceptor.ts
             └── features/
+                ├── auth/login/
                 ├── auth/callback/
-                ├── dashboard/ (watchlist + price-ticker)
-                └── alerts/ (create form + history)
+                ├── dashboard/ (watchlist + price-ticker + alert toast)
+                └── alerts/ (create form + active alerts list)
 ```
 
 ---
@@ -270,6 +275,14 @@ CREATE POLICY "alert_history: select own" ON alert_history FOR SELECT USING (aut
 CREATE POLICY "alert_history: insert own" ON alert_history FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "alert_history: update own" ON alert_history FOR UPDATE USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "alert_history: delete own" ON alert_history FOR DELETE USING (auth.uid() = user_id);
+
+-- ─── service_role grants (required for NestJS backend) ────────
+-- RLS and GRANT are separate. Tables created via SQL Editor do NOT
+-- automatically grant privileges to service_role — must be explicit.
+GRANT ALL ON public.watchlist_items TO service_role;
+GRANT ALL ON public.alerts TO service_role;
+GRANT ALL ON public.alert_history TO service_role;
+GRANT ALL ON ALL SEQUENCES IN SCHEMA public TO service_role;
 ```
 
 ### Environment variables
@@ -284,10 +297,10 @@ PORT=3000
 CORS_ORIGIN=https://your-app.vercel.app
 ```
 
-**`apps/web/src/environments/environment.prod.ts`** — generated at build time by `scripts/set-env.ts` (gitignored):
+**`apps/web/src/environments/environment.ts`** — generated at build time by `scripts/set-env.ts --dev|--prod` from the root `.env` (gitignored, no `environment.prod.ts` — fileReplacements removed):
 ```typescript
 export const environment = {
-  production: true,
+  production: true,             // false for --dev
   supabaseUrl: '...',           // from SUPABASE_URL
   supabasePublishableKey: '...',// from SUPABASE_PUBLISHABLE_KEY (Publishable key, browser-safe)
   apiUrl: '...',                // from API_URL
@@ -348,19 +361,16 @@ Dashboard flow: `ngOnInit` → load watchlist from REST → connect socket → s
 
 ## Phase 3: BullMQ Alerts
 
-### BullMQ config in AppModule
+### BullMQ config
 
-```typescript
-BullModule.forRoot({
-  connection: { url: process.env.UPSTASH_REDIS_URL, tls: {} }, // Upstash requires TLS
-}),
-BullModule.registerQueue({ name: 'alerts' }),
-```
+`BullModule.forRootAsync` is already wired in AppModule (Phase 1 corrections).
+AlertsModule only needs `BullModule.registerQueue({ name: 'alerts' })`.
 
 Use `@nestjs/bullmq` (not `@nestjs/bull`) — different package for the newer BullMQ library.
 
 ### AlertsProcessor (apps/api/src/alerts/alerts.processor.ts)
 
+Uses the modern `WorkerHost` pattern: `extends WorkerHost`, override `process(job)`.
 Runs in the same NestJS process (simpler for portfolio):
 1. Fetch alert from Supabase, check if still active
 2. Evaluate threshold (above/below current price)
@@ -368,22 +378,21 @@ Runs in the same NestJS process (simpler for portfolio):
 
 ### Connecting price ticks to alert checks
 
-In `FinnhubService.broadcastPrice()`, also call `alertsService.checkAlerts(symbol, price)` which queries active alerts for that symbol and enqueues a BullMQ job for each one.
-
-### Keep-alive ping (Render cold start)
-
-```typescript
-// Angular app.component.ts
-setInterval(() => fetch(`${environment.apiUrl}/health`), 14 * 60 * 1000);
-```
+In `FinnhubService` price handler, also call `alertsService.checkAlerts(symbol, price)` which queries active alerts for that symbol and enqueues a BullMQ job for each one.
 
 ---
 
 ## Phase 4: Polish + Tests + README
 
-- `HealthController`: use `@nestjs/terminus` — check Supabase connectivity
-- Unit test `AlertsProcessor.handleCheckAlert()`: mock Supabase + gateway, verify threshold logic
-- Unit test `PricesGateway` connection handling: verify disconnect on invalid JWT
+- `HealthController` uses `@nestjs/terminus` with 3 indicators: custom Supabase
+  ping (`select id from watchlist_items limit 1`), custom Redis ping
+  (`queue.getJobCounts()`), and `MemoryHealthIndicator.checkHeap` (200 MB)
+- Render keep-alive: Angular root `App` component sets a 14-min `setInterval`
+  that `fetch`es `/health` (Render free tier sleeps after 15 min idle)
+- Unit test `AlertsProcessor.process()`: mock Supabase + gateway, verify
+  threshold logic (4 cases: inactive, above-no-trigger, above-trigger, below-trigger)
+- Unit test `PricesGateway` connection handling: verify disconnect on missing/
+  invalid JWT, joins `user:<id>` on valid JWT
 - README: ASCII architecture diagram, env var list, local setup steps
 
 ---
@@ -425,7 +434,7 @@ pnpm dev   # starts api (port 3000) and web (port 4200) concurrently via Turbore
 ### Vercel (Angular)
 - [ ] Root directory: `apps/web`
 - [ ] Framework preset: Angular
-- [ ] Build: `tsx scripts/set-env.ts && ng build` (set-env reads Vercel env vars)
+- [ ] Build: `tsx scripts/set-env.ts --prod && ng build` (set-env reads Vercel env vars)
 - [ ] Output: `dist/web/browser`
 - [ ] Add `vercel.json` **before first deploy** (missing this causes 404 on direct URL access):
   ```json
@@ -448,9 +457,13 @@ pnpm dev   # starts api (port 3000) and web (port 4200) concurrently via Turbore
 | `@nestjs/bull` vs `@nestjs/bullmq` | Install `@nestjs/bullmq` — different API, matches BullMQ requirement |
 | Supabase JWT uses asymmetric ES256 | Use jose `createRemoteJWKSet` + `jwtVerify`; fetch keys from `SUPABASE_URL/auth/v1/.well-known/jwks.json` |
 | Angular standalone (no NgModules) | Use `app.config.ts` providers, not `AppModule`. Ignore older Angular tutorials. |
+| Angular 22 ships without zone.js | Add `provideZonelessChangeDetection()` in `app.config.ts`; use `signal()` for any state bound to templates |
+| Authenticated user clicks "Sign in" again | Add `publicOnlyGuard` to `/` route; redirects to `/dashboard` if `session$.value` is truthy |
 | Upstash Redis requires TLS | Pass `tls: {}` in BullMQ connection config |
 | Finnhub WS drops during Render cold start | Reconnect logic in `FinnhubService` re-subscribes all symbols on `open` |
 | Alert notifications must be per-user | Join socket to `user:<userId>` room on connect; emit to that room, not broadcast |
+| `service_role` gets 42501 on SQL-Editor tables | Run `GRANT ALL ON public.<table> TO service_role` — RLS bypass ≠ table privilege |
+| `authGuard` redirects on page reload | `session$` starts as `null`; guard must wait for `initialized$` before evaluating |
 
 ---
 
@@ -483,4 +496,4 @@ Angular → alert$ → NotificationToastComponent renders
 1. **Phase 1**: OAuth login works in production — GitHub login redirects to `/auth/callback`, session is established, `/dashboard` loads (empty state OK)
 2. **Phase 2**: Add `AAPL` to watchlist → price updates appear in real-time (verify during US market hours EST 9:30–16:00)
 3. **Phase 3**: Create alert for `AAPL` above/below current price ±$1 → within seconds, toast notification fires + history row appears in Supabase
-4. **Phase 4**: `curl https://<render-url>/health` returns `{"status":"ok"}`. Jest test suite passes with `pnpm --filter api test`
+4. **Phase 4**: `curl https://<render-url>/health` returns rich JSON: `{ "status": "ok", "info": { "supabase": {...}, "redis": {...}, "memory_heap": {...} }, ... }`. Jest test suite passes with `pnpm --filter api test` (8 tests)
