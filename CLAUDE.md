@@ -29,6 +29,12 @@ See [PLAN.md](./PLAN.md) for the full implementation plan including:
 - Deployment checklist (Render + Vercel)
 - Known pitfalls (circular deps, WebSocket guards, Graphile Worker requires Session Pooler DATABASE_URL on IPv4 platforms like Render)
 
+## Git Workflow
+
+- **Branch per task**: Always create a new branch before starting any task (`git checkout -b <short-descriptor>`).
+- Commit on the branch; merge into `main` when the task is complete.
+- Branch names should be short and descriptive (e.g. `feat/symbol-search`, `fix/alert-oanda-display`).
+
 ## Key Principles
 
 - Deploy-first: Phase 1 must be live before adding features
