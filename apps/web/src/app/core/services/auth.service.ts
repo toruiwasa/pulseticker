@@ -1,16 +1,19 @@
 import { Injectable } from '@angular/core';
 import { createClient, SupabaseClient, Session } from '@supabase/supabase-js';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, filter, firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private supabase: SupabaseClient = createClient(environment.supabaseUrl, environment.supabasePublishableKey);
   session$ = new BehaviorSubject<Session | null>(null);
+  initialized$ = new BehaviorSubject<boolean>(false);
 
   constructor() {
-    this.supabase.auth.getSession().then(({ data }) => this.session$.next(data.session));
-    this.supabase.auth.onAuthStateChange((_, session) => this.session$.next(session));
+    this.supabase.auth.onAuthStateChange((event, session) => {
+      this.session$.next(session);
+      if (event === 'INITIAL_SESSION') this.initialized$.next(true);
+    });
   }
 
   signInWithGitHub() {
@@ -25,7 +28,7 @@ export class AuthService {
   }
 
   async handleCallback() {
-    const { data } = await this.supabase.auth.getSession();
-    return data.session;
+    await firstValueFrom(this.initialized$.pipe(filter(Boolean)));
+    return this.session$.value;
   }
 }

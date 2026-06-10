@@ -1,7 +1,7 @@
 import * as path from 'path';
 import { Module } from '@nestjs/common';
-import { ConfigModule, ConfigService } from '@nestjs/config';
-import { BullModule } from '@nestjs/bullmq';
+import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { SupabaseModule } from './supabase/supabase.module';
 import { AuthModule } from './auth/auth.module';
 import { WatchlistModule } from './watchlist/watchlist.module';
@@ -16,12 +16,7 @@ import { HealthModule } from './health/health.module';
       isGlobal: true,
       envFilePath: path.join(__dirname, '../../../.env'),
     }),
-    BullModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        connection: { url: config.getOrThrow('UPSTASH_REDIS_URL'), tls: {} },
-      }),
-    }),
+    EventEmitterModule.forRoot(),
     SupabaseModule,
     AuthModule,
     WatchlistModule,
