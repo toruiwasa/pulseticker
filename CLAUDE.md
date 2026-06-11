@@ -66,3 +66,7 @@ See [PLAN.md](./PLAN.md) for the full implementation plan including:
   Each step is a separate, independently deployable migration file.
 
 - **No data loss without explicit confirmation**: If a migration deletes or irreversibly transforms existing data, stop and confirm with the user before running `supabase db push`.
+
+## Planning Artifacts
+
+- `plans/` is committed to the repository. It contains per-requirement planning documents and mockups (e.g. `plans/REQ-13_Mockup.png`). Always commit new files added here.
