@@ -28,6 +28,10 @@ export class SocketService {
     this.socket = io(`${environment.wsUrl}/prices`, {
       auth: { token },
       transports: ['websocket'],
+      reconnection: true,
+      reconnectionDelay: 2000,
+      reconnectionDelayMax: 30000,
+      reconnectionAttempts: Infinity,
     });
     this.socket.on('price', (data: PriceTick) => this.price$.next(data));
     this.socket.on('alert-triggered', (data: AlertPayload) => this.alert$.next(data));
