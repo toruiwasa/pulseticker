@@ -41,6 +41,14 @@ describe('QueueService', () => {
     });
   });
 
+  it('seedPreviewFetchJob calls workerUtils.addJob with preserve_run_at mode', async () => {
+    await service.seedPreviewFetchJob();
+    expect(workerUtils.addJob).toHaveBeenCalledWith('fetch-preview-prices', {}, {
+      jobKey: 'preview-fetch',
+      jobKeyMode: 'preserve_run_at',
+    });
+  });
+
   it('releases workerUtils on destroy', async () => {
     await service.onModuleDestroy();
     expect(workerUtils.release).toHaveBeenCalled();

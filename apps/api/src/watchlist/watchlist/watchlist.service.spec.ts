@@ -323,7 +323,7 @@ describe('WatchlistService', () => {
 
     it('throws when the response is not ok', async () => {
       fetchMock.mockResolvedValue({ ok: false, status: 429 } as never);
-      await expect(service.getQuote('AAPL')).rejects.toThrow('Finnhub quote failed: 429');
+      await expect(service.getQuote('AAPL')).rejects.toThrow('Finnhub quote failed for AAPL: 429');
     });
   });
 });

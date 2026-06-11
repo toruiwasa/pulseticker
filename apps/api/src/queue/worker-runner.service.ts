@@ -3,7 +3,10 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Runner, run } from 'graphile-worker';
 import { SupabaseService } from '../supabase/supabase/supabase.service';
+import { PreviewCacheService } from '../preview/preview-cache.service';
 import { makeCheckPriceAlertTask } from './tasks/check-price-alert';
+import { makeFetchPreviewPricesTask } from '../preview/tasks/fetch-preview-prices';
+import { QueueService } from './queue.service';
 
 @Injectable()
 export class WorkerRunnerService implements OnModuleInit, OnModuleDestroy {
@@ -13,6 +16,8 @@ export class WorkerRunnerService implements OnModuleInit, OnModuleDestroy {
     private config: ConfigService,
     private supabase: SupabaseService,
     private eventEmitter: EventEmitter2,
+    private previewCache: PreviewCacheService,
+    private queueService: QueueService,
   ) {}
 
   async onModuleInit() {
@@ -20,10 +25,13 @@ export class WorkerRunnerService implements OnModuleInit, OnModuleDestroy {
       connectionString: this.config.getOrThrow('DATABASE_URL'),
       taskList: {
         'check-price-alert': makeCheckPriceAlertTask(this.supabase, this.eventEmitter),
+        'fetch-preview-prices': makeFetchPreviewPricesTask(this.config, this.previewCache),
       },
       pollInterval: 1000,
       noHandleSignals: true,
     });
+
+    await this.queueService.seedPreviewFetchJob();
   }
 
   async onModuleDestroy() {

@@ -9,6 +9,7 @@ import { FinnhubModule } from './finnhub/finnhub.module';
 import { GatewayModule } from './gateway/gateway.module';
 import { AlertsModule } from './alerts/alerts.module';
 import { HealthModule } from './health/health.module';
+import { PreviewModule } from './preview/preview.module';
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { HealthModule } from './health/health.module';
     GatewayModule,
     AlertsModule,
     HealthModule,
+    PreviewModule,
   ],
 })
 export class AppModule {}

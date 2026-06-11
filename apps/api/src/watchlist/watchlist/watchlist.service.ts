@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SupabaseService } from '../../supabase/supabase/supabase.service';
+import { FinnhubQuote, fetchFinnhubQuote } from '../../common/utils/finnhub-quote';
 
 const DEFAULT_SYMBOLS = ['VOO', 'AAPL', 'MSFT', 'OANDA:AUD_USD', 'OANDA:AUD_JPY'];
 const MAX_WATCHLIST_SIZE = 50;
@@ -18,11 +19,7 @@ interface FinnhubForexSymbol {
   description: string;
 }
 
-export interface FinnhubQuote {
-  c: number;
-  pc: number;
-  t: number;
-}
+export type { FinnhubQuote };
 
 export interface SymbolSearchResult {
   symbol: string;
@@ -121,10 +118,7 @@ export class WatchlistService {
 
   async getQuote(symbol: string): Promise<FinnhubQuote> {
     const key = this.config.getOrThrow<string>('FINNHUB_API_KEY');
-    const res = await fetch(`${FINNHUB_BASE}/quote?symbol=${encodeURIComponent(symbol)}&token=${key}`);
-    if (!res.ok) throw new Error(`Finnhub quote failed: ${res.status}`);
-    const { c, pc, t } = (await res.json()) as FinnhubQuote;
-    return { c, pc, t };
+    return fetchFinnhubQuote(symbol, key);
   }
 
   private async loadOandaSymbols(): Promise<void> {
