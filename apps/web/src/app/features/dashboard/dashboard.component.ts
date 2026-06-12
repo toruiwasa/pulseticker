@@ -71,7 +71,7 @@ interface WatchlistItem {
               @for (item of watchlist(); track item.id) {
                 <tr
                   [style.color]="isLive()[item.symbol] ? 'inherit' : '#999'"
-                  [style.background]="selectedSymbol() === item.symbol ? 'rgba(34,197,94,0.08)' : 'transparent'"
+                  [style.background]="activeSymbol() === item.symbol ? 'rgba(34,197,94,0.08)' : 'transparent'"
                   style="border-bottom:1px solid #f0f0f0;cursor:pointer"
                   (click)="selectSymbol(item.symbol)"
                 >
@@ -94,7 +94,7 @@ interface WatchlistItem {
             </tbody>
           </table>
 
-          <app-price-chart [symbol]="selectedSymbol()" />
+          <app-price-chart [symbol]="activeSymbol()" />
         </div>
       }
     </div>
@@ -126,6 +126,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   watchlistCount = computed(() => this.watchlist().length);
   atLimit = computed(() => this.watchlistCount() >= 50);
+  activeSymbol = computed(() => this.selectedSymbol() ?? this.watchlist()[0]?.symbol ?? null);
 
   private priceSub?: Subscription;
   private alertSub?: Subscription;
