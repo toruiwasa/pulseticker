@@ -56,8 +56,8 @@ const RED = '#ef4444';
       }
       .chart-container {
         width: 100%;
-        max-width: 900px;
-        height: 400px;
+        max-width: 600px;
+        height: 280px;
       }
       @media (max-width: 768px) {
         .chart-container {
@@ -92,6 +92,7 @@ export class PriceChartComponent implements AfterViewInit, OnDestroy {
     this.chart = createChart(this.host.nativeElement, {
       autoSize: true,
       layout: {
+        attributionLogo: false,
         background: { color: 'transparent' },
         textColor: '#d1d5db',
       },

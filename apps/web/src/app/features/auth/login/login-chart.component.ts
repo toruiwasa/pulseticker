@@ -70,6 +70,7 @@ export class LoginChartComponent implements AfterViewInit, OnDestroy {
     this.chart = createChart(this.host.nativeElement, {
       autoSize: true,
       layout: {
+        attributionLogo: false,
         background: { color: 'transparent' },
         textColor: 'rgba(255,255,255,0.7)',
       },

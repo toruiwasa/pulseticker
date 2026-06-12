@@ -74,12 +74,14 @@ describe('LoginComponent', () => {
 
   describe('formatChange()', () => {
     it('returns "---" for null', () => expect(component.formatChange(null)).toBe('---'));
-    it('includes ▲ and + for positive', () => {
-      const s = component.formatChange(1.23);
-      expect(s).toContain('▲');
-      expect(s).toContain('+');
+    it('formats positive as "+x.xx% ↑"', () => {
+      expect(component.formatChange(1.23)).toBe('+1.23% ↑');
     });
-    it('includes ▼ for negative', () => expect(component.formatChange(-0.55)).toContain('▼'));
-    it('includes — for zero', () => expect(component.formatChange(0)).toContain('—'));
+    it('formats negative as "-x.xx% ↓"', () => {
+      expect(component.formatChange(-0.55)).toBe('-0.55% ↓');
+    });
+    it('returns plain "0.00%" for zero', () => {
+      expect(component.formatChange(0)).toBe('0.00%');
+    });
   });
 });
