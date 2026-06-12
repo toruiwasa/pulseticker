@@ -13,6 +13,11 @@ export interface QuoteResponse {
   t: number;
 }
 
+export interface CandlePoint {
+  time: number;
+  value: number;
+}
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private base = environment.apiUrl;
@@ -26,5 +31,8 @@ export class ApiService {
   }
   getQuote(symbol: string) {
     return this.get<QuoteResponse>(`/watchlist/quote?symbol=${encodeURIComponent(symbol)}`);
+  }
+  getCandles(symbol: string) {
+    return this.get<CandlePoint[]>(`/chart/candles?symbol=${encodeURIComponent(symbol)}`);
   }
 }

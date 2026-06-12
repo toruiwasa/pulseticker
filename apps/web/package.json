@@ -20,6 +20,7 @@
     "@angular/router": "^22.0.0",
     "@pulseticker/trading-utils": "workspace:*",
     "@supabase/supabase-js": "^2.107.0",
+    "lightweight-charts": "^5.2.0",
     "rxjs": "~7.8.0",
     "socket.io-client": "^4.8.3",
     "tslib": "^2.3.0"

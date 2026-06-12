@@ -10,6 +10,7 @@ import { GatewayModule } from './gateway/gateway.module';
 import { AlertsModule } from './alerts/alerts.module';
 import { HealthModule } from './health/health.module';
 import { PreviewModule } from './preview/preview.module';
+import { ChartModule } from './chart/chart.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { PreviewModule } from './preview/preview.module';
     AlertsModule,
     HealthModule,
     PreviewModule,
+    ChartModule,
   ],
 })
 export class AppModule {}

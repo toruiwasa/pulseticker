@@ -1,6 +1,14 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { Subject } from 'rxjs';
+
+// LoginComponent imports LoginChartComponent which boots lightweight-charts.
+// Stub it so jsdom doesn't have to handle canvas/matchMedia.
+vi.mock('lightweight-charts', () => ({
+  createChart: vi.fn(() => ({ addSeries: vi.fn(() => ({ setData: vi.fn(), update: vi.fn(), applyOptions: vi.fn() })), remove: vi.fn() })),
+  LineSeries: Symbol('LineSeries'),
+}));
+
 import { AuthService } from '../../../core/services/auth.service';
 import { PreviewService, PREVIEW_SYMBOLS_INITIAL, PreviewPrice } from '../../../core/services/preview.service';
 import { LoginComponent } from './login.component';

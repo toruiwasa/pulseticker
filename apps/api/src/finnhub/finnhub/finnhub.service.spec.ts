@@ -240,6 +240,45 @@ describe('FinnhubService', () => {
     });
   });
 
+  describe('getCandles()', () => {
+    const originalFetch = global.fetch;
+    afterEach(() => {
+      global.fetch = originalFetch;
+    });
+
+    it('returns parsed candles on a 200 response', async () => {
+      const { service } = await buildService();
+      const body = { s: 'ok', t: [1, 2], c: [10, 11], o: [9, 10], h: [12, 12], l: [8, 9] };
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(body),
+      }) as unknown as typeof fetch;
+
+      const result = await service.getCandles('AAPL', '1', 1000, 2000);
+
+      expect(result).toEqual(body);
+      const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
+      expect(calledUrl).toContain('symbol=AAPL');
+      expect(calledUrl).toContain('resolution=1');
+      expect(calledUrl).toContain('from=1000');
+      expect(calledUrl).toContain('to=2000');
+      expect(calledUrl).toContain('token=test-key');
+    });
+
+    it('returns { s: "no_data" } on a non-200 response', async () => {
+      const { service } = await buildService();
+      global.fetch = jest.fn().mockResolvedValue({
+        ok: false,
+        status: 403,
+        json: jest.fn(),
+      }) as unknown as typeof fetch;
+
+      const result = await service.getCandles('AAPL', '1', 0, 0);
+
+      expect(result).toEqual({ s: 'no_data' });
+    });
+  });
+
   describe('unsubscribe()', () => {
     it('sends an unsubscribe message when the socket is OPEN', async () => {
       const { service } = await buildService();

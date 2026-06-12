@@ -8,6 +8,7 @@ import { AlertPayload, SocketService } from '../../core/services/socket.service'
 import { isMarketOpen } from '../../core/constants/market-holidays';
 import { OandaPipe } from '../../core/pipes/oanda.pipe';
 import { SymbolSearchInputComponent } from '../../core/components/symbol-search-input.component';
+import { PriceChartComponent } from './price-chart/price-chart.component';
 
 interface WatchlistItem {
   id: string;
@@ -17,7 +18,7 @@ interface WatchlistItem {
 
 @Component({
   standalone: true,
-  imports: [DatePipe, RouterLink, OandaPipe, SymbolSearchInputComponent],
+  imports: [DatePipe, RouterLink, OandaPipe, SymbolSearchInputComponent, PriceChartComponent],
   template: `
     <div style="padding: 2rem">
       <div style="display:flex;justify-content:space-between;align-items:center">
@@ -56,39 +57,61 @@ interface WatchlistItem {
       } @else if (watchlist().length === 0) {
         <p>No symbols yet. Use the search above to add some.</p>
       } @else {
-        <table style="width:100%;border-collapse:collapse">
-          <thead>
-            <tr style="text-align:left;border-bottom:1px solid #ddd">
-              <th style="padding:0.5rem">Symbol</th>
-              <th style="padding:0.5rem">Price</th>
-              <th style="padding:0.5rem">Last updated</th>
-              <th style="padding:0.5rem"></th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of watchlist(); track item.id) {
-              <tr [style.color]="isLive()[item.symbol] ? 'inherit' : '#999'" style="border-bottom:1px solid #f0f0f0">
-                <td style="padding:0.5rem">{{ item.symbol | oanda }}</td>
-                <td style="padding:0.5rem">{{ prices()[item.symbol] ?? '—' }}</td>
-                <td style="padding:0.5rem">
-                  @if (isLive()[item.symbol]) {
-                    {{ timestamps()[item.symbol] | date:'HH:mm:ss' }}
-                  } @else if (prices()[item.symbol] && timestamps()[item.symbol]) {
-                    Last: {{ timestamps()[item.symbol] | date:'MMM d, HH:mm' }} EST
-                  } @else {
-                    —
-                  }
-                </td>
-                <td style="padding:0.5rem">
-                  <button type="button" (click)="removeSymbol(item.symbol)" style="background:transparent;border:none;cursor:pointer;font-size:1rem">×</button>
-                </td>
+        <div class="dash-grid">
+          <table style="width:100%;border-collapse:collapse">
+            <thead>
+              <tr style="text-align:left;border-bottom:1px solid #ddd">
+                <th style="padding:0.5rem">Symbol</th>
+                <th style="padding:0.5rem">Price</th>
+                <th style="padding:0.5rem">Last updated</th>
+                <th style="padding:0.5rem"></th>
               </tr>
-            }
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              @for (item of watchlist(); track item.id) {
+                <tr
+                  [style.color]="isLive()[item.symbol] ? 'inherit' : '#999'"
+                  [style.background]="selectedSymbol() === item.symbol ? 'rgba(34,197,94,0.08)' : 'transparent'"
+                  style="border-bottom:1px solid #f0f0f0;cursor:pointer"
+                  (click)="selectSymbol(item.symbol)"
+                >
+                  <td style="padding:0.5rem">{{ item.symbol | oanda }}</td>
+                  <td style="padding:0.5rem">{{ prices()[item.symbol] ?? '—' }}</td>
+                  <td style="padding:0.5rem">
+                    @if (isLive()[item.symbol]) {
+                      {{ timestamps()[item.symbol] | date:'HH:mm:ss' }}
+                    } @else if (prices()[item.symbol] && timestamps()[item.symbol]) {
+                      Last: {{ timestamps()[item.symbol] | date:'MMM d, HH:mm' }} EST
+                    } @else {
+                      —
+                    }
+                  </td>
+                  <td style="padding:0.5rem">
+                    <button type="button" (click)="removeSymbol(item.symbol); $event.stopPropagation()" style="background:transparent;border:none;cursor:pointer;font-size:1rem">×</button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+
+          <app-price-chart [symbol]="selectedSymbol()" />
+        </div>
       }
     </div>
   `,
+  styles: [`
+    .dash-grid {
+      display: grid;
+      grid-template-columns: minmax(280px, 1fr) 2fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+    @media (max-width: 768px) {
+      .dash-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  `],
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   loading = signal(true);
@@ -99,6 +122,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   isLive = signal<Record<string, boolean>>({});
   marketOpen = signal(isMarketOpen());
+  selectedSymbol = signal<string | null>(null);
 
   watchlistCount = computed(() => this.watchlist().length);
   atLimit = computed(() => this.watchlistCount() >= 50);
@@ -166,7 +190,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
     });
   }
 
+  selectSymbol(symbol: string) {
+    this.selectedSymbol.set(symbol);
+  }
+
   removeSymbol(symbol: string) {
+    if (this.selectedSymbol() === symbol) this.selectedSymbol.set(null);
     this.api.delete(`/watchlist/${encodeURIComponent(symbol)}`).subscribe({
       next: () => {
         this.watchlist.update(w => w.filter(i => i.symbol !== symbol));

@@ -4,10 +4,11 @@ import { Subscription } from 'rxjs';
 import { AuthService } from '../../../core/services/auth.service';
 import { PreviewService, PreviewPrice, PREVIEW_SYMBOLS_INITIAL } from '../../../core/services/preview.service';
 import { isMarketOpen } from '../../../core/constants/market-holidays';
+import { LoginChartComponent } from './login-chart.component';
 
 @Component({
   standalone: true,
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, LoginChartComponent],
   styles: [`
     :host {
       display: flex;
@@ -16,6 +17,19 @@ import { isMarketOpen } from '../../../core/constants/market-holidays';
       min-height: 100vh;
       background: radial-gradient(ellipse at 20% 50%, #1a0a2e 0%, #0a0a1a 60%, #001a2e 100%);
       font-family: 'Inter', system-ui, sans-serif;
+    }
+
+    .login-top {
+      display: grid;
+      grid-template-columns: 340px minmax(0, 600px);
+      gap: 1.5rem;
+      align-items: stretch;
+    }
+
+    @media (max-width: 768px) {
+      .login-top {
+        grid-template-columns: 1fr;
+      }
     }
 
     .market-card {
@@ -131,6 +145,7 @@ import { isMarketOpen } from '../../../core/constants/market-holidays';
     }
   `],
   template: `
+    <div class="login-top">
     <div class="market-card">
       <h1>pulseticker</h1>
 
@@ -167,6 +182,9 @@ import { isMarketOpen } from '../../../core/constants/market-holidays';
         </svg>
         Login with GitHub
       </button>
+    </div>
+
+    <app-login-chart />
     </div>
   `,
 })

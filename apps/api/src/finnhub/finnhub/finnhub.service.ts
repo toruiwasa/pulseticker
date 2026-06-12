@@ -75,4 +75,33 @@ export class FinnhubService implements OnModuleInit {
       this.ws.send(JSON.stringify({ type: 'unsubscribe', symbol }));
     }
   }
+
+  async getCandles(
+    symbol: string,
+    resolution: string,
+    from: number,
+    to: number,
+  ): Promise<FinnhubCandles> {
+    const apiKey = this.config.getOrThrow<string>('FINNHUB_API_KEY');
+    const url =
+      `https://finnhub.io/api/v1/stock/candle` +
+      `?symbol=${encodeURIComponent(symbol)}` +
+      `&resolution=${encodeURIComponent(resolution)}` +
+      `&from=${from}&to=${to}&token=${apiKey}`;
+    const res = await fetch(url);
+    if (!res.ok) {
+      this.logger.warn(`Finnhub candles ${symbol} returned ${res.status}`);
+      return { s: 'no_data' };
+    }
+    return (await res.json()) as FinnhubCandles;
+  }
+}
+
+export interface FinnhubCandles {
+  s: string;
+  t?: number[];
+  c?: number[];
+  o?: number[];
+  h?: number[];
+  l?: number[];
 }
