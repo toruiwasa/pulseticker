@@ -6,7 +6,6 @@ import { SupabaseService } from '../supabase/supabase/supabase.service';
 import { PreviewCacheService } from '../preview/preview-cache.service';
 import { makeCheckPriceAlertTask } from './tasks/check-price-alert';
 import { makeFetchPreviewPricesTask } from '../preview/tasks/fetch-preview-prices';
-import { QueueService } from './queue.service';
 
 @Injectable()
 export class WorkerRunnerService implements OnModuleInit, OnModuleDestroy {
@@ -17,7 +16,6 @@ export class WorkerRunnerService implements OnModuleInit, OnModuleDestroy {
     private supabase: SupabaseService,
     private eventEmitter: EventEmitter2,
     private previewCache: PreviewCacheService,
-    private queueService: QueueService,
   ) {}
 
   async onModuleInit() {
@@ -30,8 +28,6 @@ export class WorkerRunnerService implements OnModuleInit, OnModuleDestroy {
       pollInterval: 1000,
       noHandleSignals: true,
     });
-
-    await this.queueService.seedPreviewFetchJob();
   }
 
   async onModuleDestroy() {

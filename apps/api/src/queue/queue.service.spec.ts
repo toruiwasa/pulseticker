@@ -32,6 +32,13 @@ describe('QueueService', () => {
     expect(mockMakeWorkerUtils).toHaveBeenCalledWith({ connectionString: 'postgres://test' });
   });
 
+  it('seeds the preview fetch job during onModuleInit', () => {
+    expect(workerUtils.addJob).toHaveBeenCalledWith('fetch-preview-prices', {}, {
+      jobKey: 'preview-fetch',
+      jobKeyMode: 'preserve_run_at',
+    });
+  });
+
   it('addAlertCheckJob calls workerUtils.addJob with jobKey and replace mode', async () => {
     const payload = { alertId: 'a1', symbol: 'AAPL', price: 200, userId: 'u1' };
     await service.addAlertCheckJob(payload);

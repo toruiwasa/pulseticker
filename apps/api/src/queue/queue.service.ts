@@ -19,6 +19,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     this.workerUtils = await makeWorkerUtils({
       connectionString: this.config.getOrThrow('DATABASE_URL'),
     });
+    await this.seedPreviewFetchJob();
   }
 
   async onModuleDestroy() {

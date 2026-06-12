@@ -1,0 +1,7 @@
+{
+  "watch": ["src", "../../packages/trading-utils/dist"],
+  "ext": "ts,js,json",
+  "ignore": ["dist", "coverage", "**/*.spec.ts"],
+  "exec": "nest start",
+  "delay": "300"
+}

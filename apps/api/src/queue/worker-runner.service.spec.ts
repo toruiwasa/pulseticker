@@ -4,7 +4,6 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test } from '@nestjs/testing';
 import { SupabaseService } from '../supabase/supabase/supabase.service';
 import { PreviewCacheService } from '../preview/preview-cache.service';
-import { QueueService } from './queue.service';
 import { WorkerRunnerService } from './worker-runner.service';
 
 jest.mock('graphile-worker', () => ({ run: jest.fn() }));
@@ -16,12 +15,10 @@ const mockRun = run as jest.Mock;
 describe('WorkerRunnerService', () => {
   let service: WorkerRunnerService;
   let runner: { stop: jest.Mock };
-  let queueService: { seedPreviewFetchJob: jest.Mock };
 
   beforeEach(async () => {
     runner = { stop: jest.fn().mockResolvedValue(undefined) };
     mockRun.mockResolvedValue(runner);
-    queueService = { seedPreviewFetchJob: jest.fn().mockResolvedValue(undefined) };
 
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -30,7 +27,6 @@ describe('WorkerRunnerService', () => {
         { provide: SupabaseService, useValue: { client: {} } },
         { provide: EventEmitter2, useValue: new EventEmitter2() },
         { provide: PreviewCacheService, useValue: { getPrices: jest.fn(), setPrices: jest.fn(), prices$: { pipe: jest.fn() } } },
-        { provide: QueueService, useValue: queueService },
       ],
     }).compile();
 
@@ -50,11 +46,6 @@ describe('WorkerRunnerService', () => {
         }),
       }),
     );
-  });
-
-  it('seeds the preview fetch job after runner starts', async () => {
-    await service.onModuleInit();
-    expect(queueService.seedPreviewFetchJob).toHaveBeenCalled();
   });
 
   it('stops the runner on destroy', async () => {
