@@ -5,6 +5,7 @@ import WebSocket from 'ws';
 import { FinnhubService } from './finnhub.service';
 import { PricesGateway } from '../../gateway/prices.gateway';
 import { AlertsService } from '../../alerts/alerts/alerts.service';
+import { LiveCandleCacheService } from '../../chart/live-candle-cache.service';
 
 const WS_OPEN = 1;
 const WS_CONNECTING = 0;
@@ -44,6 +45,7 @@ async function buildService() {
   const config = { getOrThrow: jest.fn().mockReturnValue('test-key') };
   const gateway = { broadcastPrice: jest.fn() };
   const alerts = { checkAlerts: jest.fn() };
+  const cache = { applyTick: jest.fn() };
 
   const moduleRef = await Test.createTestingModule({
     providers: [
@@ -51,11 +53,12 @@ async function buildService() {
       { provide: ConfigService, useValue: config },
       { provide: PricesGateway, useValue: gateway },
       { provide: AlertsService, useValue: alerts },
+      { provide: LiveCandleCacheService, useValue: cache },
     ],
   }).compile();
 
   const service = moduleRef.get(FinnhubService);
-  return { service, gateway, alerts };
+  return { service, gateway, alerts, cache };
 }
 
 describe('FinnhubService', () => {
@@ -77,7 +80,6 @@ describe('FinnhubService', () => {
 
       service.subscribe('AAPL');
 
-      // Simulate close → timer fires → reconnect → open
       ws1.trigger('close');
       jest.advanceTimersByTime(1000);
 
@@ -92,27 +94,24 @@ describe('FinnhubService', () => {
       service.onModuleInit();
       const ws1 = FakeWS.lastInstance;
 
-      // First close doubles delay to 2 000 ms
       ws1.trigger('close');
       jest.advanceTimersByTime(1000);
 
-      // Open resets it back to 1 000 ms
       const ws2 = FakeWS.lastInstance;
       ws2.trigger('open');
 
-      // Next close should fire at 1 000 ms again, not 2 000 ms
       ws2.trigger('close');
       jest.advanceTimersByTime(999);
-      expect(WebSocket).toHaveBeenCalledTimes(2); // no third instance yet
+      expect(WebSocket).toHaveBeenCalledTimes(2);
 
       jest.advanceTimersByTime(1);
-      expect(WebSocket).toHaveBeenCalledTimes(3); // reconnected at exactly 1 000 ms
+      expect(WebSocket).toHaveBeenCalledTimes(3);
     });
   });
 
   describe('message handler', () => {
-    it('broadcasts price and checks alerts for each trade', async () => {
-      const { service, gateway, alerts } = await buildService();
+    it('broadcasts price, checks alerts, and forwards the tick to the cache', async () => {
+      const { service, gateway, alerts, cache } = await buildService();
       service.onModuleInit();
       const ws = FakeWS.lastInstance;
 
@@ -124,6 +123,7 @@ describe('FinnhubService', () => {
 
       expect(gateway.broadcastPrice).toHaveBeenCalledWith('AAPL', 185.5, 1000);
       expect(alerts.checkAlerts).toHaveBeenCalledWith('AAPL', 185.5);
+      expect(cache.applyTick).toHaveBeenCalledWith('AAPL', 185.5, 1000);
     });
 
     it('ignores non-trade message types', async () => {
@@ -154,10 +154,10 @@ describe('FinnhubService', () => {
       ws.trigger('close');
 
       jest.advanceTimersByTime(999);
-      expect(WebSocket).toHaveBeenCalledTimes(1); // not yet
+      expect(WebSocket).toHaveBeenCalledTimes(1);
 
       jest.advanceTimersByTime(1);
-      expect(WebSocket).toHaveBeenCalledTimes(2); // reconnected
+      expect(WebSocket).toHaveBeenCalledTimes(2);
     });
 
     it('doubles the delay on each consecutive close', async () => {
@@ -165,18 +165,16 @@ describe('FinnhubService', () => {
       service.onModuleInit();
       let ws = FakeWS.lastInstance;
 
-      // 1st close: fires at 1 000 ms
       ws.trigger('close');
       jest.advanceTimersByTime(1000);
       ws = FakeWS.lastInstance;
       expect(WebSocket).toHaveBeenCalledTimes(2);
 
-      // 2nd close: fires at 2 000 ms
       ws.trigger('close');
       jest.advanceTimersByTime(1999);
-      expect(WebSocket).toHaveBeenCalledTimes(2); // not yet
+      expect(WebSocket).toHaveBeenCalledTimes(2);
       jest.advanceTimersByTime(1);
-      expect(WebSocket).toHaveBeenCalledTimes(3); // reconnected at 2 000 ms
+      expect(WebSocket).toHaveBeenCalledTimes(3);
     });
 
     it('caps the reconnect delay at 30 000 ms', async () => {
@@ -184,8 +182,6 @@ describe('FinnhubService', () => {
       service.onModuleInit();
       let ws = FakeWS.lastInstance;
 
-      // Advance through 5 closes to push reconnectDelay to 30 000 ms
-      // delays: 1000 → 2000 → 4000 → 8000 → 16000 → (next will be 30000)
       for (let i = 0; i < 5; i++) {
         ws.trigger('close');
         jest.runAllTimers();
@@ -194,7 +190,6 @@ describe('FinnhubService', () => {
 
       const instancesBefore = (WebSocket as unknown as jest.Mock).mock.instances.length;
 
-      // 6th close: should fire at exactly 30 000 ms
       ws.trigger('close');
       jest.advanceTimersByTime(29999);
       expect((WebSocket as unknown as jest.Mock).mock.instances.length).toBe(instancesBefore);
@@ -216,20 +211,20 @@ describe('FinnhubService', () => {
     });
   });
 
-  describe('subscribe()', () => {
-    it('sends a subscribe message when the socket is OPEN', async () => {
+  describe('subscribe() — reference counted', () => {
+    it('sends a single WS subscribe on the 0 → 1 transition', async () => {
       const { service } = await buildService();
       service.onModuleInit();
-      FakeWS.lastInstance.readyState = WS_OPEN;
+      const ws = FakeWS.lastInstance;
 
-      service.subscribe('TSLA');
+      service.subscribe('AAPL');
+      service.subscribe('AAPL');
 
-      expect(FakeWS.lastInstance.send).toHaveBeenCalledWith(
-        JSON.stringify({ type: 'subscribe', symbol: 'TSLA' }),
-      );
+      expect(ws.send).toHaveBeenCalledTimes(1);
+      expect(ws.send).toHaveBeenCalledWith(JSON.stringify({ type: 'subscribe', symbol: 'AAPL' }));
     });
 
-    it('only tracks the symbol without sending when socket is not OPEN', async () => {
+    it('does not send when the socket is not OPEN, but still tracks the symbol', async () => {
       const { service } = await buildService();
       service.onModuleInit();
       FakeWS.lastInstance.readyState = WS_CONNECTING;
@@ -237,73 +232,37 @@ describe('FinnhubService', () => {
       service.subscribe('TSLA');
 
       expect(FakeWS.lastInstance.send).not.toHaveBeenCalled();
+
+      FakeWS.lastInstance.readyState = WS_OPEN;
+      FakeWS.lastInstance.trigger('open');
+      expect(FakeWS.lastInstance.send).toHaveBeenCalledWith(JSON.stringify({ type: 'subscribe', symbol: 'TSLA' }));
     });
   });
 
-  describe('getCandles()', () => {
-    const originalFetch = global.fetch;
-    afterEach(() => {
-      global.fetch = originalFetch;
-    });
-
-    it('returns parsed candles on a 200 response', async () => {
-      const { service } = await buildService();
-      const body = { s: 'ok', t: [1, 2], c: [10, 11], o: [9, 10], h: [12, 12], l: [8, 9] };
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: true,
-        json: jest.fn().mockResolvedValue(body),
-      }) as unknown as typeof fetch;
-
-      const result = await service.getCandles('AAPL', '1', 1000, 2000);
-
-      expect(result).toEqual(body);
-      const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
-      expect(calledUrl).toContain('symbol=AAPL');
-      expect(calledUrl).toContain('resolution=1');
-      expect(calledUrl).toContain('from=1000');
-      expect(calledUrl).toContain('to=2000');
-      expect(calledUrl).toContain('token=test-key');
-    });
-
-    it('returns { s: "no_data" } on a non-200 response', async () => {
-      const { service } = await buildService();
-      global.fetch = jest.fn().mockResolvedValue({
-        ok: false,
-        status: 403,
-        json: jest.fn(),
-      }) as unknown as typeof fetch;
-
-      const result = await service.getCandles('AAPL', '1', 0, 0);
-
-      expect(result).toEqual({ s: 'no_data' });
-    });
-  });
-
-  describe('unsubscribe()', () => {
-    it('sends an unsubscribe message when the socket is OPEN', async () => {
-      const { service } = await buildService();
-      service.onModuleInit();
-      const ws = FakeWS.lastInstance;
-      ws.readyState = WS_OPEN;
-
-      service.subscribe('MSFT');
-      service.unsubscribe('MSFT');
-
-      expect(ws.send).toHaveBeenLastCalledWith(
-        JSON.stringify({ type: 'unsubscribe', symbol: 'MSFT' }),
-      );
-    });
-
-    it('does not send when socket is not OPEN', async () => {
+  describe('unsubscribe() — reference counted', () => {
+    it('sends a WS unsubscribe only on the 1 → 0 transition', async () => {
       const { service } = await buildService();
       service.onModuleInit();
       const ws = FakeWS.lastInstance;
 
       service.subscribe('MSFT');
-      ws.readyState = WS_CONNECTING;
+      service.subscribe('MSFT');
       ws.send.mockClear();
 
       service.unsubscribe('MSFT');
+      expect(ws.send).not.toHaveBeenCalled();
+
+      service.unsubscribe('MSFT');
+      expect(ws.send).toHaveBeenCalledWith(JSON.stringify({ type: 'unsubscribe', symbol: 'MSFT' }));
+    });
+
+    it('is a no-op when no one ever subscribed (count already 0)', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      const ws = FakeWS.lastInstance;
+      ws.send.mockClear();
+
+      service.unsubscribe('GOOG');
 
       expect(ws.send).not.toHaveBeenCalled();
     });

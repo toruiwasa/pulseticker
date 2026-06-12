@@ -18,6 +18,8 @@ export interface CandlePoint {
   value: number;
 }
 
+export type ChartRange = '1D' | '1Y';
+
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private base = environment.apiUrl;
@@ -32,7 +34,9 @@ export class ApiService {
   getQuote(symbol: string) {
     return this.get<QuoteResponse>(`/watchlist/quote?symbol=${encodeURIComponent(symbol)}`);
   }
-  getCandles(symbol: string) {
-    return this.get<CandlePoint[]>(`/chart/candles?symbol=${encodeURIComponent(symbol)}`);
+  getCandles(symbol: string, range: ChartRange = '1D') {
+    return this.get<CandlePoint[]>(
+      `/chart/candles?symbol=${encodeURIComponent(symbol)}&range=${range}`,
+    );
   }
 }

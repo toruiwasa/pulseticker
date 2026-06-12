@@ -3,12 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import WebSocket from 'ws';
 import { PricesGateway } from '../../gateway/prices.gateway';
 import { AlertsService } from '../../alerts/alerts/alerts.service';
+import { LiveCandleCacheService } from '../../chart/live-candle-cache.service';
 
 @Injectable()
 export class FinnhubService implements OnModuleInit {
   private readonly logger = new Logger(FinnhubService.name);
   private ws: WebSocket;
-  private readonly subscriptions = new Set<string>();
+  private readonly refCounts = new Map<string, number>();
   private reconnectDelay = 1000;
   private readonly maxDelay = 30000;
 
@@ -16,6 +17,7 @@ export class FinnhubService implements OnModuleInit {
     private config: ConfigService,
     @Inject(forwardRef(() => PricesGateway)) private gateway: PricesGateway,
     @Inject(forwardRef(() => AlertsService)) private alertsService: AlertsService,
+    @Inject(forwardRef(() => LiveCandleCacheService)) private cache: LiveCandleCacheService,
   ) {}
 
   onModuleInit() {
@@ -29,7 +31,7 @@ export class FinnhubService implements OnModuleInit {
     this.ws.on('open', () => {
       this.logger.log('Finnhub WS connected');
       this.reconnectDelay = 1000;
-      for (const sym of this.subscriptions) {
+      for (const sym of this.refCounts.keys()) {
         this.ws.send(JSON.stringify({ type: 'subscribe', symbol: sym }));
       }
     });
@@ -41,6 +43,7 @@ export class FinnhubService implements OnModuleInit {
           for (const trade of msg.data) {
             this.gateway.broadcastPrice(trade.s, trade.p, trade.t);
             this.alertsService.checkAlerts(trade.s, trade.p);
+            this.cache.applyTick(trade.s, trade.p, trade.t);
           }
         }
       } catch {
@@ -62,46 +65,35 @@ export class FinnhubService implements OnModuleInit {
     });
   }
 
+  /**
+   * Reference-counted subscribe. Sends an upstream subscribe only on the
+   * 0 → 1 transition, so watchlist CRUD and the live-candle cache can both
+   * call subscribe(symbol) safely without fighting over the WS state.
+   */
   subscribe(symbol: string) {
-    this.subscriptions.add(symbol);
-    if (this.ws.readyState === WebSocket.OPEN) {
+    const prev = this.refCounts.get(symbol) ?? 0;
+    this.refCounts.set(symbol, prev + 1);
+    if (prev === 0 && this.ws.readyState === WebSocket.OPEN) {
       this.ws.send(JSON.stringify({ type: 'subscribe', symbol }));
     }
   }
 
+  /**
+   * Reference-counted unsubscribe. Sends an upstream unsubscribe only on
+   * the 1 → 0 transition. A spurious unsubscribe (count already 0) is a
+   * no-op so callers never need to track whether they ever subscribed.
+   */
   unsubscribe(symbol: string) {
-    this.subscriptions.delete(symbol);
-    if (this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ type: 'unsubscribe', symbol }));
+    const prev = this.refCounts.get(symbol) ?? 0;
+    if (prev === 0) return;
+    const next = prev - 1;
+    if (next === 0) {
+      this.refCounts.delete(symbol);
+      if (this.ws.readyState === WebSocket.OPEN) {
+        this.ws.send(JSON.stringify({ type: 'unsubscribe', symbol }));
+      }
+    } else {
+      this.refCounts.set(symbol, next);
     }
   }
-
-  async getCandles(
-    symbol: string,
-    resolution: string,
-    from: number,
-    to: number,
-  ): Promise<FinnhubCandles> {
-    const apiKey = this.config.getOrThrow<string>('FINNHUB_API_KEY');
-    const url =
-      `https://finnhub.io/api/v1/stock/candle` +
-      `?symbol=${encodeURIComponent(symbol)}` +
-      `&resolution=${encodeURIComponent(resolution)}` +
-      `&from=${from}&to=${to}&token=${apiKey}`;
-    const res = await fetch(url);
-    if (!res.ok) {
-      this.logger.warn(`Finnhub candles ${symbol} returned ${res.status}`);
-      return { s: 'no_data' };
-    }
-    return (await res.json()) as FinnhubCandles;
-  }
-}
-
-export interface FinnhubCandles {
-  s: string;
-  t?: number[];
-  c?: number[];
-  o?: number[];
-  h?: number[];
-  l?: number[];
 }
