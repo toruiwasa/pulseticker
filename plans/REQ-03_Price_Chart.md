@@ -298,9 +298,132 @@ GET /chart/candles?symbol=AAPL
 
 ---
 
+**Historical Data Source — Open Issue**
+
+> Surfaced from the integration build. Blocks the "long-term chart" feature requested by the user.
+
+### Problem
+
+When a user clicks a watchlist row on the dashboard, the chart appears empty and only starts to draw a line from the moment of the click. Visually it looks like a "since-click" chart, not a long-term historical view.
+
+The root cause:
+
+- `ChartService.getCandles` (`apps/api/src/chart/chart.service.ts:16-28`) delegates to `FinnhubService.getCandles` (`apps/api/src/finnhub/finnhub/finnhub.service.ts:79`), which calls `https://finnhub.io/api/v1/stock/candle`.
+- That endpoint is **no longer available on the Finnhub free plan for US stocks** (since 2024). The response is `{ s: 'no_data' }`, so `ChartService.getCandles` returns `[]`.
+- The frontend (`apps/web/src/app/features/dashboard/price-chart/price-chart.component.ts:136-143`) receives an empty history and the chart populates only from incoming WebSocket ticks.
+
+Live ticks via the `/prices` Socket.io namespace **continue to work** — only the historical pre-fill is broken.
+
+### Data-source options
+
+| # | Source | API key | Free-tier limits | US stocks | Forex (OANDA) | Notes |
+|---|---|---|---|---|---|---|
+| 1 | Finnhub `/stock/candle` (current) | already have | n/a | ❌ Paid only | ⚠ Limited | Cause of the bug |
+| 2 | **Yahoo Finance** (`query1.finance.yahoo.com/v8/finance/chart`) | None | Generous, no formal cap | ✅ | ✅ (`AUDUSD=X`) | Unofficial but widely used; suitable for portfolio demo |
+| 3 | **Alpha Vantage** | Required (`ALPHA_VANTAGE_API_KEY`) | 25 req / day | ✅ | ✅ | Tight free quota — needs server-side caching |
+| 4 | **Twelve Data** | Required (`TWELVEDATA_API_KEY`) | 800 req / day | ✅ | ✅ | Comfortable quota, official |
+| 5 | **Polygon.io** | Required | Restrictive on free tier | ✅ | △ | Less attractive for demo |
+
+**Decision for the portfolio MVP:** Twelve Data — 800 req/day free limit is ample for portfolio/demo use, official API, stable, and supports both US stocks and Forex out of the box. Requires registering for a free API key (`TWELVEDATA_API_KEY`).
+
+### Extensible API surface
+
+Whatever source we pick, the API should expose an explicit `range` query parameter so we can ship `1Y` first and grow into other ranges without breaking the contract:
+
+```text
+GET /chart/candles?symbol=AAPL&range=1Y
+```
+
+- `range` is **optional**, defaults to `1D`.
+- Initial supported values: `1D` (Today) and `1Y` (1 Year).
+- `1D`: Twelve Data `interval=1min`, `outputsize=390` (covers today's 6.5h session). `basePrice` is today's open.
+- `1Y`: Twelve Data `interval=1day`, `outputsize=253` (trading days in a year). `basePrice` is 1 year ago.
+- Reserved values (return 400 until implemented): `1W`, `1M`, `3M`, `6M`, `5Y`, `MAX`.
+
+Adding `1W` later is a server-only change; the frontend's range selector can ship in a follow-up.
+
+Frontend signature:
+
+```ts
+ApiService.getCandles(symbol: string, range: ChartRange = '1D'): Observable<CandlePoint[]>;
+```
+
+### Real-time updates are preserved
+
+The live-tick layer **does not disappear** when we switch to long-term data:
+
+- Historical pre-fill (long-term candles) arrives once on symbol click.
+- Live WebSocket ticks continue to arrive at sub-second cadence.
+- The chart appends each tick as a new data point at the live timestamp. For a 1-day-resolution chart (`1Y`), this means the most recent point on the line is "today, intraday" and it updates as new ticks flow in — visually the line's right edge moves in real time.
+- The existing duplicate-time guard at `price-chart.component.ts:145-155` already protects against `time <= lastTime`, so a tick whose floor-to-second equals the last candle's time is skipped harmlessly.
+
+### Decisions made
+
+1. Historical data source is **Twelve Data**.
+2. Initial ranges to support: `1D` (1-min resolution) and `1Y` (1-day resolution).
+3. **Live Cache Architecture:** To prevent "data gaps" when users switch symbols, the backend will implement a Live Cache.
+
+### Live Cache Architecture (Backend)
+
+To ensure users see a gapless, instantly-loading chart even after switching symbols, the backend must merge historical data with live WebSocket ticks.
+
+**Robust In-Memory Design (MVP):**
+- Use a `Map<CacheKey, { lastAccessed: number, candles: CandlePoint[] }>` in a singleton `LiveCandleCacheService`, where `CacheKey = ${symbol}:${range}` (see "Resolved design questions" below for why range is part of the key).
+- **Memory Leak Prevention 1 (Stale data):** A background `setInterval` sweeps the Map every minute and `delete`s entries whose `lastAccessed` is older than 15 minutes. `lastAccessed` is updated on read only (`GET /chart/candles`), not on tick append — so a stream nobody is reading still ages out. After deleting the entry, the sweep calls `FinnhubService.unsubscribe(symbol)` (ref-counted, see Q4) so the upstream WS subscription is released too. Otherwise WS subscriptions leak forever.
+- **Memory Leak Prevention 2 (Array bounds):** Cap the array length at 30,000 points; when exceeded, shift FIFO. This is a defence-in-depth bound, not the normal operating size: `1D` ≤ 390 (1-min × 6.5 h), `1Y` ≤ 252 (trading days), even raw second-resolution ticks for an 8-h session ≤ 28,800.
+- **Tick Merging:** When a WS tick arrives from Finnhub, look up the symbol's cache entries and **update the rightmost candle in place** — set its `value` to the tick price, keep its `time` (start-of-bucket) unchanged. Works for both `1D` (1-min bucket) and `1Y` (1-day bucket) and stays compatible with `lightweight-charts`' duplicate-time guard.
+- **On-Demand Fetch:** When a user requests `AAPL` for a given range, if `(AAPL, range)` is in the Map, return it instantly. If not, fetch from Twelve Data, initialize the Map entry, and `FinnhubService.subscribe(symbol)` (ref-counted) if not already subscribed. Concurrent misses for the same `(symbol, range)` share a single in-flight fetch via a `Map<CacheKey, Promise<CacheEntry>>` (see Q5).
+- **Persistence:** In-memory only; a NestJS restart loses the cache. Cold-start latency = one Twelve Data fetch per first-request-per-`(symbol, range)`. Accepted for MVP.
+
+**Future Scalability (Multi-instance):**
+This design is fully scalable. By abstracting the cache behind an interface (`ICandleCache`), transitioning to a multi-instance architecture simply requires swapping the `Map` for **Redis** (e.g., pushing ticks via `RPUSH` and reading via `LRANGE`, letting Redis handle TTL via `EXPIRE`).
+
+### Resolved design questions
+
+These five points were settled during design review before implementation:
+
+**Q1. Cache key = `(symbol, range)`.** `1D` (1-min, ~390 pts) and `1Y` (1-day, ~252 pts) are completely different time series for the same symbol; keying by symbol alone would have one range overwrite the other. Memory cost is negligible (~650 floats per symbol).
+
+**Q2. Tick merging = update-in-place, not append.** When a tick arrives, the rightmost candle in the array has its `value` overwritten with the tick price; the `time` (start-of-bucket) stays put. For `1D` this means "the latest minute" keeps moving; for `1Y` it means "today's close" keeps moving. No new array entries are pushed by tick merging — only the historical fetch from Twelve Data ever extends the array.
+
+**Q3. Symbol mapping (Finnhub ↔ Twelve Data).** The cache and `FinnhubService` use Finnhub-form symbols (matches the WS channel). Only the outbound HTTP call to Twelve Data translates them:
+
+| Finnhub form | Twelve Data form |
+|---|---|
+| `AAPL` | `AAPL` |
+| `MSFT` | `MSFT` |
+| `VOO`  | `VOO` |
+| `OANDA:AUD_USD` | `AUD/USD` |
+
+Implemented as a small helper (`apps/api/src/chart/twelve-data-symbol.ts` or similar).
+
+**Q4. WS subscription is reference-counted in `FinnhubService`.** Both watchlist CRUD and `LiveCandleCacheService` call the same `subscribe(symbol)` / `unsubscribe(symbol)` API. Internally:
+
+```ts
+private refCounts = new Map<string, number>();
+subscribe(symbol)   → refCounts[symbol]++; if was 0, send WS subscribe
+unsubscribe(symbol) → refCounts[symbol]--; if now 0, send WS unsubscribe
+```
+
+This prevents the cache's TTL eviction from accidentally unsubscribing a symbol that a user still has on a watchlist.
+
+**Q5. Concurrent cache miss is de-duped.** A `Map<CacheKey, Promise<CacheEntry>>` of in-flight Twelve Data fetches ensures two simultaneous clicks for a fresh symbol share one HTTP request, not two — important under the 800 req/day free-tier budget.
+
+### Follow-up implementation work
+
+- Add `TWELVEDATA_API_KEY` to environment variables (`.env`).
+- Implement `LiveCandleCacheService` with the Map, GC interval, and array-bounding logic.
+- Add `range` query param + DTO validation to `ChartController` (`apps/api/src/chart/chart.controller.ts`).
+- Wire Twelve Data API for the initial history fetch. The live-tick path stays on Finnhub WebSocket and routes into the cache.
+- Update `apps/web/src/app/core/services/api.service.ts` to forward `range`.
+- Default the dashboard chart to `range='1D'`; range selector UI ships separately.
+
+---
+
 **Outstanding Tasks**
 
-- [ ] Verify `/stock/candle` availability on Finnhub free tier at implementation time
+- [ ] Implement historical data fetch using Twelve Data API (`/time_series` endpoint).
+- [ ] Add `TWELVEDATA_API_KEY` to the environment variables (`.env`).
 - [ ] Candlestick support (nice-to-have, post-MVP)
 - [ ] Implement `getLastTradingDayOpenUnix()` in `apps/api/src/utils/trading-day.util.ts` — shared utility, reusable by REQ-05
 - [ ] Confirm `luxon` or `date-fns-tz` is present in the API package (avoid adding duplicate timezone dependency)
