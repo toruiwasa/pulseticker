@@ -24,7 +24,12 @@ export class SocketService {
   price$ = new Subject<PriceTick>();
   alert$ = new Subject<AlertPayload>();
 
+  get connected(): boolean {
+    return this.socket?.connected ?? false;
+  }
+
   connect(token: string) {
+    if (this.socket?.connected) return;
     this.socket = io(`${environment.wsUrl}/prices`, {
       auth: { token },
       transports: ['websocket'],

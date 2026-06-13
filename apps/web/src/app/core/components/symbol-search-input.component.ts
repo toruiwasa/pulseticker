@@ -8,33 +8,89 @@ import { OandaPipe } from '../pipes/oanda.pipe';
   standalone: true,
   imports: [OandaPipe],
   template: `
-    <div style="position:relative">
+    <div class="search-root">
       <input
+        class="search-input"
         type="text"
         [placeholder]="placeholder"
         [value]="searchQuery()"
         [disabled]="disabled"
         (input)="onInput($event)"
         (keydown)="onKeydown($event)"
-        style="padding:0.4rem 0.6rem;width:200px;box-sizing:border-box"
       />
       @if (results().length > 0) {
-        <ul style="position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid #ccc;list-style:none;margin:0;padding:0;z-index:10;max-height:280px;overflow-y:auto">
+        <ul class="dropdown" role="listbox">
           @for (r of results(); track r.symbol; let i = $index) {
             <li
-              [style.background]="i === activeIndex() ? '#eef2ff' : 'transparent'"
-              style="padding:0.4rem 0.6rem;cursor:pointer"
+              class="dropdown-item"
+              [class.active]="i === activeIndex()"
+              role="option"
+              [attr.aria-selected]="i === activeIndex()"
               (click)="select(r.symbol)"
               (mouseenter)="activeIndex.set(i)"
             >
               <strong>{{ r.symbol | oanda }}</strong>
-              <span style="color:#666;margin-left:0.5rem">{{ r.description }}</span>
+              <span class="description">{{ r.description }}</span>
             </li>
           }
         </ul>
       }
     </div>
   `,
+  styles: [`
+    :host { display: block; }
+
+    .search-root { position: relative; }
+
+    .search-input {
+      width: 100%;
+      padding: 0.4rem 0.6rem;
+      box-sizing: border-box;
+      border: 1px solid var(--pt-border);
+      border-radius: 6px;
+      background: var(--pt-bg-surface);
+      color: var(--pt-text-primary);
+      font-family: inherit;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .search-input:focus { border-color: var(--pt-primary); }
+    .search-input:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .dropdown {
+      position: absolute;
+      left: 0; right: 0; top: calc(100% + 2px);
+      background: var(--pt-bg-surface);
+      border: 1px solid var(--pt-border);
+      border-radius: 6px;
+      list-style: none;
+      margin: 0; padding: 0;
+      z-index: 200;
+      max-height: 280px;
+      overflow-y: auto;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    }
+
+    .dropdown-item {
+      padding: 0.4rem 0.6rem;
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: background 0.1s;
+      display: flex;
+      align-items: baseline;
+      gap: 0.4rem;
+    }
+
+    .dropdown-item:hover,
+    .dropdown-item.active {
+      background: color-mix(in srgb, var(--pt-primary) 8%, transparent);
+    }
+
+    .dropdown-item strong { color: var(--pt-text-primary); }
+    .description { color: var(--pt-text-secondary); font-size: 0.8rem; }
+  `],
 })
 export class SymbolSearchInputComponent implements OnInit, OnDestroy {
   @Input({ transform: booleanAttribute }) clearOnSelect = false;

@@ -11,6 +11,8 @@ import { AlertsModule } from './alerts/alerts.module';
 import { HealthModule } from './health/health.module';
 import { PreviewModule } from './preview/preview.module';
 import { ChartModule } from './chart/chart.module';
+import { CompanyModule } from './company/company.module';
+import { MarketModule } from './market/market.module';
 
 @Module({
   imports: [
@@ -28,6 +30,8 @@ import { ChartModule } from './chart/chart.module';
     HealthModule,
     PreviewModule,
     ChartModule,
+    CompanyModule,
+    MarketModule,
   ],
 })
 export class AppModule {}

@@ -1,2 +1,66 @@
+@import "tailwindcss";
+
+/* Taiga UI icons render via CSS mask-image; preflight resets background-color, this restores it */
+tui-icon { background-color: currentColor; }
+
+:root {
+  --pt-primary:        #2953B2;
+  --pt-primary-hover:  #1e3f8a;
+  --pt-up:             #34D399;
+  --pt-down:           #F87171;
+  --pt-neutral:        #6B7280;
+  --pt-bg-base:        #F9FAFB;
+  --pt-bg-surface:     #FFFFFF;
+  --pt-bg-elevated:    #F3F4F6;
+  --pt-border:         #E5E7EB;
+  --pt-text-primary:   #111827;
+  --pt-text-secondary: #6B7280;
+  --pt-text-muted:     #9CA3AF;
+  --pt-chart-grid:     #E5E7EB;
+  --pt-chart-text:     #6B7280;
+  --pt-chart-cross:    #9CA3AF;
+  --pt-header-h:       44px;
+  --pt-sidebar-w:      48px;
+  --pt-watchlist-w:    260px;
+  --tui-primary:       var(--pt-primary);
+}
+
+html.tui-theme-dark {
+  --pt-primary:        #4A72D6;
+  --pt-primary-hover:  #3560c4;
+  --pt-neutral:        #9CA3AF;
+  --pt-bg-base:        #111827;
+  --pt-bg-surface:     #1F2937;
+  --pt-bg-elevated:    #374151;
+  --pt-border:         #374151;
+  --pt-text-primary:   #F9FAFB;
+  --pt-text-secondary: #9CA3AF;
+  --pt-text-muted:     #6B7280;
+  --pt-chart-grid:     #374151;
+  --pt-chart-text:     #9CA3AF;
+  --pt-chart-cross:    #6B7280;
+  --tui-primary:       var(--pt-primary);
+}
+
 *, *::before, *::after { box-sizing: border-box; }
-html, body { margin: 0; padding: 0; }
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}

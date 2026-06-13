@@ -117,8 +117,8 @@ import { LoginChartComponent } from './login-chart.component';
       min-width: 80px;
     }
 
-    .positive { color: #00e676; }
-    .negative { color: #ff5252; }
+    .positive { color: var(--pt-up); }
+    .negative { color: var(--pt-down); }
     .neutral  { color: rgba(255, 255, 255, 0.5); }
 
     .market-closed-badge {
