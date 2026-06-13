@@ -55,7 +55,8 @@ interface Alert {
       } @else if (alerts().length === 0) {
         <p class="empty-msg">No alerts yet. Use the form above to add one.</p>
       } @else {
-        <table>
+        <!-- Desktop: table -->
+        <table class="alert-table">
           <thead>
             <tr>
               <th>Symbol</th>
@@ -88,6 +89,40 @@ interface Alert {
             }
           </tbody>
         </table>
+
+        <!-- Mobile: card list -->
+        <ul class="card-list" aria-label="Alerts">
+          @for (alert of alerts(); track alert.id) {
+            <li class="alert-card">
+              <div class="card-header">
+                <span class="card-symbol">{{ alert.symbol | oanda }}</span>
+                <button
+                  class="btn-delete"
+                  type="button"
+                  [attr.aria-label]="'Delete alert for ' + (alert.symbol | oanda)"
+                  (click)="deleteAlert(alert.id)"
+                >Delete</button>
+              </div>
+              <div class="card-grid">
+                <div class="card-field">
+                  <span class="field-label">Direction</span>
+                  <span class="field-value">{{ alert.direction }}</span>
+                </div>
+                <div class="card-field">
+                  <span class="field-label">Price</span>
+                  <span class="field-value col-price">{{ alert.threshold_price }}</span>
+                </div>
+                <div class="card-field">
+                  <span class="field-label">Status</span>
+                  <span class="field-value"
+                    [class]="alert.is_active ? 'status-active' : 'status-triggered'">
+                    {{ alert.is_active ? 'Active' : 'Triggered' }}
+                  </span>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
       }
     </div>
   `,
@@ -108,7 +143,6 @@ interface Alert {
     }
 
     h2 {
-      font-size: 1rem;
       font-weight: 600;
       margin: 1.5rem 0 0.75rem;
       color: var(--pt-text-secondary);
@@ -167,7 +201,9 @@ interface Alert {
       margin: 0;
     }
 
-    table {
+    /* ── Desktop table ── */
+
+    .alert-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.875rem;
@@ -209,6 +245,79 @@ interface Alert {
     }
     .btn-delete:hover { border-color: var(--pt-down); color: var(--pt-down); }
     .btn-delete:focus-visible { outline: 2px solid var(--pt-primary); outline-offset: 2px; }
+
+    /* ── Mobile card list (hidden on desktop) ── */
+
+    .card-list {
+      display: none;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .alert-card {
+      border: 1px solid var(--pt-border);
+      border-radius: 8px;
+      background: var(--pt-bg-surface);
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-symbol {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--pt-text-primary);
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.4rem 0.75rem;
+    }
+
+    .card-field {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .field-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--pt-text-muted);
+    }
+
+    .field-value {
+      font-size: 0.875rem;
+      color: var(--pt-text-primary);
+    }
+
+    /* ── Mobile breakpoint ── */
+
+    @media (max-width: 767px) {
+      .page { padding: 1rem; }
+
+      .alert-table { display: none; }
+      .card-list { display: flex; }
+
+      .form-row { flex-direction: column; align-items: stretch; }
+      .symbol-search { max-width: none; }
+      .price-input { width: 100%; box-sizing: border-box; }
+      .direction-select { width: 100%; }
+      .btn-primary { width: 100%; }
+    }
   `],
 })
 export class AlertsComponent implements OnInit {

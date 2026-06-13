@@ -77,6 +77,8 @@ export class PriceChartComponent implements AfterViewInit, OnDestroy {
           horzLines: { color: c.grid, style: LineStyle.Dashed },
         },
         crosshair: { vertLine: { color: c.cross }, horzLine: { color: c.cross } },
+        timeScale:       { borderColor: c.border },
+        rightPriceScale: { borderColor: c.border },
       });
     });
   }
@@ -91,6 +93,8 @@ export class PriceChartComponent implements AfterViewInit, OnDestroy {
         horzLines: { color: c.grid, style: LineStyle.Dashed },
       },
       crosshair: { vertLine: { color: c.cross }, horzLine: { color: c.cross } },
+      timeScale:       { borderColor: c.border },
+      rightPriceScale: { borderColor: c.border },
     });
     this.series = this.chart.addSeries(LineSeries, { color: this.upColor() });
 
@@ -116,9 +120,10 @@ export class PriceChartComponent implements AfterViewInit, OnDestroy {
     // isDark() reactive — effect() re-runs on theme change
     void this.theme.isDark();
     return {
-      grid:  this.cssVar('--pt-chart-grid'),
-      text:  this.cssVar('--pt-chart-text'),
-      cross: this.cssVar('--pt-chart-cross'),
+      grid:   this.cssVar('--pt-chart-grid'),
+      text:   this.cssVar('--pt-chart-text'),
+      cross:  this.cssVar('--pt-chart-cross'),
+      border: this.cssVar('--pt-border'),
     };
   }
 

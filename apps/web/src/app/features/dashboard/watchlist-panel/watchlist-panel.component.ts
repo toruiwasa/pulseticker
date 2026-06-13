@@ -73,7 +73,10 @@ export type { WatchlistItem };
                 type="button"
                 [attr.aria-label]="'Remove ' + (item.symbol | oanda)"
                 (click)="symbolRemoved.emit(item.symbol); $event.stopPropagation()"
-              >×</button>
+              >
+                <span class="btn-short" aria-hidden="true">×</span>
+                <span class="btn-long">Delete</span>
+              </button>
             </div>
           </div>
         }
@@ -190,7 +193,7 @@ export type { WatchlistItem };
     .ticker-right {
       display: flex;
       align-items: center;
-      gap: 0.4rem;
+      gap: 0.75rem;
       flex-shrink: 0;
     }
 
@@ -205,21 +208,25 @@ export type { WatchlistItem };
 
     .remove-btn {
       background: transparent;
-      border: none;
-      cursor: pointer;
-      color: var(--pt-text-muted);
-      font-size: 1rem;
+      border: 1px solid var(--pt-border);
+      border-radius: 4px;
+      padding: 0.2rem 0.5rem;
+      color: var(--pt-text-secondary);
+      font-size: 0.8rem;
       line-height: 1;
-      padding: 0 2px;
-      border-radius: 3px;
-      transition: color 0.1s;
+      font-family: inherit;
+      cursor: pointer;
+      transition: border-color 0.15s, color 0.15s;
     }
 
-    .remove-btn:hover { color: var(--pt-down); }
+    .remove-btn:hover { border-color: var(--pt-down); color: var(--pt-down); }
 
     .remove-btn:focus-visible {
       outline: 2px solid var(--pt-primary);
+      outline-offset: 2px;
     }
+
+    .remove-btn .btn-long { display: none; }
 
     .add-hint, .limit-msg {
       padding: 0.75rem;
@@ -234,6 +241,13 @@ export type { WatchlistItem };
       .symbol { font-size: 0.9rem; }
       .price { font-size: 0.9rem; }
       .timestamp { font-size: 0.75rem; }
+
+      .remove-btn {
+        padding: 0.3rem 0.6rem;
+        min-height: 36px;
+      }
+      .remove-btn .btn-short { display: none; }
+      .remove-btn .btn-long  { display: inline; }
     }
   `],
 })
