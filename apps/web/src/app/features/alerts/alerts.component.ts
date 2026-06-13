@@ -1,6 +1,5 @@
 import { Component, OnInit, ViewChild, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { SymbolSearchInputComponent } from '../../core/components/symbol-search-input.component';
@@ -17,48 +16,309 @@ interface Alert {
 
 @Component({
   standalone: true,
-  imports: [FormsModule, RouterLink, SymbolSearchInputComponent, OandaPipe],
+  imports: [FormsModule, SymbolSearchInputComponent, OandaPipe],
   template: `
-    <div style="padding: 2rem">
+    <div class="page">
       <h1>Alerts</h1>
-      <a routerLink="/dashboard">← Dashboard</a>
 
-      <h2>Create Alert</h2>
-      <form (ngSubmit)="createAlert()" style="display:flex;gap:0.5rem;flex-wrap:wrap">
-        <app-symbol-search (symbolSelected)="selectSymbol($event)" />
-        <input [(ngModel)]="form.threshold_price" name="price" type="number" step="0.01" placeholder="Price" required />
-        <select [(ngModel)]="form.direction" name="direction">
+      <h2>Create alert</h2>
+      <form class="form-row" (ngSubmit)="createAlert()">
+        <app-symbol-search
+          class="symbol-search"
+          (symbolSelected)="selectSymbol($event)"
+        />
+        <input
+          [(ngModel)]="form.threshold_price"
+          name="price"
+          type="number"
+          step="0.01"
+          placeholder="Price"
+          required
+          class="price-input"
+          aria-label="Price threshold"
+        />
+        <select
+          [(ngModel)]="form.direction"
+          name="direction"
+          class="direction-select"
+          aria-label="Alert direction"
+        >
           <option value="above">Above</option>
           <option value="below">Below</option>
         </select>
-        <button type="submit">Add</button>
+        <button type="submit" class="btn-primary">Add alert</button>
       </form>
 
-      <h2>Active Alerts</h2>
+      <h2>Active alerts</h2>
       @if (loading()) {
-        <p>Loading…</p>
+        <p class="empty-msg">Loading…</p>
       } @else if (alerts().length === 0) {
-        <p>No alerts yet.</p>
+        <p class="empty-msg">No alerts yet. Use the form above to add one.</p>
       } @else {
-        <table>
+        <!-- Desktop: table -->
+        <table class="alert-table">
           <thead>
-            <tr><th>Symbol</th><th>Direction</th><th>Price</th><th>Status</th><th></th></tr>
+            <tr>
+              <th>Symbol</th>
+              <th>Direction</th>
+              <th>Price</th>
+              <th>Status</th>
+              <th></th>
+            </tr>
           </thead>
           <tbody>
             @for (alert of alerts(); track alert.id) {
               <tr>
-                <td>{{ alert.symbol | oanda }}</td>
+                <td class="col-symbol">{{ alert.symbol | oanda }}</td>
                 <td>{{ alert.direction }}</td>
-                <td>{{ alert.threshold_price }}</td>
-                <td>{{ alert.is_active ? 'Active' : 'Triggered' }}</td>
-                <td><button (click)="deleteAlert(alert.id)">Delete</button></td>
+                <td class="col-price">{{ alert.threshold_price }}</td>
+                <td>
+                  <span [class]="alert.is_active ? 'status-active' : 'status-triggered'">
+                    {{ alert.is_active ? 'Active' : 'Triggered' }}
+                  </span>
+                </td>
+                <td>
+                  <button
+                    class="btn-delete"
+                    type="button"
+                    [attr.aria-label]="'Delete alert for ' + (alert.symbol | oanda)"
+                    (click)="deleteAlert(alert.id)"
+                  >Delete</button>
+                </td>
               </tr>
             }
           </tbody>
         </table>
+
+        <!-- Mobile: card list -->
+        <ul class="card-list" aria-label="Alerts">
+          @for (alert of alerts(); track alert.id) {
+            <li class="alert-card">
+              <div class="card-header">
+                <span class="card-symbol">{{ alert.symbol | oanda }}</span>
+                <button
+                  class="btn-delete"
+                  type="button"
+                  [attr.aria-label]="'Delete alert for ' + (alert.symbol | oanda)"
+                  (click)="deleteAlert(alert.id)"
+                >Delete</button>
+              </div>
+              <div class="card-grid">
+                <div class="card-field">
+                  <span class="field-label">Direction</span>
+                  <span class="field-value">{{ alert.direction }}</span>
+                </div>
+                <div class="card-field">
+                  <span class="field-label">Price</span>
+                  <span class="field-value col-price">{{ alert.threshold_price }}</span>
+                </div>
+                <div class="card-field">
+                  <span class="field-label">Status</span>
+                  <span class="field-value"
+                    [class]="alert.is_active ? 'status-active' : 'status-triggered'">
+                    {{ alert.is_active ? 'Active' : 'Triggered' }}
+                  </span>
+                </div>
+              </div>
+            </li>
+          }
+        </ul>
       }
     </div>
   `,
+  styles: [`
+    :host { display: block; }
+
+    .page {
+      padding: 2rem;
+      color: var(--pt-text-primary);
+      max-width: 900px;
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin: 0 0 1.5rem;
+      color: var(--pt-text-primary);
+    }
+
+    h2 {
+      font-weight: 600;
+      margin: 1.5rem 0 0.75rem;
+      color: var(--pt-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.75rem;
+    }
+
+    .form-row {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      margin-bottom: 1rem;
+    }
+
+    .symbol-search { flex: 1; min-width: 160px; max-width: 240px; }
+
+    .price-input, .direction-select {
+      padding: 0.4rem 0.6rem;
+      border: 1px solid var(--pt-border);
+      border-radius: 6px;
+      background: var(--pt-bg-surface);
+      color: var(--pt-text-primary);
+      font-family: inherit;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    .price-input { width: 120px; }
+    .direction-select { cursor: pointer; }
+
+    .price-input:focus,
+    .direction-select:focus { border-color: var(--pt-primary); }
+
+    .btn-primary {
+      padding: 0.4rem 0.9rem;
+      border: none;
+      border-radius: 6px;
+      background: var(--pt-primary);
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-family: inherit;
+      transition: background 0.15s;
+      white-space: nowrap;
+    }
+    .btn-primary:hover { background: var(--pt-primary-hover); }
+    .btn-primary:focus-visible { outline: 2px solid var(--pt-primary); outline-offset: 2px; }
+
+    .empty-msg {
+      color: var(--pt-text-muted);
+      font-size: 0.875rem;
+      margin: 0;
+    }
+
+    /* ── Desktop table ── */
+
+    .alert-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    th {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--pt-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      border-bottom: 2px solid var(--pt-border);
+    }
+
+    td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--pt-border);
+      color: var(--pt-text-primary);
+    }
+
+    .col-symbol { font-weight: 600; }
+    .col-price { font-variant-numeric: tabular-nums; }
+
+    .status-active    { color: var(--pt-up); font-weight: 600; }
+    .status-triggered { color: var(--pt-neutral); }
+
+    .btn-delete {
+      background: transparent;
+      border: 1px solid var(--pt-border);
+      border-radius: 4px;
+      padding: 0.2rem 0.5rem;
+      color: var(--pt-text-secondary);
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-family: inherit;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .btn-delete:hover { border-color: var(--pt-down); color: var(--pt-down); }
+    .btn-delete:focus-visible { outline: 2px solid var(--pt-primary); outline-offset: 2px; }
+
+    /* ── Mobile card list (hidden on desktop) ── */
+
+    .card-list {
+      display: none;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .alert-card {
+      border: 1px solid var(--pt-border);
+      border-radius: 8px;
+      background: var(--pt-bg-surface);
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .card-symbol {
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--pt-text-primary);
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.4rem 0.75rem;
+    }
+
+    .card-field {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .field-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--pt-text-muted);
+    }
+
+    .field-value {
+      font-size: 0.875rem;
+      color: var(--pt-text-primary);
+    }
+
+    /* ── Mobile breakpoint ── */
+
+    @media (max-width: 767px) {
+      .page { padding: 1rem; }
+
+      .alert-table { display: none; }
+      .card-list { display: flex; }
+
+      .form-row { flex-direction: column; align-items: stretch; }
+      .symbol-search { max-width: none; }
+      .price-input { width: 100%; box-sizing: border-box; }
+      .direction-select { width: 100%; }
+      .btn-primary { width: 100%; }
+    }
+  `],
 })
 export class AlertsComponent implements OnInit {
   @ViewChild(SymbolSearchInputComponent) private symbolSearch!: SymbolSearchInputComponent;

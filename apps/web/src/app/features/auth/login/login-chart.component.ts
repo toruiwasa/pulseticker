@@ -16,8 +16,8 @@ import {
 } from 'lightweight-charts';
 import { PreviewPrice, PreviewService } from '../../../core/services/preview.service';
 
-const GREEN = '#00e676';
-const RED = '#ff5252';
+const GREEN = '#34D399'; // --pt-up
+const RED   = '#F87171'; // --pt-down
 
 @Component({
   standalone: true,
