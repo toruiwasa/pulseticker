@@ -2,22 +2,19 @@ import {
   Component,
   DestroyRef,
   OnInit,
-  computed,
   inject,
   signal,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter, interval, startWith } from 'rxjs';
-import { TuiIcon } from '@taiga-ui/core';
 import { isMarketOpen } from '@pulseticker/trading-utils';
-import { ThemeService } from '../../services/theme.service';
 import { AuthService } from '../../services/auth.service';
 import { SocketService } from '../../services/socket.service';
 
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [TuiIcon],
+  imports: [],
   template: `
     <header class="header-bar">
       <span class="logo">pulseticker</span>
@@ -48,21 +45,11 @@ import { SocketService } from '../../services/socket.service';
 
       <div class="header-actions">
         <button
-          class="icon-btn"
-          (click)="theme.toggle()"
-          [attr.aria-label]="themeButtonLabel()"
-          [title]="themeButtonLabel()"
-        >
-          <tui-icon [icon]="themeIcon()" />
-        </button>
-
-        <button
-          class="avatar-btn"
+          class="logout-btn"
           (click)="auth.signOut()"
-          aria-label="Sign out"
-          title="Sign out"
+          aria-label="Log out"
         >
-          {{ initials() }}
+          Log out
         </button>
       </div>
     </header>
@@ -85,7 +72,7 @@ import { SocketService } from '../../services/socket.service';
 
     .logo {
       font-weight: 700;
-      font-size: 1rem;
+      font-size: 1.0625rem;
       color: var(--pt-primary);
       letter-spacing: -0.02em;
       white-space: nowrap;
@@ -133,57 +120,30 @@ import { SocketService } from '../../services/socket.service';
       margin-left: 1rem;
     }
 
-    .icon-btn {
-      width: 32px;
-      height: 32px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border: none;
+    .logout-btn {
+      padding: 0.25rem 0.75rem;
       border-radius: 6px;
+      border: 1px solid var(--pt-border);
       background: transparent;
       color: var(--pt-text-secondary);
+      font-size: 0.8rem;
       cursor: pointer;
-      transition: background 0.15s, color 0.15s;
-      padding: 0;
+      transition: border-color 0.15s, color 0.15s;
+      white-space: nowrap;
     }
 
-    .icon-btn:hover {
-      background: var(--pt-bg-elevated);
-      color: var(--pt-primary);
+    .logout-btn:hover {
+      border-color: var(--pt-down);
+      color: var(--pt-down);
     }
 
-    .icon-btn:focus-visible {
-      outline: 2px solid var(--pt-primary);
-      outline-offset: 2px;
-    }
-
-    .avatar-btn {
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      border: 1.5px solid var(--pt-border);
-      background: var(--pt-bg-elevated);
-      color: var(--pt-text-primary);
-      font-size: 0.7rem;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: border-color 0.15s;
-    }
-
-    .avatar-btn:hover { border-color: var(--pt-primary); }
-
-    .avatar-btn:focus-visible {
+    .logout-btn:focus-visible {
       outline: 2px solid var(--pt-primary);
       outline-offset: 2px;
     }
   `],
 })
 export class HeaderComponent implements OnInit {
-  protected theme = inject(ThemeService);
   protected auth = inject(AuthService);
   private socket = inject(SocketService);
   private destroyRef = inject(DestroyRef);
@@ -191,27 +151,8 @@ export class HeaderComponent implements OnInit {
   protected marketOpen = signal(isMarketOpen());
   protected audUsd = signal<number | null>(null);
   protected audUsdDir = signal<'up' | 'down' | ''>('');
-  protected initials = signal('');
-
-  protected themeIcon = computed(() => {
-    const p = this.theme.pref();
-    return p === 'light' ? '@tui.sun' : p === 'dark' ? '@tui.moon' : '@tui.monitor';
-  });
-
-  protected themeButtonLabel = computed(() => {
-    const p = this.theme.pref();
-    return p === 'light' ? 'Switch to dark mode' :
-           p === 'dark'  ? 'Follow system theme' : 'Switch to light mode';
-  });
 
   ngOnInit() {
-    this.auth.session$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(session => {
-      const name = session?.user?.user_metadata?.['full_name'] || session?.user?.email || '';
-      this.initials.set(
-        name.split(/\s+/).slice(0, 2).map((w: string) => w[0]?.toUpperCase() ?? '').join(''),
-      );
-    });
-
     interval(30_000)
       .pipe(startWith(0), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.marketOpen.set(isMarketOpen()));

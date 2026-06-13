@@ -38,6 +38,8 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
     .shell-main {
       grid-area: main;
       overflow-y: auto;
+      overflow-x: hidden;
+      min-width: 0;
       display: flex;
       flex-direction: column;
     }

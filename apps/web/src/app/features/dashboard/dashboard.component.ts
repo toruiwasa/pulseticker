@@ -6,6 +6,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { IconComponent } from '../../core/components/svg-icon.component';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription, filter, take } from 'rxjs';
 import { TuiNotificationService } from '@taiga-ui/core';
@@ -27,13 +28,21 @@ import { ContextAccordionComponent } from './context-accordion/context-accordion
     PriceChartComponent,
     StatsBarComponent,
     ContextAccordionComponent,
+    IconComponent,
   ],
   template: `
     @if (wl.loading()) {
       <div class="loading-state">Loading watchlist…</div>
     } @else {
       <div class="dashboard-layout">
-        <aside class="watchlist-aside">
+        <div
+          class="backdrop"
+          [class.open]="watchlistOpen()"
+          (click)="watchlistOpen.set(false)"
+          aria-hidden="true"
+        ></div>
+
+        <aside class="watchlist-aside" [class.open]="watchlistOpen()">
           <app-watchlist-panel
             [watchlist]="wl.watchlist()"
             [prices]="wl.prices()"
@@ -48,6 +57,15 @@ import { ContextAccordionComponent } from './context-accordion/context-accordion
         </aside>
 
         <div class="chart-area">
+          <button
+            class="watchlist-toggle"
+            (click)="watchlistOpen.update(v => !v)"
+            [attr.aria-label]="watchlistOpen() ? 'Close watchlist' : 'Open watchlist'"
+          >
+            <app-icon name="list" size="16" />
+            <span>{{ watchlistOpen() ? 'Hide list' : 'Watchlist' }}</span>
+          </button>
+
           <app-chart-header
             [symbol]="activeSymbol()"
             [activeRange]="range()"
@@ -99,6 +117,8 @@ import { ContextAccordionComponent } from './context-accordion/context-accordion
       display: flex;
       flex-direction: column;
       background: var(--pt-bg-base);
+      min-width: 0;
+      overflow-x: hidden;
     }
 
     .chart-body {
@@ -106,13 +126,75 @@ import { ContextAccordionComponent } from './context-accordion/context-accordion
       flex-shrink: 0;
     }
 
-    @media (max-width: 1199px) {
+    /* Toggle button — hidden on mobile + desktop, shown only on tablet */
+    .watchlist-toggle {
+      display: none;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.75rem;
+      background: var(--pt-bg-elevated);
+      border: 1px solid var(--pt-border);
+      border-radius: 6px;
+      color: var(--pt-text-secondary);
+      font-size: 0.8rem;
+      cursor: pointer;
+      margin: 0.5rem 0.75rem;
+      width: fit-content;
+      transition: color 0.15s;
+    }
+    .watchlist-toggle:hover { color: var(--pt-primary); }
+
+    /* Backdrop element — hidden until open */
+    .backdrop {
+      display: none;
+      position: absolute;
+      inset: 0;
+      background: transparent;
+      pointer-events: none;
+      z-index: 49;
+      transition: background 0.22s;
+    }
+
+    /* Tablet: 768–1199px — slide-in drawer */
+    @media (min-width: 768px) and (max-width: 1199px) {
       .dashboard-layout {
         grid-template-columns: 1fr;
+        position: relative;
+        overflow: hidden;
       }
+
       .watchlist-aside {
-        display: none;
+        display: flex;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: var(--pt-watchlist-w);
+        height: 100%;
+        transform: translateX(-100%);
+        transition: transform 0.22s ease;
+        z-index: 50;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.18);
+        min-height: unset;
       }
+
+      .watchlist-aside.open { transform: translateX(0); }
+
+      .backdrop { display: block; }
+
+      .backdrop.open {
+        background: rgba(0, 0, 0, 0.3);
+        pointer-events: auto;
+      }
+
+      .watchlist-toggle { display: flex; }
+    }
+
+    /* Mobile: aside hidden, /watchlist route used */
+    @media (max-width: 767px) {
+      .dashboard-layout { grid-template-columns: 1fr; }
+      .watchlist-aside { display: none; }
+      .watchlist-toggle { display: none; }
+      .backdrop { display: none; }
     }
   `],
 })
@@ -125,6 +207,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   selectedSymbol = signal<string | null>(null);
   range = signal<ChartRange>('1D');
+  protected watchlistOpen = signal(false);
 
   activeSymbol = computed(() => this.selectedSymbol() ?? this.wl.watchlist()[0]?.symbol ?? null);
   currentPrice = computed(() => {
@@ -154,6 +237,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   selectSymbol(symbol: string) {
     this.selectedSymbol.set(symbol);
+    this.watchlistOpen.set(false);
   }
 
   onRemoveSymbol(symbol: string) {

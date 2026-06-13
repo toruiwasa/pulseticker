@@ -12,6 +12,7 @@ import { Subscription, filter } from 'rxjs';
 import {
   IChartApi,
   ISeriesApi,
+  LineStyle,
   LineSeries,
   Time,
   createChart,
@@ -71,7 +72,10 @@ export class PriceChartComponent implements AfterViewInit, OnDestroy {
       const c = this.chartColors();
       this.chart.applyOptions({
         layout: { background: { color: 'transparent' }, textColor: c.text },
-        grid: { vertLines: { color: c.grid }, horzLines: { color: c.grid } },
+        grid: {
+          vertLines: { color: c.grid, style: LineStyle.Dashed },
+          horzLines: { color: c.grid, style: LineStyle.Dashed },
+        },
         crosshair: { vertLine: { color: c.cross }, horzLine: { color: c.cross } },
       });
     });
@@ -82,7 +86,10 @@ export class PriceChartComponent implements AfterViewInit, OnDestroy {
     this.chart = createChart(this.host.nativeElement, {
       autoSize: true,
       layout: { attributionLogo: false, background: { color: 'transparent' }, textColor: c.text },
-      grid: { vertLines: { color: c.grid }, horzLines: { color: c.grid } },
+      grid: {
+        vertLines: { color: c.grid, style: LineStyle.Dashed },
+        horzLines: { color: c.grid, style: LineStyle.Dashed },
+      },
       crosshair: { vertLine: { color: c.cross }, horzLine: { color: c.cross } },
     });
     this.series = this.chart.addSeries(LineSeries, { color: this.upColor() });

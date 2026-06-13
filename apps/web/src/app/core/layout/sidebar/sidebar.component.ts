@@ -1,19 +1,25 @@
 import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { TuiIcon } from '@taiga-ui/core';
+import { IconComponent, IconName } from '../../components/svg-icon.component';
 
-const NAV_ITEMS = [
-  { path: '/dashboard', label: 'Dashboard', icon: '@tui.chart-bar',  mobileOnly: false },
-  { path: '/watchlist', label: 'Watchlist', icon: '@tui.list',        mobileOnly: true  },
-  { path: '/alerts',    label: 'Alerts',    icon: '@tui.bell',        mobileOnly: false },
-  { path: '/discover',  label: 'Discover',  icon: '@tui.compass',     mobileOnly: false },
-  { path: '/settings',  label: 'Settings',  icon: '@tui.settings',    mobileOnly: false },
-] as const;
+interface NavItem {
+  path: string;
+  label: string;
+  icon: IconName;
+  mobileOnly: boolean;
+}
+
+const NAV_ITEMS: readonly NavItem[] = [
+  { path: '/dashboard', label: 'Dashboard', icon: 'chart-bar', mobileOnly: false },
+  { path: '/watchlist', label: 'Watchlist', icon: 'list',      mobileOnly: true  },
+  { path: '/alerts',    label: 'Alerts',    icon: 'bell',      mobileOnly: false },
+  { path: '/settings',  label: 'Settings',  icon: 'settings',  mobileOnly: false },
+];
 
 @Component({
   selector: 'app-sidebar',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive, TuiIcon],
+  imports: [RouterLink, RouterLinkActive, IconComponent],
   template: `
     <nav class="sidebar" aria-label="Main navigation">
       @for (item of navItems; track item.path) {
@@ -25,7 +31,7 @@ const NAV_ITEMS = [
           [attr.aria-label]="item.label"
           [title]="item.label"
         >
-          <tui-icon [icon]="item.icon" />
+          <app-icon [name]="item.icon" size="20" />
         </a>
       }
     </nav>

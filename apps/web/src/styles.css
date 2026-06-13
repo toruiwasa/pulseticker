@@ -1,8 +1,5 @@
 @import "tailwindcss";
 
-/* Taiga UI icons render via CSS mask-image; preflight resets background-color, this restores it */
-tui-icon { background-color: currentColor; }
-
 :root {
   --pt-primary:        #2953B2;
   --pt-primary-hover:  #1e3f8a;

@@ -33,6 +33,14 @@ export class ThemeService {
     }
   }
 
+  set(pref: ThemePref) {
+    if (pref === 'system') {
+      this.darkMode.reset(); this._explicitPref.set(null);
+    } else {
+      this.darkMode.set(pref === 'dark'); this._explicitPref.set(pref);
+    }
+  }
+
   private resolveExplicitPref(): 'light' | 'dark' | null {
     const v = localStorage.getItem(TUI_KEY);
     return v === null ? null : v === 'true' ? 'dark' : 'light';
