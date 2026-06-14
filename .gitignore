@@ -5,6 +5,9 @@ dist/
 .pnpm-store/
 .turbo/
 
+# Test coverage output (jest/vitest)
+**/coverage/
+
 # Supabase local dev artifacts
 supabase/.branches/
 supabase/.temp/
