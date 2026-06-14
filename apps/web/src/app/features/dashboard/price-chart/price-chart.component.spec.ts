@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { signal } from '@angular/core';
 import { Subject } from 'rxjs';
 import { of, throwError } from 'rxjs';
 
@@ -32,11 +33,24 @@ const mocks = vi.hoisted(() => {
 vi.mock('lightweight-charts', () => ({
   createChart: mocks.createChart,
   LineSeries: mocks.LineSeries,
+  // PriceChartComponent uses LineStyle.Dashed for grid/crosshair options
+  LineStyle: { Solid: 0, Dotted: 1, Dashed: 2, LargeDashed: 3, SparseDotted: 4 },
 }));
 
 import { PriceChartComponent } from './price-chart.component';
 import { ApiService } from '../../../core/services/api.service';
 import { SocketService, PriceTick } from '../../../core/services/socket.service';
+import { ThemeService } from '../../../core/services/theme.service';
+
+// CSS var values expected by the chart component
+const CSS_VARS: Record<string, string> = {
+  '--pt-up':          '#22c55e',
+  '--pt-down':        '#ef4444',
+  '--pt-chart-grid':  '#2a2a3a',
+  '--pt-chart-text':  '#9ca3af',
+  '--pt-chart-cross': '#6b7280',
+  '--pt-border':      '#374151',
+};
 
 describe('PriceChartComponent', () => {
   let api: { getCandles: ReturnType<typeof vi.fn> };
@@ -49,13 +63,24 @@ describe('PriceChartComponent', () => {
     priceSubject = new Subject<PriceTick>();
     socket = { price$: priceSubject };
 
+    // PriceChartComponent reads chart colors from CSS custom properties.
+    // Mock getComputedStyle so the chart receives the expected hex values.
+    vi.spyOn(window, 'getComputedStyle').mockReturnValue({
+      getPropertyValue: (prop: string) => CSS_VARS[prop.trim()] ?? '',
+    } as CSSStyleDeclaration);
+
     TestBed.configureTestingModule({
       providers: [
-        { provide: ApiService, useValue: api },
+        { provide: ApiService,    useValue: api    },
         { provide: SocketService, useValue: socket },
+        // Stub ThemeService — its isDark signal is read in an effect() for reactivity.
+        // Providing a stub prevents TUI_DARK_MODE from calling window.matchMedia in jsdom.
+        { provide: ThemeService,  useValue: { isDark: signal(false) } },
       ],
     });
   });
+
+  afterEach(() => vi.restoreAllMocks());
 
   function mount(symbol: string | null) {
     const fixture = TestBed.createComponent(PriceChartComponent);
@@ -76,7 +101,7 @@ describe('PriceChartComponent', () => {
       { time: 200, value: 12 },
     ]));
     mount('AAPL');
-    expect(api.getCandles).toHaveBeenCalledWith('AAPL');
+    expect(api.getCandles).toHaveBeenCalledWith('AAPL', '1D');
     expect(mocks.MockSeries.last.setData).toHaveBeenLastCalledWith([
       { time: 100, value: 10 },
       { time: 200, value: 12 },
@@ -118,7 +143,7 @@ describe('PriceChartComponent', () => {
 
     // setData([]) is called first to clear, then with new history
     expect(mocks.MockSeries.last.setData).toHaveBeenCalledWith([]);
-    expect(api.getCandles).toHaveBeenCalledWith('MSFT');
+    expect(api.getCandles).toHaveBeenCalledWith('MSFT', '1D');
   });
 
   it('treats getCandles errors as empty history (chart builds from ticks)', () => {

@@ -9,7 +9,11 @@
     "dev:web": "pnpm --filter web start",
     "build:api": "pnpm --filter api build",
     "build:web": "pnpm --filter web build",
-    "test:api": "pnpm --filter api test"
+    "test": "turbo test",
+    "test:api": "pnpm --filter api test",
+    "test:web": "pnpm --filter web test",
+    "test:cov:api": "pnpm --filter api test:cov",
+    "test:cov:web": "pnpm --filter web test:cov"
   },
   "devDependencies": {
     "turbo": "^2.9.16"

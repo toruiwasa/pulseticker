@@ -62,7 +62,7 @@ describe('LoginChartComponent', () => {
   it('builds the chart and subscribes to the preview stream on mount', () => {
     mount();
     expect(mocks.createChart).toHaveBeenCalledOnce();
-    expect(mocks.MockChart.last.addSeries).toHaveBeenCalledWith(mocks.LineSeries, { color: '#00e676' });
+    expect(mocks.MockChart.last.addSeries).toHaveBeenCalledWith(mocks.LineSeries, { color: '#34D399' });
   });
 
   it('updates the series when AAPL ticks arrive', () => {
@@ -75,7 +75,7 @@ describe('LoginChartComponent', () => {
     mount();
     stream.next([aapl(185, 1000)]);
     stream.next([aapl(180, 1100)]);
-    expect(mocks.MockSeries.last.applyOptions).toHaveBeenLastCalledWith({ color: '#ff5252' });
+    expect(mocks.MockSeries.last.applyOptions).toHaveBeenLastCalledWith({ color: '#F87171' });
   });
 
   it('skips duplicate or stale timestamps', () => {
