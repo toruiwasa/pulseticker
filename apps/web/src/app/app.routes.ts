@@ -5,6 +5,7 @@ import { publicOnlyGuard } from './core/guards/public-only.guard';
 export const routes: Routes = [
   {
     path: '',
+    pathMatch: 'full',
     loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent),
     canActivate: [publicOnlyGuard],
   },

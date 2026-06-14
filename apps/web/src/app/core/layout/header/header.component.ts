@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter, interval, startWith } from 'rxjs';
+import { Router } from '@angular/router';
 import { isMarketOpen } from '@pulseticker/trading-utils';
 import { AuthService } from '../../services/auth.service';
 import { SocketService } from '../../services/socket.service';
@@ -46,7 +47,7 @@ import { SocketService } from '../../services/socket.service';
       <div class="header-actions">
         <button
           class="logout-btn"
-          (click)="auth.signOut()"
+          (click)="logout()"
           aria-label="Log out"
         >
           Log out
@@ -147,10 +148,16 @@ export class HeaderComponent implements OnInit {
   protected auth = inject(AuthService);
   private socket = inject(SocketService);
   private destroyRef = inject(DestroyRef);
+  private router = inject(Router);
 
   protected marketOpen = signal(isMarketOpen());
   protected audUsd = signal<number | null>(null);
   protected audUsdDir = signal<'up' | 'down' | ''>('');
+
+  protected async logout() {
+    await this.auth.signOut();
+    this.router.navigate(['/']);
+  }
 
   ngOnInit() {
     interval(30_000)

@@ -1,18 +1,18 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { createClient, SupabaseClient, Session } from '@supabase/supabase-js';
-import { BehaviorSubject, filter, firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private supabase: SupabaseClient = createClient(environment.supabaseUrl, environment.supabasePublishableKey);
-  session$ = new BehaviorSubject<Session | null>(null);
-  initialized$ = new BehaviorSubject<boolean>(false);
+
+  session     = signal<Session | null>(null);
+  initialized = signal(false);
 
   constructor() {
-    this.supabase.auth.onAuthStateChange((event, session) => {
-      this.session$.next(session);
-      if (event === 'INITIAL_SESSION') this.initialized$.next(true);
+    this.supabase.auth.onAuthStateChange((_event, session) => {
+      this.session.set(session);
+      this.initialized.set(true);
     });
   }
 
@@ -27,8 +27,13 @@ export class AuthService {
     return this.supabase.auth.signOut();
   }
 
-  async handleCallback() {
-    await firstValueFrom(this.initialized$.pipe(filter(Boolean)));
-    return this.session$.value;
+  async handleCallback(): Promise<Session | null> {
+    const { data: { session }, error } = await this.supabase.auth.getSession();
+    if (error) {
+      console.error('Auth callback error:', error);
+      return null;
+    }
+    if (session) this.session.set(session);
+    return session;
   }
 }

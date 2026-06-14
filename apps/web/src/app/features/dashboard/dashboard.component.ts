@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { IconComponent } from '../../core/components/svg-icon.component';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription, filter, take } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { TuiNotificationService } from '@taiga-ui/core';
 import { AuthService } from '../../core/services/auth.service';
 import { SocketService } from '../../core/services/socket.service';
@@ -222,13 +222,13 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const sym = this.route.snapshot.queryParamMap.get('symbol');
     if (sym) this.selectedSymbol.set(sym);
 
-    this.auth.session$.pipe(filter(Boolean), take(1)).subscribe(session => {
+    const session = this.auth.session();
+    if (session) {
       this.wl.load(session);
-
       this.alertSub = this.socket.alert$.subscribe(payload => {
         this.notifications.open(payload.message, { label: 'Alert triggered' }).subscribe();
       });
-    });
+    }
   }
 
   ngOnDestroy() {

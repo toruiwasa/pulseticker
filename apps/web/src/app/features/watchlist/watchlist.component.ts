@@ -1,6 +1,5 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
-import { filter, take } from 'rxjs';
 import { AuthService } from '../../core/services/auth.service';
 import { WatchlistStateService } from '../../core/services/watchlist-state.service';
 import { WatchlistPanelComponent } from '../dashboard/watchlist-panel/watchlist-panel.component';
@@ -45,9 +44,8 @@ export class WatchlistPageComponent implements OnInit {
   private router = inject(Router);
 
   ngOnInit() {
-    this.auth.session$.pipe(filter(Boolean), take(1)).subscribe(session => {
-      this.wl.load(session);
-    });
+    const session = this.auth.session();
+    if (session) this.wl.load(session);
   }
 
   protected openChart(symbol: string) {
