@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
-import { PreviewService, PREVIEW_SYMBOLS_INITIAL, PreviewPrice } from './preview.service';
+import { PreviewService, PREVIEW_SYMBOLS_INITIAL, PreviewSnapshot } from './preview.service';
+
+const STUB_CANDLES = [{ time: 1000, value: 180 }];
 
 class MockEventSource {
   static lastInstance: MockEventSource | undefined;
@@ -17,6 +19,13 @@ class MockEventSource {
   }
 
   close() { this.closed = true; }
+}
+
+function makeSnapshot(price: number, candles = null as typeof STUB_CANDLES | null): PreviewSnapshot {
+  return {
+    prices: PREVIEW_SYMBOLS_INITIAL.map(s => ({ ...s, price, percentChange: 1 })),
+    candles,
+  };
 }
 
 describe('PreviewService', () => {
@@ -42,14 +51,14 @@ describe('PreviewService', () => {
   });
 
   it('opens an EventSource connection when document is visible', () => {
-    const received: PreviewPrice[][] = [];
-    const sub = service.getPriceStream().subscribe(p => received.push(p));
+    const received: PreviewSnapshot[] = [];
+    const sub = service.getPriceStream().subscribe(s => received.push(s));
 
-    const prices = PREVIEW_SYMBOLS_INITIAL.map(s => ({ ...s, price: 100, percentChange: 1 }));
-    MockEventSource.lastInstance!.emit(prices);
+    MockEventSource.lastInstance!.emit(makeSnapshot(100, STUB_CANDLES));
 
     expect(received).toHaveLength(1);
-    expect(received[0]).toEqual(prices);
+    expect(received[0].prices[0].price).toBe(100);
+    expect(received[0].candles).toEqual(STUB_CANDLES);
     sub.unsubscribe();
   });
 
@@ -79,18 +88,17 @@ describe('PreviewService', () => {
     sub.unsubscribe();
   });
 
-  it('emits multiple price updates as they arrive', () => {
-    const received: PreviewPrice[][] = [];
-    const sub = service.getPriceStream().subscribe(p => received.push(p));
+  it('emits multiple snapshots as they arrive; tick-only messages have candles: null', () => {
+    const received: PreviewSnapshot[] = [];
+    const sub = service.getPriceStream().subscribe(s => received.push(s));
 
-    const prices1 = PREVIEW_SYMBOLS_INITIAL.map(s => ({ ...s, price: 100, percentChange: 1 }));
-    const prices2 = PREVIEW_SYMBOLS_INITIAL.map(s => ({ ...s, price: 200, percentChange: 2 }));
-
-    MockEventSource.lastInstance!.emit(prices1);
-    MockEventSource.lastInstance!.emit(prices2);
+    MockEventSource.lastInstance!.emit(makeSnapshot(100, STUB_CANDLES));
+    MockEventSource.lastInstance!.emit(makeSnapshot(200, null));
 
     expect(received).toHaveLength(2);
-    expect(received[1][0].price).toBe(200);
+    expect(received[0].candles).toEqual(STUB_CANDLES);
+    expect(received[1].prices[0].price).toBe(200);
+    expect(received[1].candles).toBeNull();
     sub.unsubscribe();
   });
 });

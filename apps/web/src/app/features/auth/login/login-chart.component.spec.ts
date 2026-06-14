@@ -34,22 +34,27 @@ vi.mock('lightweight-charts', () => ({
 }));
 
 import { LoginChartComponent } from './login-chart.component';
-import { PreviewService, PreviewPrice } from '../../../core/services/preview.service';
+import { PreviewService, PreviewSnapshot, PreviewPrice } from '../../../core/services/preview.service';
 
-function aapl(price: number | null, ts: number): PreviewPrice {
-  return { symbol: 'AAPL', raw: 'AAPL', price, percentChange: 0, ts };
+function makeSnapshot(aaplPrice: number | null, ts: number, candles: { time: number; value: number }[] | null = null): PreviewSnapshot {
+  const prices: PreviewPrice[] = [
+    { symbol: 'AAPL', raw: 'AAPL', price: aaplPrice, percentChange: 0, ts },
+  ];
+  return { prices, candles };
 }
 
 describe('LoginChartComponent', () => {
-  let stream: Subject<PreviewPrice[]>;
-  let preview: { getPriceStream: () => Subject<PreviewPrice[]> };
+  let stream: Subject<PreviewSnapshot>;
+  let preview: { getPriceStream: () => Subject<PreviewSnapshot> };
 
   beforeEach(() => {
     mocks.createChart.mockClear();
-    stream = new Subject<PreviewPrice[]>();
+    stream = new Subject<PreviewSnapshot>();
     preview = { getPriceStream: () => stream };
     TestBed.configureTestingModule({
-      providers: [{ provide: PreviewService, useValue: preview }],
+      providers: [
+        { provide: PreviewService, useValue: preview },
+      ],
     });
   });
 
@@ -65,33 +70,50 @@ describe('LoginChartComponent', () => {
     expect(mocks.MockChart.last.addSeries).toHaveBeenCalledWith(mocks.LineSeries, { color: '#34D399' });
   });
 
-  it('updates the series when AAPL ticks arrive', () => {
+  it('seeds the series with candles from the first snapshot', () => {
     mount();
-    stream.next([aapl(185, 1000)]);
-    expect(mocks.MockSeries.last.update).toHaveBeenLastCalledWith({ time: 1000, value: 185 });
+    stream.next(makeSnapshot(180, 2000, [{ time: 1000, value: 180 }, { time: 1060, value: 182 }]));
+    expect(mocks.MockSeries.last.setData).toHaveBeenCalledWith([
+      { time: 1000, value: 180 },
+      { time: 1060, value: 182 },
+    ]);
+  });
+
+  it('tick after history: dedup prevents tick at or before last candle time', () => {
+    mount();
+    stream.next(makeSnapshot(180, 1000, [{ time: 1, value: 180 }]));
+    // lastTime is now 1 * 1000 = 1000ms. A tick with ts=1000 should be skipped.
+    mocks.MockSeries.last.update.mockClear();
+    stream.next(makeSnapshot(181, 1000, null));
+    expect(mocks.MockSeries.last.update).not.toHaveBeenCalled();
+  });
+
+  it('updates the series when AAPL ticks arrive (ts in ms → time in seconds)', () => {
+    mount();
+    stream.next(makeSnapshot(185, 2000, null));
+    expect(mocks.MockSeries.last.update).toHaveBeenLastCalledWith({ time: 2, value: 185 });
   });
 
   it('flips color to red when price falls below basePrice', () => {
     mount();
-    stream.next([aapl(185, 1000)]);
-    stream.next([aapl(180, 1100)]);
+    stream.next(makeSnapshot(185, 2000, null));
+    stream.next(makeSnapshot(180, 3000, null));
     expect(mocks.MockSeries.last.applyOptions).toHaveBeenLastCalledWith({ color: '#F87171' });
   });
 
   it('skips duplicate or stale timestamps', () => {
     mount();
-    stream.next([aapl(185, 1000)]);
+    stream.next(makeSnapshot(185, 2000, null));
     mocks.MockSeries.last.update.mockClear();
-    stream.next([aapl(186, 1000)]); // same ts
-    stream.next([aapl(186, 500)]);  // older ts
+    stream.next(makeSnapshot(186, 2000, null)); // same ts
+    stream.next(makeSnapshot(186, 500, null));  // older ts
     expect(mocks.MockSeries.last.update).not.toHaveBeenCalled();
   });
 
-  it('ignores updates with no AAPL entry or null price', () => {
+  it('ignores updates with null price or ts=0', () => {
     mount();
-    stream.next([{ symbol: 'MSFT', raw: 'MSFT', price: 400, percentChange: 0, ts: 1000 }]);
-    stream.next([aapl(null, 1000)]);
-    stream.next([aapl(185, 0)]);
+    stream.next(makeSnapshot(null, 2000, null));
+    stream.next(makeSnapshot(185, 0, null));
     expect(mocks.MockSeries.last.update).not.toHaveBeenCalled();
   });
 

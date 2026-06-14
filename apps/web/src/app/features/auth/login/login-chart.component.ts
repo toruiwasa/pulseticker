@@ -14,6 +14,7 @@ import {
   Time,
   createChart,
 } from 'lightweight-charts';
+import { CandlePoint } from '../../../core/services/api.service';
 import { PreviewPrice, PreviewService } from '../../../core/services/preview.service';
 
 const GREEN = '#34D399'; // --pt-up
@@ -64,6 +65,7 @@ export class LoginChartComponent implements AfterViewInit, OnDestroy {
   private series: ISeriesApi<'Line'> | null = null;
   private sub: Subscription | null = null;
   private basePrice: number | null = null;
+  // Stored in milliseconds to match aapl.ts from PreviewPrice; convert to seconds only on series.update()
   private lastTime: number | null = null;
 
   ngAfterViewInit() {
@@ -78,10 +80,14 @@ export class LoginChartComponent implements AfterViewInit, OnDestroy {
         vertLines: { color: 'rgba(255,255,255,0.05)' },
         horzLines: { color: 'rgba(255,255,255,0.05)' },
       },
+      timeScale: { timeVisible: true, secondsVisible: false },
     });
     this.series = this.chart.addSeries(LineSeries, { color: GREEN });
 
-    this.sub = this.preview.getPriceStream().subscribe(prices => this.onUpdate(prices));
+    this.sub = this.preview.getPriceStream().subscribe(snapshot => {
+      if (snapshot.candles) this.applyHistory(snapshot.candles);
+      this.onUpdate(snapshot.prices);
+    });
   }
 
   ngOnDestroy() {
@@ -94,6 +100,14 @@ export class LoginChartComponent implements AfterViewInit, OnDestroy {
     this.lastTime = null;
   }
 
+  private applyHistory(candles: CandlePoint[]) {
+    if (!this.series || candles.length === 0) return;
+    this.series.setData(candles.map(c => ({ time: c.time as Time, value: c.value })));
+    this.basePrice = candles[0].value;
+    // Convert last candle's Unix seconds back to ms so lastTime stays in the same unit as aapl.ts
+    this.lastTime = candles[candles.length - 1].time * 1000;
+  }
+
   private onUpdate(prices: PreviewPrice[]) {
     if (!this.series) return;
     const aapl = prices.find(p => p.symbol === 'AAPL');
@@ -104,6 +118,6 @@ export class LoginChartComponent implements AfterViewInit, OnDestroy {
     if (this.basePrice === null) this.basePrice = aapl.price;
     const color = aapl.price >= this.basePrice ? GREEN : RED;
     this.series.applyOptions({ color });
-    this.series.update({ time: aapl.ts as Time, value: aapl.price });
+    this.series.update({ time: Math.floor(aapl.ts / 1000) as Time, value: aapl.price });
   }
 }

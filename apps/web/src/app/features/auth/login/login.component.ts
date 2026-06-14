@@ -232,7 +232,7 @@ export class LoginComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.sub = this.preview.getPriceStream().subscribe({
-      next: prices => this.prices.set(prices),
+      next: snapshot => this.prices.set(snapshot.prices),
     });
 
     this.marketTimer = setInterval(() => {

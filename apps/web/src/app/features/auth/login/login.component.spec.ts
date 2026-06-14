@@ -10,7 +10,7 @@ vi.mock('lightweight-charts', () => ({
 }));
 
 import { AuthService } from '../../../core/services/auth.service';
-import { PreviewService, PREVIEW_SYMBOLS_INITIAL, PreviewPrice } from '../../../core/services/preview.service';
+import { PreviewService, PREVIEW_SYMBOLS_INITIAL, PreviewPrice, PreviewSnapshot } from '../../../core/services/preview.service';
 import { LoginComponent } from './login.component';
 
 const mockPrices: PreviewPrice[] = [
@@ -24,11 +24,11 @@ describe('LoginComponent', () => {
   let component: LoginComponent;
   let authSpy: { signInWithGitHub: ReturnType<typeof vi.fn> };
   let previewSpy: { getPriceStream: ReturnType<typeof vi.fn> };
-  let prices$: Subject<PreviewPrice[]>;
+  let prices$: Subject<PreviewSnapshot>;
 
   beforeEach(async () => {
     authSpy = { signInWithGitHub: vi.fn() };
-    prices$ = new Subject();
+    prices$ = new Subject<PreviewSnapshot>();
     previewSpy = { getPriceStream: vi.fn().mockReturnValue(prices$) };
 
     await TestBed.configureTestingModule({
@@ -49,7 +49,7 @@ describe('LoginComponent', () => {
   });
 
   it('updates prices when stream emits', () => {
-    prices$.next(mockPrices);
+    prices$.next({ prices: mockPrices, candles: null });
     expect(component.prices()).toEqual(mockPrices);
   });
 

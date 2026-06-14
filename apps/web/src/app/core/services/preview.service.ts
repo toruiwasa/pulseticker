@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { EMPTY, Observable, fromEvent, of } from 'rxjs';
+import { EMPTY, Observable, fromEvent } from 'rxjs';
 import { map, retry, startWith, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
+import { CandlePoint } from './api.service';
 
 export interface PreviewPrice {
   symbol: string;
@@ -9,6 +10,11 @@ export interface PreviewPrice {
   price: number | null;
   percentChange: number | null;
   ts: number;
+}
+
+export interface PreviewSnapshot {
+  prices:  PreviewPrice[];
+  candles: CandlePoint[] | null;
 }
 
 export const PREVIEW_SYMBOLS_INITIAL: PreviewPrice[] = [
@@ -20,7 +26,7 @@ export const PREVIEW_SYMBOLS_INITIAL: PreviewPrice[] = [
 
 @Injectable({ providedIn: 'root' })
 export class PreviewService {
-  getPriceStream(): Observable<PreviewPrice[]> {
+  getPriceStream(): Observable<PreviewSnapshot> {
     const visibility$ = fromEvent(document, 'visibilitychange').pipe(
       map(() => !document.hidden),
       startWith(!document.hidden),
@@ -31,12 +37,12 @@ export class PreviewService {
     );
   }
 
-  private connectSse(): Observable<PreviewPrice[]> {
-    return new Observable<PreviewPrice[]>(subscriber => {
+  private connectSse(): Observable<PreviewSnapshot> {
+    return new Observable<PreviewSnapshot>(subscriber => {
       const es = new EventSource(`${environment.apiUrl}/preview/prices/stream`);
       es.onmessage = (e: MessageEvent) => {
         try {
-          subscriber.next(JSON.parse(e.data) as PreviewPrice[]);
+          subscriber.next(JSON.parse(e.data) as PreviewSnapshot);
         } catch {
           // malformed data — skip
         }
