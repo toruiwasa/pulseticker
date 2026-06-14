@@ -29,6 +29,7 @@
     "@nestjs/platform-socket.io": "^11.1.24",
     "@nestjs/terminus": "^11.1.1",
     "@nestjs/websockets": "^11.1.24",
+    "@pulseticker/logging": "workspace:*",
     "@pulseticker/trading-utils": "workspace:*",
     "@supabase/supabase-js": "^2.107.0",
     "class-transformer": "^0.5.1",

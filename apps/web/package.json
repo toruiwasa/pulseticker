@@ -26,6 +26,7 @@
     "@ng-web-apis/intersection-observer": "^5.3.0",
     "@ng-web-apis/mutation-observer": "^5.3.0",
     "@ng-web-apis/platform": "^5.3.0",
+    "@pulseticker/logging": "workspace:*",
     "@pulseticker/trading-utils": "workspace:*",
     "@supabase/supabase-js": "^2.107.0",
     "@taiga-ui/cdk": "5.10.0",

@@ -70,3 +70,137 @@ See [PLAN.md](./PLAN.md) for the full implementation plan including:
 ## Planning Artifacts
 
 - `plans/` is committed to the repository. It contains per-requirement planning documents and mockups (e.g. `plans/REQ-13_Mockup.png`). Always commit new files added here.
+
+## Logging Strategy
+
+### 基本ツール
+
+| 層 | ツール | 場所 |
+|---|---|---|
+| Frontend (Angular) | `LoggerService` | `apps/web/src/app/core/services/logger.service.ts` |
+| Backend (NestJS) | `SecureLogger` | `apps/api/src/common/logger/secure-logger.ts` |
+| 共通コア | `sanitize()`, `REDACTED_KEYS`, `LogLevel` | `packages/logging/src/index.ts` |
+
+`console.log` / `console.error` を直接呼ぶことは禁止。必ず上記ツールを経由すること。
+
+---
+
+### セキュリティ要件
+
+#### 絶対禁止事項（Frontend・Backend 共通）
+
+以下は **いかなる状況でも、いかなるログレベルでも** 出力してはならない:
+
+| 種別 | 具体例 | 理由 |
+|---|---|---|
+| 認証トークン | `access_token`, `refresh_token`, `id_token`, JWT 全体 | 漏洩でアカウント乗っ取り直結 |
+| 認証情報 | `password`, `client_secret`, Supabase `service_role` キー | 同上 |
+| API キー | `FINNHUB_API_KEY`, `TWELVEDATA_API_KEY`, `SUPABASE_ANON_KEY` | 不正利用・課金被害 |
+| `Authorization` ヘッダ値 | `req.headers.authorization` の中身 | Bearer トークンが含まれる |
+
+#### フロントエンド追加禁止事項
+
+ブラウザコンソールは **エンドユーザーを含む誰もが DevTools で閲覧可能**。
+サーバーサイドより厳格なポリシーを適用する:
+
+| 種別 | 具体例 | 法的根拠 |
+|---|---|---|
+| PII | `email`, `phone`, `name`, `address` | Australian Privacy Act 1988 APP 3, APP 11 |
+| ユーザー識別子 | `userId` / UUID（ブラウザログでは不要） | APP 3: 必要最小限の収集 |
+| Raw オブジェクト | `session`, `user`, `Error` オブジェクト丸ごと | トークン・PII が混入している可能性 |
+| エラーメッセージ全文 | `error.message` | Supabase/jose エラー本文にトークン断片が含まれうる |
+
+**ログに出してよいもの（Frontend）:**
+- 状態フラグ: `{ hasSession: true }`, `{ hasCode: true }`
+- イベント名: `'SIGNED_IN'`, `'SIGNED_OUT'`
+- エラー種別名: `error.name`（例: `'AuthApiError'`）
+- ナビゲーション先: `'/dashboard'`, `'/'`
+
+#### バックエンド追加ガイドライン
+
+Render インフラのアクセス制御で保護されているが、それでも慎重に:
+
+| 種別 | 方針 |
+|---|---|
+| `userId` (UUID) | ✅ 監査証跡・トレーシングに許可 |
+| Supabase `error.code` | ✅ Postgres エラーコード（例: `"23505"`）は安全 |
+| HTTP ステータスコード | ✅ 安全 |
+| エラースタックトレース | ✅ DEBUG レベルのみ。prod は `LOG_LEVEL=warn` で抑制 |
+| `email` | ⚠️ セキュリティ監査（不正ログイン検知・アカウントロック）に限定。通常デバッグに使わない |
+| IP アドレス | ⚠️ 不正アクセス検知・レート制限のみ (APP 3: 必要最小限) |
+| `error.message`（外部サービス由来） | ⚠️ 内容を確認してから。Supabase/jose のメッセージはトークン断片を含みうる |
+
+---
+
+### 実装ルール
+
+#### 1. データ型制約による防御
+
+`LoggerService` / `SecureLogger` のデータ引数は `Record<string, unknown>` に限定する。
+`Session`, `User`, `Error` 型を直接渡せない設計にすることで、
+呼び出し元の誤りを TypeScript コンパイル時に検出できるようにする。
+
+```typescript
+// NG: Session オブジェクト丸ごと（access_token が含まれる）
+logger.debug('AUTH', 'session', session);
+
+// OK: 必要なフラグだけ取り出して渡す
+logger.debug('AUTH', 'event: SIGNED_IN', { hasSession: !!session });
+```
+
+#### 2. sanitize() による多層防御
+
+`@pulseticker/logging` の `sanitize()` は、呼び出し元が誤って
+`REDACTED_KEYS` に含まれるキー（`access_token` 等）を持つオブジェクトを渡した場合でも
+`[REDACTED]` に置換する。**これは最後の砦であり、呼び出し元での制御が第一義。**
+
+#### 3. エラーハンドリング — 無音失敗の禁止
+
+`catch` ブロックでは必ずログを出力してから処理を続けること。
+特にモジュール初期化（`onModuleInit`）や起動時キャッシュロードの失敗は、
+無音で続行すると本番で気づかないまま機能が停止する:
+
+```typescript
+// NG: 失敗を飲み込む
+try {
+  await this.workerUtils.initialize();
+} catch { }
+
+// OK: ログ → 再スロー（呼び出し元に伝播させる）
+try {
+  await this.workerUtils.initialize();
+} catch (err) {
+  this.logger.error('Failed to initialize', (err as Error).stack);
+  throw err;
+}
+```
+
+#### 4. ログレベルの使い分け
+
+| レベル | 使う場面 |
+|---|---|
+| `debug` | 開発時のフロー追跡（prod では出力されない） |
+| `info` / `log` | 正常な業務イベント（接続確立、処理完了） |
+| `warn` | 異常だが続行可能（認証失敗、API エラーでフォールバック） |
+| `error` | 例外・致命的エラー（再スローする前に必ず記録） |
+
+#### 5. ログレベルの環境設定
+
+```
+# Frontend: environment.logLevel
+logLevel: 'debug'   # 開発環境 (environment.ts)
+logLevel: 'warn'    # 本番環境 (environment.prod.ts)
+
+# Backend: LOG_LEVEL 環境変数（Render の環境変数で設定）
+LOG_LEVEL=warn      # 本番 (WARN/ERROR のみ)
+LOG_LEVEL=debug     # 開発 (全レベル)
+```
+
+---
+
+### 参照規格
+
+- [OWASP Logging Cheat Sheet](https://cheatsheetseries.owasp.org/cheatsheets/Logging_Cheat_Sheet.html)
+- Australian Privacy Act 1988 — Australian Privacy Principles (APP):
+  - APP 3: 個人情報の収集は目的に必要な範囲に限定
+  - APP 11: 個人情報の漏洩・誤用・不正アクセスから保護する合理的な措置を講じること

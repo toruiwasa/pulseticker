@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
+import { SecureLogger } from '../common/logger/secure-logger';
 import { ConfigService } from '@nestjs/config';
 import { DateTime } from 'luxon';
 import { CandlePoint, ChartRange } from './chart.types';
@@ -29,7 +30,7 @@ const RANGE_CONFIG: Record<ChartRange, RangeConfig> = {
 
 @Injectable()
 export class TwelveDataService {
-  private readonly logger = new Logger(TwelveDataService.name);
+  private readonly logger = new SecureLogger(TwelveDataService.name);
   private readonly base = 'https://api.twelvedata.com';
 
   constructor(private config: ConfigService) {}

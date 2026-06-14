@@ -5,7 +5,8 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { forwardRef, Inject, Logger } from '@nestjs/common';
+import { forwardRef, Inject } from '@nestjs/common';
+import { SecureLogger } from '../common/logger/secure-logger';
 import { OnEvent } from '@nestjs/event-emitter';
 import { Server, Socket } from 'socket.io';
 import { FinnhubService } from '../finnhub/finnhub/finnhub.service';
@@ -24,7 +25,7 @@ interface AlertTriggeredPayload {
 @WebSocketGateway({ cors: { origin: process.env.CORS_ORIGIN }, namespace: '/prices' })
 export class PricesGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server: Server;
-  private readonly logger = new Logger(PricesGateway.name);
+  private readonly logger = new SecureLogger(PricesGateway.name);
 
   constructor(
     private supabase: SupabaseService,
@@ -34,11 +35,13 @@ export class PricesGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleConnection(client: Socket) {
     const token = client.handshake.auth?.token as string | undefined;
     if (!token) {
+      this.logger.warn('WS rejected: missing auth token');
       client.disconnect();
       return;
     }
     const { data, error } = await this.supabase.client.auth.getUser(token);
     if (error || !data.user) {
+      this.logger.warnData('WS rejected: token verification failed', { errorName: error?.name ?? 'unknown' });
       client.disconnect();
       return;
     }

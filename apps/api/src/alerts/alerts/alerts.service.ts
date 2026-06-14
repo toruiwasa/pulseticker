@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { SupabaseService } from '../../supabase/supabase/supabase.service';
 import { QueueService } from '../../queue/queue.service';
+import { SecureLogger } from '../../common/logger/secure-logger';
 
 interface CachedAlert {
   id: string;
@@ -21,6 +22,7 @@ interface AlertRow {
 
 @Injectable()
 export class AlertsService implements OnModuleInit {
+  private readonly logger = new SecureLogger(AlertsService.name);
   private cache = new Map<string, CachedAlert[]>();
 
   constructor(
@@ -33,12 +35,18 @@ export class AlertsService implements OnModuleInit {
   }
 
   private async reloadCache() {
-    const { data } = await this.supabase.client
+    const { data, error } = await this.supabase.client
       .from('alerts')
       .select('id, symbol, user_id, threshold_price, direction')
       .eq('is_active', true);
 
+    if (error) {
+      this.logger.errorData('Failed to load alerts cache', { code: error.code });
+      return;
+    }
+
     this.cache.clear();
+    let totalCount = 0;
     for (const row of (data ?? []) as AlertRow[]) {
       const key = row.symbol.toUpperCase();
       const list = this.cache.get(key) ?? [];
@@ -50,7 +58,9 @@ export class AlertsService implements OnModuleInit {
         direction: row.direction,
       });
       this.cache.set(key, list);
+      totalCount++;
     }
+    this.logger.log(`Alerts cache loaded: ${totalCount} active alerts across ${this.cache.size} symbols`);
   }
 
   private sym(s: string) {
@@ -63,7 +73,10 @@ export class AlertsService implements OnModuleInit {
       .select('*')
       .eq('user_id', userId)
       .order('created_at', { ascending: false });
-    if (error) throw error;
+    if (error) {
+      this.logger.errorData('Supabase query failed', { code: error.code, op: 'getAlerts' });
+      throw error;
+    }
     return data as unknown[];
   }
 
@@ -83,7 +96,10 @@ export class AlertsService implements OnModuleInit {
       })
       .select('*')
       .single();
-    if (res.error) throw res.error;
+    if (res.error) {
+      this.logger.errorData('Supabase query failed', { code: res.error.code, op: 'createAlert' });
+      throw res.error;
+    }
 
     const row = res.data as AlertRow;
     const key = row.symbol.toUpperCase();
@@ -106,7 +122,10 @@ export class AlertsService implements OnModuleInit {
       .delete()
       .eq('id', alertId)
       .eq('user_id', userId);
-    if (error) throw error;
+    if (error) {
+      this.logger.errorData('Supabase query failed', { code: error.code, op: 'deleteAlert' });
+      throw error;
+    }
 
     for (const [sym, alerts] of this.cache) {
       this.cache.set(
@@ -123,6 +142,11 @@ export class AlertsService implements OnModuleInit {
         (alert.direction === 'above' && price >= alert.thresholdPrice) ||
         (alert.direction === 'below' && price <= alert.thresholdPrice);
       if (!triggered) continue;
+      this.logger.logData('Alert queued', {
+        alertId: alert.id,
+        symbol: alert.symbol,
+        userId: alert.userId,
+      });
       await this.queueService.addAlertCheckJob({
         alertId: alert.id,
         symbol: alert.symbol,

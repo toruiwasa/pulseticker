@@ -1,4 +1,5 @@
-import { forwardRef, Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { forwardRef, Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { SecureLogger } from '../../common/logger/secure-logger';
 import { ConfigService } from '@nestjs/config';
 import WebSocket from 'ws';
 import { PricesGateway } from '../../gateway/prices.gateway';
@@ -7,7 +8,7 @@ import { LiveCandleCacheService } from '../../chart/live-candle-cache.service';
 
 @Injectable()
 export class FinnhubService implements OnModuleInit {
-  private readonly logger = new Logger(FinnhubService.name);
+  private readonly logger = new SecureLogger(FinnhubService.name);
   private ws: WebSocket;
   private readonly refCounts = new Map<string, number>();
   private reconnectDelay = 1000;

@@ -1,5 +1,6 @@
 export const environment = {
   production: false,
+  logLevel: 'debug',
   supabaseUrl: 'https://<project-id>.supabase.co',
   supabasePublishableKey: '<publishable-key>',
   apiUrl: 'http://localhost:3000',

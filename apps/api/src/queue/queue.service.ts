@@ -1,6 +1,7 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { makeWorkerUtils, WorkerUtils } from 'graphile-worker';
+import { SecureLogger } from '../common/logger/secure-logger';
 
 export interface AlertJobPayload {
   alertId: string;
@@ -11,15 +12,22 @@ export interface AlertJobPayload {
 
 @Injectable()
 export class QueueService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new SecureLogger(QueueService.name);
   private workerUtils: WorkerUtils;
 
   constructor(private config: ConfigService) {}
 
   async onModuleInit() {
-    this.workerUtils = await makeWorkerUtils({
-      connectionString: this.config.getOrThrow('DATABASE_URL'),
-    });
-    await this.seedPreviewFetchJob();
+    try {
+      this.workerUtils = await makeWorkerUtils({
+        connectionString: this.config.getOrThrow('DATABASE_URL'),
+      });
+      await this.seedPreviewFetchJob();
+      this.logger.log('Queue worker utils initialized');
+    } catch (err) {
+      this.logger.error('Failed to initialize worker utils', (err as Error).stack);
+      throw err;
+    }
   }
 
   async onModuleDestroy() {
