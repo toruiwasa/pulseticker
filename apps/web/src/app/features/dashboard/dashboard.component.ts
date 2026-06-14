@@ -3,6 +3,7 @@ import {
   OnDestroy,
   OnInit,
   computed,
+  effect,
   inject,
   signal,
 } from '@angular/core';
@@ -217,18 +218,25 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   private alertSub?: Subscription;
 
+  constructor() {
+    effect(() => {
+      const session = this.auth.session();
+      if (session) {
+        this.wl.load(session);
+
+        if (!this.alertSub) {
+          this.alertSub = this.socket.alert$.subscribe(payload => {
+            this.notifications.open(payload.message, { label: 'Alert triggered' }).subscribe();
+          });
+        }
+      }
+    });
+  }
+
   ngOnInit() {
     // Pre-select symbol passed from mobile /watchlist navigation
     const sym = this.route.snapshot.queryParamMap.get('symbol');
     if (sym) this.selectedSymbol.set(sym);
-
-    const session = this.auth.session();
-    if (session) {
-      this.wl.load(session);
-      this.alertSub = this.socket.alert$.subscribe(payload => {
-        this.notifications.open(payload.message, { label: 'Alert triggered' }).subscribe();
-      });
-    }
   }
 
   ngOnDestroy() {

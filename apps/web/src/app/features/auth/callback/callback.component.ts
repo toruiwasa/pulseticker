@@ -13,17 +13,17 @@ export class CallbackComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
-    const hasCode  = !!this.route.snapshot.queryParamMap.get('code');
-    const hasError = !!this.route.snapshot.queryParamMap.get('error');
-    this.logger.debug('AUTH:CALLBACK', 'ngOnInit', { hasCode, hasError });
+    const code  = this.route.snapshot.queryParamMap.get('code');
+    const error = this.route.snapshot.queryParamMap.get('error');
+    this.logger.debug('AUTH:CALLBACK', 'ngOnInit', { hasCode: !!code, hasError: !!error });
 
-    if (hasError) {
-      this.logger.warn('AUTH:CALLBACK', 'OAuth error param present, redirecting to /');
-      this.router.navigate(['/']);
+    if (error || !code) {
+      this.logger.warn('AUTH:CALLBACK', 'missing code or OAuth error param');
+      await this.router.navigate(['/'], { replaceUrl: true });
       return;
     }
 
-    const session = await this.auth.handleCallback();
+    const session = await this.auth.exchangeCode(code);
     const dest = session ? '/dashboard' : '/';
     this.logger.info('AUTH:CALLBACK', `navigating to ${dest}`, { hasSession: !!session });
     await this.router.navigate([dest], { replaceUrl: true });
