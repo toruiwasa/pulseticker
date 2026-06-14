@@ -4,7 +4,12 @@ import { config } from 'dotenv';
 
 config({ path: resolve(process.cwd(), '../../.env') });
 
-const isDev = process.argv.includes('--dev');
+type AppEnv = 'development' | 'staging' | 'production';
+const LOG_LEVEL_MAP: Record<AppEnv, string> = {
+  development: 'debug',
+  staging:     'info',
+  production:  'warn',
+};
 
 const get = (key: string): string => {
   const val = process.env[key];
@@ -12,8 +17,14 @@ const get = (key: string): string => {
   return val;
 };
 
+const appEnv = (process.env['APP_ENV'] ?? 'production') as AppEnv;
+const logLevel = LOG_LEVEL_MAP[appEnv] ?? 'warn';
+const isProduction = appEnv === 'production';
+
 const content = `export const environment = {
-  production: ${!isDev},
+  production: ${isProduction},
+  appEnv: '${appEnv}',
+  logLevel: '${logLevel}',
   supabaseUrl: '${get('SUPABASE_URL')}',
   supabasePublishableKey: '${get('SUPABASE_PUBLISHABLE_KEY')}',
   apiUrl: '${get('API_URL')}',
@@ -21,7 +32,6 @@ const content = `export const environment = {
 };
 `;
 
-const filename = 'environment.ts';
-const target = resolve(process.cwd(), `src/environments/${filename}`);
+const target = resolve(process.cwd(), 'src/environments/environment.ts');
 writeFileSync(target, content, 'utf8');
 console.log('[set-env] Wrote', target);

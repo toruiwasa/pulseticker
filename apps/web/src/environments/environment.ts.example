@@ -1,5 +1,6 @@
 export const environment = {
   production: false,
+  appEnv: 'development',
   logLevel: 'debug',
   supabaseUrl: 'https://<project-id>.supabase.co',
   supabasePublishableKey: '<publishable-key>',
