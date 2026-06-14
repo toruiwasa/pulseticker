@@ -8,6 +8,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter, interval, startWith } from 'rxjs';
 import { Router } from '@angular/router';
+import { TuiButton } from '@taiga-ui/core';
 import { isMarketOpen } from '@pulseticker/trading-utils';
 import { AuthService } from '../../services/auth.service';
 import { SocketService } from '../../services/socket.service';
@@ -15,7 +16,7 @@ import { SocketService } from '../../services/socket.service';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [],
+  imports: [TuiButton],
   template: `
     <header class="header-bar">
       <span class="logo">pulseticker</span>
@@ -46,7 +47,11 @@ import { SocketService } from '../../services/socket.service';
 
       <div class="header-actions">
         <button
-          class="logout-btn"
+          tuiButton
+          type="button"
+          appearance="outline"
+          size="xs"
+          class="btn-outline-destructive"
           (click)="logout()"
           aria-label="Log out"
         >
@@ -121,27 +126,6 @@ import { SocketService } from '../../services/socket.service';
       margin-left: 1rem;
     }
 
-    .logout-btn {
-      padding: 0.25rem 0.75rem;
-      border-radius: 6px;
-      border: 1px solid var(--pt-border);
-      background: transparent;
-      color: var(--pt-text-secondary);
-      font-size: 0.8rem;
-      cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
-      white-space: nowrap;
-    }
-
-    .logout-btn:hover {
-      border-color: var(--pt-down);
-      color: var(--pt-down);
-    }
-
-    .logout-btn:focus-visible {
-      outline: 2px solid var(--pt-primary);
-      outline-offset: 2px;
-    }
   `],
 })
 export class HeaderComponent implements OnInit {

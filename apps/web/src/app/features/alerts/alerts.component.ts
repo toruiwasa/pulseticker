@@ -1,6 +1,8 @@
 import { Component, OnInit, ViewChild, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
+import { TuiButton } from '@taiga-ui/core';
+import { CreateAlertSchema } from '@pulseticker/schemas';
 import { ApiService } from '../../core/services/api.service';
 import { SymbolSearchInputComponent } from '../../core/components/symbol-search-input.component';
 import { OandaPipe } from '../../core/pipes/oanda.pipe';
@@ -16,7 +18,7 @@ interface Alert {
 
 @Component({
   standalone: true,
-  imports: [FormsModule, SymbolSearchInputComponent, OandaPipe],
+  imports: [FormsModule, TuiButton, SymbolSearchInputComponent, OandaPipe],
   template: `
     <div class="page">
       <h1>Alerts</h1>
@@ -46,7 +48,7 @@ interface Alert {
           <option value="above">Above</option>
           <option value="below">Below</option>
         </select>
-        <button type="submit" class="btn-primary">Add alert</button>
+        <button tuiButton type="submit" appearance="primary" size="s" [disabled]="!isFormValid">Add alert</button>
       </form>
 
       <h2>Active alerts</h2>
@@ -79,8 +81,11 @@ interface Alert {
                 </td>
                 <td>
                   <button
-                    class="btn-delete"
+                    tuiButton
                     type="button"
+                    appearance="outline"
+                    size="xs"
+                    class="btn-outline-destructive"
                     [attr.aria-label]="'Delete alert for ' + (alert.symbol | oanda)"
                     (click)="deleteAlert(alert.id)"
                   >Delete</button>
@@ -97,8 +102,11 @@ interface Alert {
               <div class="card-header">
                 <span class="card-symbol">{{ alert.symbol | oanda }}</span>
                 <button
-                  class="btn-delete"
+                  tuiButton
                   type="button"
+                  appearance="outline"
+                  size="xs"
+                  class="btn-outline-destructive"
                   [attr.aria-label]="'Delete alert for ' + (alert.symbol | oanda)"
                   (click)="deleteAlert(alert.id)"
                 >Delete</button>
@@ -179,22 +187,6 @@ interface Alert {
     .price-input:focus,
     .direction-select:focus { border-color: var(--pt-primary); }
 
-    .btn-primary {
-      padding: 0.4rem 0.9rem;
-      border: none;
-      border-radius: 6px;
-      background: var(--pt-primary);
-      color: #fff;
-      font-weight: 600;
-      cursor: pointer;
-      font-size: 0.875rem;
-      font-family: inherit;
-      transition: background 0.15s;
-      white-space: nowrap;
-    }
-    .btn-primary:hover { background: var(--pt-primary-hover); }
-    .btn-primary:focus-visible { outline: 2px solid var(--pt-primary); outline-offset: 2px; }
-
     .empty-msg {
       color: var(--pt-text-muted);
       font-size: 0.875rem;
@@ -232,19 +224,6 @@ interface Alert {
     .status-active    { color: var(--pt-up); font-weight: 600; }
     .status-triggered { color: var(--pt-neutral); }
 
-    .btn-delete {
-      background: transparent;
-      border: 1px solid var(--pt-border);
-      border-radius: 4px;
-      padding: 0.2rem 0.5rem;
-      color: var(--pt-text-secondary);
-      cursor: pointer;
-      font-size: 0.8rem;
-      font-family: inherit;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .btn-delete:hover { border-color: var(--pt-down); color: var(--pt-down); }
-    .btn-delete:focus-visible { outline: 2px solid var(--pt-primary); outline-offset: 2px; }
 
     /* ── Mobile card list (hidden on desktop) ── */
 
@@ -316,7 +295,7 @@ interface Alert {
       .symbol-search { max-width: none; }
       .price-input { width: 100%; box-sizing: border-box; }
       .direction-select { width: 100%; }
-      .btn-primary { width: 100%; }
+      .form-row button[tuiButton] { width: 100%; }
     }
   `],
 })
@@ -325,7 +304,13 @@ export class AlertsComponent implements OnInit {
 
   loading = signal(true);
   alerts = signal<Alert[]>([]);
-  form = { symbol: '', threshold_price: 0, direction: 'above' as 'above' | 'below' };
+  form: { symbol: string; threshold_price: number; direction: 'above' | 'below' } = {
+    symbol: '', threshold_price: 0, direction: 'above',
+  };
+
+  get isFormValid(): boolean {
+    return CreateAlertSchema.safeParse(this.form).success;
+  }
 
   constructor(private api: ApiService) {}
 
@@ -341,13 +326,11 @@ export class AlertsComponent implements OnInit {
   }
 
   async createAlert() {
+    const result = CreateAlertSchema.safeParse(this.form);
+    if (!result.success) return;
     try {
       const alert = await firstValueFrom(
-        this.api.post<Alert>('/alerts', {
-          symbol: this.form.symbol,
-          threshold_price: this.form.threshold_price,
-          direction: this.form.direction,
-        }),
+        this.api.post<Alert>('/alerts', result.data),
       );
       this.alerts.update(a => [alert, ...a]);
       this.form = { symbol: '', threshold_price: 0, direction: 'above' };

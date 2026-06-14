@@ -41,6 +41,7 @@ See [PLAN.md](./PLAN.md) for the full implementation plan including:
 - No mock data — real Finnhub prices only
 - NestJS + Angular are intentional learning targets (developer has 6yr TS/Node/React experience but is new to both frameworks)
 - Commit once per completed feature (not per file)
+- **Library-first UI**: Always prefer existing library components (Taiga UI, Angular CDK) over custom HTML + CSS implementations. Writing custom UI or logic without justification is NG. Taiga UI components are customizable via CSS custom properties (`--tui-*`) — override tokens in `styles.css` rather than reimplementing from scratch.
 
 ## Testing
 
@@ -48,6 +49,13 @@ See [PLAN.md](./PLAN.md) for the full implementation plan including:
 - **Coverage target**: 90–95% per changed file. Verify with `pnpm --filter api test:cov` / `pnpm --filter web test:cov`.
 - **No Angular TestBed for pure logic**: Pipes and utility functions are instantiated directly in Jest.
 - **Mock external I/O**: Supabase client, `fetch`, and Socket.io are always mocked — never hit real services in unit tests.
+
+## Validation
+
+- **Zod for all schemas**: All request/response validation schemas live in shared packages (`packages/`) using Zod. Import and reuse them in both `apps/api/` and `apps/web/`.
+- **Schema-first types**: TypeScript types are inferred from Zod schemas (`z.infer<typeof Schema>`). Never define a separate interface or type for the same shape.
+- **No class-validator / class-transformer DTOs**: Do not use decorator-based DTO classes. Never add `@IsString()`, `@IsNumber()`, etc.
+- **No global ValidationPipe**: NestJS controllers call `Schema.parse(body)` directly and throw `BadRequestException` on `ZodError`. `main.ts` stays unchanged.
 
 ## Database Migrations
 

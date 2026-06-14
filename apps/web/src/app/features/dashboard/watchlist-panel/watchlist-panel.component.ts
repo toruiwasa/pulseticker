@@ -6,6 +6,7 @@ import {
   signal,
 } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
+import { TuiButton } from '@taiga-ui/core';
 import { OandaPipe } from '../../../core/pipes/oanda.pipe';
 import { SymbolSearchInputComponent } from '../../../core/components/symbol-search-input.component';
 import type { WatchlistItem } from '../../../core/services/watchlist-state.service';
@@ -15,7 +16,7 @@ export type { WatchlistItem };
 @Component({
   selector: 'app-watchlist-panel',
   standalone: true,
-  imports: [DatePipe, DecimalPipe, OandaPipe, SymbolSearchInputComponent],
+  imports: [DatePipe, DecimalPipe, TuiButton, OandaPipe, SymbolSearchInputComponent],
   template: `
     <div class="panel">
       <div class="search-area">
@@ -69,8 +70,11 @@ export type { WatchlistItem };
                 <span class="price color-neutral">—</span>
               }
               <button
-                class="remove-btn"
+                tuiButton
                 type="button"
+                appearance="outline"
+                size="xs"
+                class="btn-outline-destructive"
                 [attr.aria-label]="'Remove ' + (item.symbol | oanda)"
                 (click)="symbolRemoved.emit(item.symbol); $event.stopPropagation()"
               >
@@ -206,27 +210,7 @@ export type { WatchlistItem };
     .color-up { color: var(--pt-up); }
     .color-neutral { color: var(--pt-neutral); }
 
-    .remove-btn {
-      background: transparent;
-      border: 1px solid var(--pt-border);
-      border-radius: 4px;
-      padding: 0.2rem 0.5rem;
-      color: var(--pt-text-secondary);
-      font-size: 0.8rem;
-      line-height: 1;
-      font-family: inherit;
-      cursor: pointer;
-      transition: border-color 0.15s, color 0.15s;
-    }
-
-    .remove-btn:hover { border-color: var(--pt-down); color: var(--pt-down); }
-
-    .remove-btn:focus-visible {
-      outline: 2px solid var(--pt-primary);
-      outline-offset: 2px;
-    }
-
-    .remove-btn .btn-long { display: none; }
+    .btn-long { display: none; }
 
     .add-hint, .limit-msg {
       padding: 0.75rem;
@@ -242,12 +226,8 @@ export type { WatchlistItem };
       .price { font-size: 0.9rem; }
       .timestamp { font-size: 0.75rem; }
 
-      .remove-btn {
-        padding: 0.3rem 0.6rem;
-        min-height: 36px;
-      }
-      .remove-btn .btn-short { display: none; }
-      .remove-btn .btn-long  { display: inline; }
+      .btn-short { display: none; }
+      .btn-long  { display: inline; }
     }
   `],
 })

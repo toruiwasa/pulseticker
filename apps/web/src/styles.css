@@ -19,7 +19,13 @@
   --pt-header-h:       44px;
   --pt-sidebar-w:      48px;
   --pt-watchlist-w:    260px;
-  --tui-primary:       var(--pt-primary);
+  --tui-primary:                      var(--pt-primary);
+  /* Override Taiga UI color tokens to match project design */
+  --tui-background-accent-1:          var(--pt-primary);
+  --tui-background-accent-1-hover:    var(--pt-primary-hover);
+  --tui-background-accent-1-pressed:  var(--pt-primary-hover);
+  --tui-text-primary-on-accent-1:     #fff;
+  --tui-text-action:                  var(--pt-primary);
 }
 
 html.tui-theme-dark {
@@ -37,6 +43,12 @@ html.tui-theme-dark {
   --pt-chart-text:     #9CA3AF;
   --pt-chart-cross:    #6B7280;
   --tui-primary:       var(--pt-primary);
+}
+
+/* Outline buttons that turn red on hover (delete / logout) */
+.btn-outline-destructive:hover {
+  box-shadow: inset 0 0 0 1px var(--pt-down) !important;
+  color: var(--pt-down) !important;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
