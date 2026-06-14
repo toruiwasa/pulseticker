@@ -6,6 +6,15 @@ import { PricesGateway } from '../../gateway/prices.gateway';
 import { AlertsService } from '../../alerts/alerts/alerts.service';
 import { LiveCandleCacheService } from '../../chart/live-candle-cache.service';
 
+// Finnhub free plan: 1 concurrent WS connection per API key.
+// reconnectDelay doubles on each close, up to maxDelay.
+// On 429 (rate limited), floor is raised to minDelayAfter429.
+// The backoff is only reset after the connection has been stable for
+// stableWindowMs — resetting on 'open' alone causes a reconnect storm
+// if the server closes the socket within seconds of accepting it.
+const STABLE_WINDOW_MS    = 60_000;
+const MIN_DELAY_AFTER_429 = 60_000;
+
 @Injectable()
 export class FinnhubService implements OnModuleInit {
   private readonly logger = new SecureLogger(FinnhubService.name);
@@ -13,6 +22,9 @@ export class FinnhubService implements OnModuleInit {
   private readonly refCounts = new Map<string, number>();
   private reconnectDelay = 1000;
   private readonly maxDelay = 30000;
+
+  private stableTimer: ReturnType<typeof setTimeout> | undefined;
+  private reconnecting = false;
 
   constructor(
     private config: ConfigService,
@@ -26,12 +38,21 @@ export class FinnhubService implements OnModuleInit {
   }
 
   private connect() {
+    this.reconnecting = false;
     const apiKey = this.config.getOrThrow<string>('FINNHUB_API_KEY');
     this.ws = new WebSocket(`wss://ws.finnhub.io?token=${apiKey}`);
 
     this.ws.on('open', () => {
       this.logger.log('Finnhub WS connected');
-      this.reconnectDelay = 1000;
+      // Only reset backoff after the connection is stable for STABLE_WINDOW_MS.
+      // Resetting immediately on 'open' causes a reconnect storm when Finnhub
+      // closes the socket a few seconds later (e.g. rate-limiting the prior session).
+      clearTimeout(this.stableTimer);
+      this.stableTimer = setTimeout(() => {
+        this.reconnectDelay = 1000;
+        this.logger.logData('Finnhub WS stable — backoff reset', { stableWindowMs: STABLE_WINDOW_MS });
+      }, STABLE_WINDOW_MS);
+
       for (const sym of this.refCounts.keys()) {
         this.ws.send(JSON.stringify({ type: 'subscribe', symbol: sym }));
       }
@@ -53,6 +74,11 @@ export class FinnhubService implements OnModuleInit {
     });
 
     this.ws.on('close', () => {
+      clearTimeout(this.stableTimer);
+      // Guard against double scheduling: error handler calls ws.close(),
+      // which fires this close event. Skip if already scheduled.
+      if (this.reconnecting) return;
+      this.reconnecting = true;
       this.logger.warn(`Finnhub WS closed — reconnecting in ${this.reconnectDelay}ms`);
       setTimeout(() => {
         this.reconnectDelay = Math.min(this.reconnectDelay * 2, this.maxDelay);
@@ -61,7 +87,15 @@ export class FinnhubService implements OnModuleInit {
     });
 
     this.ws.on('error', (err) => {
-      this.logger.error('Finnhub WS error', err.message);
+      if (err.message.includes('429')) {
+        // 429 is an expected Finnhub rate-limit response — raise the floor and warn only.
+        this.reconnectDelay = Math.max(this.reconnectDelay, MIN_DELAY_AFTER_429);
+        this.logger.warnData('Finnhub rate limited (429) — extended backoff', {
+          reconnectDelayMs: this.reconnectDelay,
+        });
+      } else {
+        this.logger.error('Finnhub WS error', err.message);
+      }
       this.ws.close();
     });
   }

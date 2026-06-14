@@ -89,17 +89,41 @@ describe('FinnhubService', () => {
       expect(ws2.send).toHaveBeenCalledWith(JSON.stringify({ type: 'subscribe', symbol: 'AAPL' }));
     });
 
-    it('resets reconnectDelay to 1 000 ms after a successful open', async () => {
+    it('does NOT reset reconnectDelay before the 60 s stability window', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      const ws1 = FakeWS.lastInstance;
+
+      // First close uses 1 000 ms; delay doubles to 2 000 ms for next time
+      ws1.trigger('close');
+      jest.advanceTimersByTime(1000);
+
+      const ws2 = FakeWS.lastInstance;
+      ws2.trigger('open'); // starts stable timer — do NOT let it fire
+
+      // Close before 60 s: delay is still 2 000 ms (not reset)
+      ws2.trigger('close');
+      jest.advanceTimersByTime(1999);
+      expect(WebSocket).toHaveBeenCalledTimes(2);
+
+      jest.advanceTimersByTime(1);
+      expect(WebSocket).toHaveBeenCalledTimes(3); // reconnects at 2 000 ms
+    });
+
+    it('resets reconnectDelay to 1 000 ms after the 60 s stability window', async () => {
       const { service } = await buildService();
       service.onModuleInit();
       const ws1 = FakeWS.lastInstance;
 
       ws1.trigger('close');
       jest.advanceTimersByTime(1000);
-
       const ws2 = FakeWS.lastInstance;
       ws2.trigger('open');
 
+      // Let the stability window elapse
+      jest.advanceTimersByTime(60_000);
+
+      // Now delay has been reset — next close reconnects in 1 000 ms
       ws2.trigger('close');
       jest.advanceTimersByTime(999);
       expect(WebSocket).toHaveBeenCalledTimes(2);
@@ -208,6 +232,23 @@ describe('FinnhubService', () => {
       ws.trigger('error', new Error('connection refused'));
 
       expect(ws.close).toHaveBeenCalledTimes(1);
+    });
+
+    it('raises reconnectDelay to ≥ 60 000 ms on a 429 rate-limit error', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      const ws = FakeWS.lastInstance;
+
+      ws.trigger('error', new Error('Unexpected server response: 429'));
+      // FakeWS.close() is mocked; manually trigger the close event that ws.close() would fire
+      ws.trigger('close');
+
+      // Must wait at least 60 s before reconnecting
+      jest.advanceTimersByTime(59_999);
+      expect(WebSocket).toHaveBeenCalledTimes(1);
+
+      jest.advanceTimersByTime(1);
+      expect(WebSocket).toHaveBeenCalledTimes(2);
     });
   });
 
