@@ -32,8 +32,8 @@ export class SupabaseAuthGuard implements CanActivate {
     const { payload } = await jwtVerify(token, this.jwks, {
       algorithms: ['ES256'],
     }).catch((err: Error) => {
-      // log err.name only — err.message may contain token fragments
-      this.logger.warnData('Auth rejected: JWT verification failed', { errorName: err.name });
+      // err.message may contain token fragments → masked outside development
+      this.logger.warnWithCause('Auth rejected: JWT verification failed', err);
       throw new UnauthorizedException('Invalid or expired token');
     });
 

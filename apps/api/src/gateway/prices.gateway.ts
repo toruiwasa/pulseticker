@@ -41,7 +41,11 @@ export class PricesGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
     const { data, error } = await this.supabase.client.auth.getUser(token);
     if (error || !data.user) {
-      this.logger.warnData('WS rejected: token verification failed', { errorName: error?.name ?? 'unknown' });
+      if (error) {
+        this.logger.warnWithCause('WS rejected: token verification failed', error);
+      } else {
+        this.logger.warn('WS rejected: no user returned');
+      }
       client.disconnect();
       return;
     }

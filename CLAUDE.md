@@ -184,17 +184,34 @@ try {
 | `warn` | 異常だが続行可能（認証失敗、API エラーでフォールバック） |
 | `error` | 例外・致命的エラー（再スローする前に必ず記録） |
 
-#### 5. ログレベルの環境設定
+#### 5. 環境とログレベル — `APP_ENV` で管理
 
-```
-# Frontend: environment.logLevel
-logLevel: 'debug'   # 開発環境 (environment.ts)
-logLevel: 'warn'    # 本番環境 (environment.prod.ts)
+`APP_ENV` 環境変数（`.env`）でアプリ全体の環境を一元管理。Frontend は `scripts/set-env.ts` で
+`environment.ts` に反映、Backend は `process.env.APP_ENV` を直接参照する。
 
-# Backend: LOG_LEVEL 環境変数（Render の環境変数で設定）
-LOG_LEVEL=warn      # 本番 (WARN/ERROR のみ)
-LOG_LEVEL=debug     # 開発 (全レベル)
+| `APP_ENV` | Frontend `logLevel` | Backend エラー詳細 | 用途 |
+|---|---|---|---|
+| `development` | `debug` | `error.message` + `error.stack` を出力 | ローカル開発 |
+| `staging` | `info` | `error.name` のみ | ステージング |
+| `production` | `warn` | `error.name` のみ | 本番 |
+| (未定義) | `warn` | `error.name` のみ | 安全側フォールバック |
+
+#### 6. 機密情報を含みうるエラーは `errorWithCause()` / `warnWithCause()` を使う
+
+Supabase 認証、jose JWT 検証など、`error.message` にトークン断片が混入する可能性がある
+ソースでは、専用メソッドを使用する。`APP_ENV=development` のときのみ詳細が出力される:
+
+```typescript
+// NG (デバッグ不能): err.message を一切出さない
+this.logger.warnData('JWT failed', { errorName: err.name });
+
+// OK (env-gated): dev では errorMessage + stack、prod では errorName のみ
+this.logger.warnWithCause('JWT failed', err);
 ```
+
+外部プロトコルレベルのエラー（HTTP ステータス、WS 切断理由）など、
+内容に機密情報が含まれないと判明しているものは、引き続き `err.message` を直接渡してよい
+（例: `FinnhubService.logger.error('WS error', err.message)`）。
 
 ---
 

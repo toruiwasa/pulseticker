@@ -63,7 +63,7 @@ export class AuthService {
       this.logger.warn('AUTH', 'handleCallback: event timeout, falling back to getSession()');
       const { data: { session }, error } = await this.supabase.auth.getSession();
       if (error) {
-        this.logger.error('AUTH', 'handleCallback: getSession failed', { errorName: error.name });
+        this.logger.errorWithCause('AUTH', 'handleCallback: getSession failed', error);
         return null;
       }
       if (session) {
