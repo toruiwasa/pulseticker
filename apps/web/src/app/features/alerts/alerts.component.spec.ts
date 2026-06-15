@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { of } from 'rxjs';
 import { AlertsComponent } from './alerts.component';
 import { ApiService } from '../../core/services/api.service';
+import { LoggerService } from '../../core/services/logger.service';
 import { SymbolSearchInputComponent } from '../../core/components/symbol-search-input.component';
 
 interface Alert {
@@ -28,6 +29,7 @@ describe('AlertsComponent (class logic)', () => {
     post:   ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
   };
+  let loggerStub: { debug: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
   let symbolSearchStub: { clear: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
@@ -38,9 +40,13 @@ describe('AlertsComponent (class logic)', () => {
       post:   vi.fn(),
       delete: vi.fn(),
     };
+    loggerStub = { debug: vi.fn(), error: vi.fn() };
     symbolSearchStub = { clear: vi.fn() };
 
-    component = new AlertsComponent(apiStub as unknown as ApiService);
+    component = new AlertsComponent(
+      apiStub as unknown as ApiService,
+      loggerStub as unknown as LoggerService,
+    );
     // Wire up @ViewChild manually — Angular doesn't set it without template rendering
     component['symbolSearch'] = symbolSearchStub as unknown as SymbolSearchInputComponent;
     component.ngOnInit();
@@ -48,39 +54,132 @@ describe('AlertsComponent (class logic)', () => {
 
   afterEach(() => vi.restoreAllMocks());
 
-  describe('isFormValid', () => {
-    it('is false when symbol is empty', () => {
-      component.form = { symbol: '', threshold_price: 100, direction: 'above' };
-      expect(component.isFormValid).toBe(false);
+  // ── isFormValid (computed signal) ────────────────────────────────────────────
+  // Equivalence partitioning:
+  //   EC-1 Valid:   symbol non-empty + price > 0 + direction in enum
+  //   EC-2 Invalid: symbol empty
+  //   EC-3 Invalid: price ≤ 0 or null
+  //   EC-4 Invalid: symbol too long (> 50 chars)
+  // Boundary values tested at the edges of each partition.
+
+  describe('isFormValid (equivalence partitions + boundary values)', () => {
+
+    // ── EC-1: Valid cases ─────────────────────────────────────────────────────
+
+    it('EC-1 / BV: valid — typical stock symbol and positive price', () => {
+      component.symbol.set('AAPL');
+      component.price.set(150);
+      expect(component.isFormValid()).toBe(true);
     });
 
-    it('is false when threshold_price is zero', () => {
-      component.form = { symbol: 'AAPL', threshold_price: 0, direction: 'above' };
-      expect(component.isFormValid).toBe(false);
+    it('EC-1 / BV: valid — boundary price just above zero (0.0001)', () => {
+      component.symbol.set('AAPL');
+      component.price.set(0.0001);
+      expect(component.isFormValid()).toBe(true);
     });
 
-    it('is false when threshold_price is negative', () => {
-      component.form = { symbol: 'AAPL', threshold_price: -10, direction: 'above' };
-      expect(component.isFormValid).toBe(false);
+    it('EC-1 / BV: valid — symbol at max length (50 chars)', () => {
+      component.symbol.set('A'.repeat(50));
+      component.price.set(1);
+      expect(component.isFormValid()).toBe(true);
     });
 
-    it('is true with a valid symbol and positive price', () => {
-      component.form = { symbol: 'AAPL', threshold_price: 150, direction: 'above' };
-      expect(component.isFormValid).toBe(true);
+    it('EC-1 / BV: valid — symbol at min length (1 char)', () => {
+      component.symbol.set('A');
+      component.price.set(1);
+      expect(component.isFormValid()).toBe(true);
     });
 
-    it('is true for lowercase symbol (schema uppercases before validating)', () => {
-      component.form = { symbol: 'aapl', threshold_price: 150, direction: 'above' };
-      expect(component.isFormValid).toBe(true);
+    it('EC-1: valid — Oanda forex symbol (13 chars, previously broken by max(10))', () => {
+      component.symbol.set('OANDA:EUR_USD');
+      component.price.set(1.08);
+      expect(component.isFormValid()).toBe(true);
+    });
+
+    it('EC-1: valid — direction "below"', () => {
+      component.symbol.set('AAPL');
+      component.price.set(100);
+      component.direction.set('below');
+      expect(component.isFormValid()).toBe(true);
+    });
+
+    it('EC-1: valid — lowercase symbol (schema uppercases via transform)', () => {
+      component.symbol.set('aapl');
+      component.price.set(150);
+      expect(component.isFormValid()).toBe(true);
+    });
+
+    // ── EC-2: Empty symbol ────────────────────────────────────────────────────
+
+    it('EC-2: invalid — empty symbol', () => {
+      component.symbol.set('');
+      component.price.set(150);
+      expect(component.isFormValid()).toBe(false);
+    });
+
+    it('EC-2 / BV: invalid — whitespace-only symbol (trimmed to empty)', () => {
+      component.symbol.set('   ');
+      component.price.set(150);
+      expect(component.isFormValid()).toBe(false);
+    });
+
+    it('EC-2 / EC-3: invalid — both symbol empty and price null', () => {
+      component.symbol.set('');
+      component.price.set(null);
+      expect(component.isFormValid()).toBe(false);
+    });
+
+    // ── EC-3: Price ≤ 0 or null ───────────────────────────────────────────────
+
+    it('EC-3 / BV: invalid — price zero (boundary)', () => {
+      component.symbol.set('AAPL');
+      component.price.set(0);
+      expect(component.isFormValid()).toBe(false);
+    });
+
+    it('EC-3 / BV: invalid — price just below zero (-0.0001)', () => {
+      component.symbol.set('AAPL');
+      component.price.set(-0.0001);
+      expect(component.isFormValid()).toBe(false);
+    });
+
+    it('EC-3: invalid — price negative', () => {
+      component.symbol.set('AAPL');
+      component.price.set(-100);
+      expect(component.isFormValid()).toBe(false);
+    });
+
+    it('EC-3: invalid — price null (empty input)', () => {
+      component.symbol.set('AAPL');
+      component.price.set(null);
+      expect(component.isFormValid()).toBe(false);
+    });
+
+    // ── EC-4: Symbol too long ─────────────────────────────────────────────────
+
+    it('EC-4 / BV: invalid — symbol 51 chars (one over the max)', () => {
+      component.symbol.set('A'.repeat(51));
+      component.price.set(1);
+      expect(component.isFormValid()).toBe(false);
+    });
+
+    it('EC-4: invalid — symbol very long (100 chars)', () => {
+      component.symbol.set('X'.repeat(100));
+      component.price.set(1);
+      expect(component.isFormValid()).toBe(false);
     });
   });
+
+  // ── selectSymbol() ────────────────────────────────────────────────────────
 
   describe('selectSymbol()', () => {
-    it('sets form.symbol to the selected symbol', () => {
+    it('sets the symbol signal', () => {
       component.selectSymbol('GOOG');
-      expect(component.form.symbol).toBe('GOOG');
+      expect(component.symbol()).toBe('GOOG');
     });
   });
+
+  // ── ngOnInit() ────────────────────────────────────────────────────────────
 
   describe('ngOnInit()', () => {
     it('loads alerts from GET /alerts and sets loading to false', () => {
@@ -92,13 +191,18 @@ describe('AlertsComponent (class logic)', () => {
     });
   });
 
+  // ── createAlert() ─────────────────────────────────────────────────────────
+
   describe('createAlert()', () => {
     beforeEach(() => {
-      component.form = { symbol: 'AAPL', threshold_price: 200, direction: 'above' };
+      component.symbol.set('AAPL');
+      component.price.set(200);
+      component.direction.set('above');
     });
 
     it('does nothing when form is invalid', async () => {
-      component.form = { symbol: '', threshold_price: 0, direction: 'above' };
+      component.symbol.set('');
+      component.price.set(null);
       await component.createAlert();
       expect(apiStub.post).not.toHaveBeenCalled();
     });
@@ -122,12 +226,12 @@ describe('AlertsComponent (class logic)', () => {
       expect(component.alerts()[1].id).toBe('old');
     });
 
-    it('resets form to defaults after success', async () => {
+    it('resets signals to defaults after success', async () => {
       apiStub.post.mockReturnValue(of(makeAlert()));
       await component.createAlert();
-      expect(component.form.symbol).toBe('');
-      expect(component.form.threshold_price).toBe(0);
-      expect(component.form.direction).toBe('above');
+      expect(component.symbol()).toBe('');
+      expect(component.price()).toBeNull();
+      expect(component.direction()).toBe('above');
     });
 
     it('calls symbolSearch.clear() after success', async () => {
@@ -136,6 +240,8 @@ describe('AlertsComponent (class logic)', () => {
       expect(symbolSearchStub.clear).toHaveBeenCalledOnce();
     });
   });
+
+  // ── deleteAlert() ─────────────────────────────────────────────────────────
 
   describe('deleteAlert()', () => {
     beforeEach(() => {

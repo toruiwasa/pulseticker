@@ -1,9 +1,10 @@
-import { Component, OnInit, ViewChild, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, ViewChild, computed, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { TuiButton } from '@taiga-ui/core';
 import { CreateAlertSchema } from '@pulseticker/schemas';
 import { ApiService } from '../../core/services/api.service';
+import { LoggerService } from '../../core/services/logger.service';
 import { SymbolSearchInputComponent } from '../../core/components/symbol-search-input.component';
 import { OandaPipe } from '../../core/pipes/oanda.pipe';
 
@@ -18,6 +19,7 @@ interface Alert {
 
 @Component({
   standalone: true,
+  changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [FormsModule, TuiButton, SymbolSearchInputComponent, OandaPipe],
   template: `
     <div class="page">
@@ -30,17 +32,18 @@ interface Alert {
           (symbolSelected)="selectSymbol($event)"
         />
         <input
-          [(ngModel)]="form.threshold_price"
+          [ngModel]="price()"
+          (ngModelChange)="price.set($event)"
           name="price"
           type="number"
           step="0.01"
           placeholder="Price"
-          required
           class="price-input"
           aria-label="Price threshold"
         />
         <select
-          [(ngModel)]="form.direction"
+          [ngModel]="direction()"
+          (ngModelChange)="direction.set($event)"
           name="direction"
           class="direction-select"
           aria-label="Alert direction"
@@ -48,7 +51,7 @@ interface Alert {
           <option value="above">Above</option>
           <option value="below">Below</option>
         </select>
-        <button tuiButton type="submit" appearance="primary" size="s" [disabled]="!isFormValid">Add alert</button>
+        <button tuiButton type="submit" appearance="primary" size="s" [disabled]="!isFormValid()">Add alert</button>
       </form>
 
       <h2>Active alerts</h2>
@@ -302,41 +305,50 @@ interface Alert {
 export class AlertsComponent implements OnInit {
   @ViewChild(SymbolSearchInputComponent) private symbolSearch!: SymbolSearchInputComponent;
 
-  loading = signal(true);
-  alerts = signal<Alert[]>([]);
-  form: { symbol: string; threshold_price: number; direction: 'above' | 'below' } = {
-    symbol: '', threshold_price: 0, direction: 'above',
-  };
+  loading   = signal(true);
+  alerts    = signal<Alert[]>([]);
+  symbol    = signal('');
+  price     = signal<number | null>(null);
+  direction = signal<'above' | 'below'>('above');
 
-  get isFormValid(): boolean {
-    return CreateAlertSchema.safeParse(this.form).success;
-  }
+  // computed() creates a reactive node in Angular's signal graph.
+  // In zoneless mode (provideZonelessChangeDetection), this is required —
+  // a plain getter does not register dependencies and won't trigger re-renders.
+  isFormValid = computed(() =>
+    CreateAlertSchema.safeParse({
+      symbol:          this.symbol(),
+      threshold_price: this.price(),
+      direction:       this.direction(),
+    }).success
+  );
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService, private logger: LoggerService) {}
 
   ngOnInit() {
     this.api.get<Alert[]>('/alerts').subscribe({
       next: data => { this.alerts.set(data); this.loading.set(false); },
-      error: e => { console.error('Failed to load alerts', e); this.loading.set(false); },
+      error: e => { this.logger.error('Failed to load alerts', (e as Error).message); this.loading.set(false); },
     });
   }
 
-  selectSymbol(symbol: string) {
-    this.form.symbol = symbol;
-  }
+  selectSymbol(s: string) { this.symbol.set(s); }
 
   async createAlert() {
-    const result = CreateAlertSchema.safeParse(this.form);
+    const result = CreateAlertSchema.safeParse({
+      symbol:          this.symbol(),
+      threshold_price: this.price(),
+      direction:       this.direction(),
+    });
     if (!result.success) return;
     try {
-      const alert = await firstValueFrom(
-        this.api.post<Alert>('/alerts', result.data),
-      );
+      const alert = await firstValueFrom(this.api.post<Alert>('/alerts', result.data));
       this.alerts.update(a => [alert, ...a]);
-      this.form = { symbol: '', threshold_price: 0, direction: 'above' };
+      this.symbol.set('');
+      this.price.set(null);
+      this.direction.set('above');
       this.symbolSearch.clear();
     } catch (e) {
-      console.error('Failed to create alert', e);
+      this.logger.error('Failed to create alert', (e as Error).message);
     }
   }
 
@@ -345,7 +357,7 @@ export class AlertsComponent implements OnInit {
       await firstValueFrom(this.api.delete(`/alerts/${id}`));
       this.alerts.update(a => a.filter(x => x.id !== id));
     } catch (e) {
-      console.error('Failed to delete alert', e);
+      this.logger.error('Failed to delete alert', (e as Error).message);
     }
   }
 }
