@@ -7,13 +7,14 @@ export interface PreviewPrice {
   price: number | null;
   percentChange: number | null;
   ts: number;
+  currency: string;
 }
 
-export const PREVIEW_SYMBOLS: { raw: string; display: string }[] = [
-  { raw: 'VOO',           display: 'VOO'     },
-  { raw: 'AAPL',          display: 'AAPL'    },
-  { raw: 'MSFT',          display: 'MSFT'    },
-  { raw: 'OANDA:AUD_USD', display: 'AUD/USD' },
+export const PREVIEW_SYMBOLS: { raw: string; display: string; currency: string }[] = [
+  { raw: 'VOO',           display: 'VOO',     currency: 'USD' },
+  { raw: 'AAPL',          display: 'AAPL',    currency: 'USD' },
+  { raw: 'MSFT',          display: 'MSFT',    currency: 'USD' },
+  { raw: 'OANDA:AUD_USD', display: 'AUD/USD', currency: 'USD' },
 ];
 
 @Injectable()
@@ -24,6 +25,7 @@ export class PreviewCacheService {
     price: null,
     percentChange: null,
     ts: 0,
+    currency: s.currency,
   }));
 
   readonly prices$ = new Subject<PreviewPrice[]>();

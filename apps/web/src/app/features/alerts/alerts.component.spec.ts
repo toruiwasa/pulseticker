@@ -1,9 +1,11 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { signal } from '@angular/core';
 import { of } from 'rxjs';
 import { AlertsComponent } from './alerts.component';
 import { ApiService } from '../../core/services/api.service';
 import { LoggerService } from '../../core/services/logger.service';
 import { SymbolSearchInputComponent } from '../../core/components/symbol-search-input.component';
+import { SymbolMetadataService } from '../../core/services/symbol-metadata.service';
 
 interface Alert {
   id: string;
@@ -31,6 +33,7 @@ describe('AlertsComponent (class logic)', () => {
   };
   let loggerStub: { debug: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
   let symbolSearchStub: { clear: ReturnType<typeof vi.fn> };
+  let metaStub: { currencies: ReturnType<typeof signal<Record<string, string>>>; ensureCurrency: ReturnType<typeof vi.fn> };
 
   beforeEach(() => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
@@ -42,10 +45,12 @@ describe('AlertsComponent (class logic)', () => {
     };
     loggerStub = { debug: vi.fn(), error: vi.fn() };
     symbolSearchStub = { clear: vi.fn() };
+    metaStub = { currencies: signal({}), ensureCurrency: vi.fn() };
 
     component = new AlertsComponent(
       apiStub as unknown as ApiService,
       loggerStub as unknown as LoggerService,
+      metaStub as unknown as SymbolMetadataService,
     );
     // Wire up @ViewChild manually — Angular doesn't set it without template rendering
     component['symbolSearch'] = symbolSearchStub as unknown as SymbolSearchInputComponent;

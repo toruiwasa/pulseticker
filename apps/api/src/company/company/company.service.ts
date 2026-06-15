@@ -39,7 +39,7 @@ export class CompanyService {
 
     const raw = (await res.json()) as FinnhubProfile2;
     if (!raw.name) {
-      const empty: CompanyProfile = { name: '', ticker: symbol, marketCap: 0, logo: '', industry: '' };
+      const empty: CompanyProfile = { name: '', ticker: symbol, marketCap: 0, logo: '', industry: '', currency: 'USD' };
       this.profileCache.set(symbol, { data: empty, expiresAt: Date.now() + TTL_MS });
       return empty;
     }
@@ -50,6 +50,7 @@ export class CompanyService {
       marketCap: raw.marketCapitalization,
       logo: raw.logo,
       industry: raw.finnhubIndustry,
+      currency: raw.currency ?? 'USD',
     };
     this.profileCache.set(symbol, { data, expiresAt: Date.now() + TTL_MS });
     this.logger.debug(`Profile fetched for ${symbol}`);

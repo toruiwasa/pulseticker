@@ -7,6 +7,7 @@ import { ApiService } from '../../core/services/api.service';
 import { LoggerService } from '../../core/services/logger.service';
 import { SymbolSearchInputComponent } from '../../core/components/symbol-search-input.component';
 import { OandaPipe } from '../../core/pipes/oanda.pipe';
+import { SymbolMetadataService } from '../../core/services/symbol-metadata.service';
 
 interface Alert {
   id: string;
@@ -76,7 +77,12 @@ interface Alert {
               <tr>
                 <td class="col-symbol">{{ alert.symbol | oanda }}</td>
                 <td>{{ alert.direction }}</td>
-                <td class="col-price">{{ alert.threshold_price }}</td>
+                <td class="col-price">
+                  {{ alert.threshold_price }}
+                  @if (meta.currencies()[alert.symbol]) {
+                    <span class="currency-unit">{{ meta.currencies()[alert.symbol] }}</span>
+                  }
+                </td>
                 <td>
                   <span [class]="alert.is_active ? 'status-active' : 'status-triggered'">
                     {{ alert.is_active ? 'Active' : 'Triggered' }}
@@ -121,7 +127,12 @@ interface Alert {
                 </div>
                 <div class="card-field">
                   <span class="field-label">Price</span>
-                  <span class="field-value col-price">{{ alert.threshold_price }}</span>
+                  <span class="field-value col-price">
+                    {{ alert.threshold_price }}
+                    @if (meta.currencies()[alert.symbol]) {
+                      <span class="currency-unit">{{ meta.currencies()[alert.symbol] }}</span>
+                    }
+                  </span>
                 </div>
                 <div class="card-field">
                   <span class="field-label">Status</span>
@@ -222,7 +233,20 @@ interface Alert {
     }
 
     .col-symbol { font-weight: 600; }
-    .col-price { font-variant-numeric: tabular-nums; }
+
+    .col-price {
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .currency-unit {
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: var(--pt-text-muted);
+      margin-left: 2px;
+      letter-spacing: 0.03em;
+      vertical-align: middle;
+    }
 
     .status-active    { color: var(--pt-up); font-weight: 600; }
     .status-triggered { color: var(--pt-neutral); }
@@ -322,11 +346,21 @@ export class AlertsComponent implements OnInit {
     }).success
   );
 
-  constructor(private api: ApiService, private logger: LoggerService) {}
+  constructor(
+    private api: ApiService,
+    private logger: LoggerService,
+    protected meta: SymbolMetadataService,
+  ) {}
 
   ngOnInit() {
     this.api.get<Alert[]>('/alerts').subscribe({
-      next: data => { this.alerts.set(data); this.loading.set(false); },
+      next: data => {
+        this.alerts.set(data);
+        this.loading.set(false);
+        for (const alert of data) {
+          this.meta.ensureCurrency(alert.symbol);
+        }
+      },
       error: e => { this.logger.error('Failed to load alerts', (e as Error).message); this.loading.set(false); },
     });
   }

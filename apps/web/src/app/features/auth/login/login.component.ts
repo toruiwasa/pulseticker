@@ -109,6 +109,16 @@ import { LoginChartComponent } from './login-chart.component';
     .price {
       color: rgba(255, 255, 255, 0.85);
       text-align: right;
+      white-space: nowrap;
+    }
+
+    .currency-unit {
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.45);
+      margin-left: 2px;
+      letter-spacing: 0.03em;
+      vertical-align: middle;
     }
 
     .change {
@@ -188,6 +198,7 @@ import { LoginChartComponent } from './login-chart.component';
               <td class="price">
                 @if (p.price != null) {
                   {{ p.price | number:(p.raw === 'OANDA:AUD_USD' ? '1.4-4' : '1.2-2') }}
+                  <span class="currency-unit">{{ p.currency }}</span>
                 } @else {
                   ---
                 }

@@ -59,12 +59,15 @@ export type { WatchlistItem };
             </div>
             <div class="ticker-right">
               @if (prices()[item.symbol]) {
-                <span
-                  class="price"
-                  [class.color-up]="isLive()[item.symbol]"
-                  [class.color-neutral]="!isLive()[item.symbol]"
-                >
-                  {{ prices()[item.symbol] | number:'1.2-5' }}
+                <span class="price-group">
+                  <span
+                    class="price"
+                    [class.color-up]="isLive()[item.symbol]"
+                    [class.color-neutral]="!isLive()[item.symbol]"
+                  >{{ prices()[item.symbol] | number:'1.2-5' }}</span>
+                  @if (currencies()[item.symbol]) {
+                    <span class="currency-unit">{{ currencies()[item.symbol] }}</span>
+                  }
                 </span>
               } @else {
                 <span class="price color-neutral">—</span>
@@ -201,10 +204,23 @@ export type { WatchlistItem };
       flex-shrink: 0;
     }
 
+    .price-group {
+      display: inline-flex;
+      align-items: baseline;
+      gap: 2px;
+    }
+
     .price {
       font-size: 0.85rem;
       font-weight: 500;
       font-variant-numeric: tabular-nums;
+    }
+
+    .currency-unit {
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: var(--pt-text-muted);
+      letter-spacing: 0.03em;
     }
 
     .color-up { color: var(--pt-up); }
@@ -224,6 +240,7 @@ export type { WatchlistItem };
     @media (max-width: 767px) {
       .symbol { font-size: 0.9rem; }
       .price { font-size: 0.9rem; }
+      .currency-unit { font-size: 0.7rem; }
       .timestamp { font-size: 0.75rem; }
 
       .btn-short { display: none; }
@@ -236,6 +253,7 @@ export class WatchlistPanelComponent {
   readonly prices = input<Record<string, number>>({});
   readonly timestamps = input<Record<string, Date>>({});
   readonly isLive = input<Record<string, boolean>>({});
+  readonly currencies = input<Record<string, string>>({});
   readonly activeSymbol = input<string | null>(null);
   readonly atLimit = input(false);
 

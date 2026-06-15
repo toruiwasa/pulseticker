@@ -10,6 +10,7 @@ export interface PreviewPrice {
   price: number | null;
   percentChange: number | null;
   ts: number;
+  currency: string;
 }
 
 export interface PreviewSnapshot {
@@ -18,10 +19,10 @@ export interface PreviewSnapshot {
 }
 
 export const PREVIEW_SYMBOLS_INITIAL: PreviewPrice[] = [
-  { symbol: 'VOO',     raw: 'VOO',           price: null, percentChange: null, ts: 0 },
-  { symbol: 'AAPL',    raw: 'AAPL',          price: null, percentChange: null, ts: 0 },
-  { symbol: 'MSFT',    raw: 'MSFT',          price: null, percentChange: null, ts: 0 },
-  { symbol: 'AUD/USD', raw: 'OANDA:AUD_USD', price: null, percentChange: null, ts: 0 },
+  { symbol: 'VOO',     raw: 'VOO',           price: null, percentChange: null, ts: 0, currency: 'USD' },
+  { symbol: 'AAPL',    raw: 'AAPL',          price: null, percentChange: null, ts: 0, currency: 'USD' },
+  { symbol: 'MSFT',    raw: 'MSFT',          price: null, percentChange: null, ts: 0, currency: 'USD' },
+  { symbol: 'AUD/USD', raw: 'OANDA:AUD_USD', price: null, percentChange: null, ts: 0, currency: 'USD' },
 ];
 
 @Injectable({ providedIn: 'root' })

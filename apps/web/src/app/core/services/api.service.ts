@@ -26,6 +26,7 @@ export interface CompanyProfile {
   marketCap: number;
   logo: string;
   industry: string;
+  currency: string;
 }
 
 export interface CompanyMetrics {

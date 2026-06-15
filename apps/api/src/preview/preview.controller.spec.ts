@@ -5,10 +5,10 @@ import { PreviewCacheService, PREVIEW_SYMBOLS } from './preview-cache.service.js
 import { LiveCandleCacheService } from '../chart/live-candle-cache.service.js';
 
 const makeNullPrices = () =>
-  PREVIEW_SYMBOLS.map(s => ({ symbol: s.display, raw: s.raw, price: null, percentChange: null, ts: 0 }));
+  PREVIEW_SYMBOLS.map(s => ({ symbol: s.display, raw: s.raw, currency: s.currency, price: null, percentChange: null, ts: 0 }));
 
 const makePrices = (price: number) =>
-  PREVIEW_SYMBOLS.map(s => ({ symbol: s.display, raw: s.raw, price, percentChange: 1, ts: 1000 }));
+  PREVIEW_SYMBOLS.map(s => ({ symbol: s.display, raw: s.raw, currency: s.currency, price, percentChange: 1, ts: 1000 }));
 
 const STUB_CANDLES = [{ time: 1000, value: 180 }, { time: 1060, value: 182 }];
 

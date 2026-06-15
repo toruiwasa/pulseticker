@@ -13,6 +13,7 @@ describe('PreviewCacheService', () => {
     prices.forEach((p, i) => {
       expect(p.symbol).toBe(PREVIEW_SYMBOLS[i].display);
       expect(p.raw).toBe(PREVIEW_SYMBOLS[i].raw);
+      expect(p.currency).toBe(PREVIEW_SYMBOLS[i].currency);
       expect(p.price).toBeNull();
       expect(p.percentChange).toBeNull();
       expect(p.ts).toBe(0);
@@ -21,7 +22,7 @@ describe('PreviewCacheService', () => {
 
   it('setPrices updates the stored prices', () => {
     const updated = PREVIEW_SYMBOLS.map(s => ({
-      symbol: s.display, raw: s.raw, price: 100, percentChange: 1.5, ts: 1000,
+      symbol: s.display, raw: s.raw, currency: s.currency, price: 100, percentChange: 1.5, ts: 1000,
     }));
     service.setPrices(updated);
     expect(service.getPrices()).toEqual(updated);
@@ -29,7 +30,7 @@ describe('PreviewCacheService', () => {
 
   it('setPrices emits updated prices on prices$', done => {
     const updated = PREVIEW_SYMBOLS.map(s => ({
-      symbol: s.display, raw: s.raw, price: 200, percentChange: -0.5, ts: 2000,
+      symbol: s.display, raw: s.raw, currency: s.currency, price: 200, percentChange: -0.5, ts: 2000,
     }));
     service.prices$.subscribe(emitted => {
       expect(emitted).toEqual(updated);
@@ -40,7 +41,7 @@ describe('PreviewCacheService', () => {
 
   it('getPrices returns the same reference after setPrices', () => {
     const updated = PREVIEW_SYMBOLS.map(s => ({
-      symbol: s.display, raw: s.raw, price: 50, percentChange: 0, ts: 3000,
+      symbol: s.display, raw: s.raw, currency: s.currency, price: 50, percentChange: 0, ts: 3000,
     }));
     service.setPrices(updated);
     expect(service.getPrices()).toBe(updated);

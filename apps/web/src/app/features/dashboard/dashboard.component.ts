@@ -14,6 +14,7 @@ import { TuiNotificationService } from '@taiga-ui/core';
 import { AuthService } from '../../core/services/auth.service';
 import { SocketService } from '../../core/services/socket.service';
 import { WatchlistStateService } from '../../core/services/watchlist-state.service';
+import { SymbolMetadataService } from '../../core/services/symbol-metadata.service';
 import { ChartRange } from '../../core/services/api.service';
 import { WatchlistPanelComponent } from './watchlist-panel/watchlist-panel.component';
 import { ChartHeaderComponent } from './chart-header/chart-header.component';
@@ -49,6 +50,7 @@ import { ContextAccordionComponent } from './context-accordion/context-accordion
             [prices]="wl.prices()"
             [timestamps]="wl.timestamps()"
             [isLive]="wl.isLive()"
+            [currencies]="meta.currencies()"
             [activeSymbol]="activeSymbol()"
             [atLimit]="wl.atLimit()"
             (symbolSelected)="selectSymbol($event)"
@@ -69,6 +71,8 @@ import { ContextAccordionComponent } from './context-accordion/context-accordion
 
           <app-chart-header
             [symbol]="activeSymbol()"
+            [price]="currentPrice()"
+            [currency]="activeSymbol() ? meta.currencies()[activeSymbol()!] ?? null : null"
             [activeRange]="range()"
             (rangeChange)="range.set($event)"
           />
@@ -201,6 +205,7 @@ import { ContextAccordionComponent } from './context-accordion/context-accordion
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   protected wl = inject(WatchlistStateService);
+  protected meta = inject(SymbolMetadataService);
   private auth = inject(AuthService);
   private socket = inject(SocketService);
   private route = inject(ActivatedRoute);
@@ -229,6 +234,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
             this.notifications.open(payload.message, { label: 'Alert triggered' }).subscribe();
           });
         }
+      }
+    });
+
+    effect(() => {
+      for (const item of this.wl.watchlist()) {
+        this.meta.ensureCurrency(item.symbol);
       }
     });
   }

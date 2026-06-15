@@ -38,7 +38,7 @@ import { PreviewService, PreviewSnapshot, PreviewPrice } from '../../../core/ser
 
 function makeSnapshot(aaplPrice: number | null, ts: number, candles: { time: number; value: number }[] | null = null): PreviewSnapshot {
   const prices: PreviewPrice[] = [
-    { symbol: 'AAPL', raw: 'AAPL', price: aaplPrice, percentChange: 0, ts },
+    { symbol: 'AAPL', raw: 'AAPL', currency: 'USD', price: aaplPrice, percentChange: 0, ts },
   ];
   return { prices, candles };
 }

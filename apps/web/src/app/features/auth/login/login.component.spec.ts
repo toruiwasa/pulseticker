@@ -14,10 +14,10 @@ import { PreviewService, PREVIEW_SYMBOLS_INITIAL, PreviewPrice, PreviewSnapshot 
 import { LoginComponent } from './login.component';
 
 const mockPrices: PreviewPrice[] = [
-  { symbol: 'VOO',     raw: 'VOO',           price: 487.00, percentChange: 0,     ts: 1000 },
-  { symbol: 'AAPL',    raw: 'AAPL',          price: 213.42, percentChange: 0.58,  ts: 1000 },
-  { symbol: 'MSFT',    raw: 'MSFT',          price: 415.10, percentChange: -0.55, ts: 1000 },
-  { symbol: 'AUD/USD', raw: 'OANDA:AUD_USD', price: 0.6423, percentChange: 0.12,  ts: 1000 },
+  { symbol: 'VOO',     raw: 'VOO',           currency: 'USD', price: 487.00, percentChange: 0,     ts: 1000 },
+  { symbol: 'AAPL',    raw: 'AAPL',          currency: 'USD', price: 213.42, percentChange: 0.58,  ts: 1000 },
+  { symbol: 'MSFT',    raw: 'MSFT',          currency: 'USD', price: 415.10, percentChange: -0.55, ts: 1000 },
+  { symbol: 'AUD/USD', raw: 'OANDA:AUD_USD', currency: 'USD', price: 0.6423, percentChange: 0.12,  ts: 1000 },
 ];
 
 describe('LoginComponent', () => {

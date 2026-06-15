@@ -60,6 +60,7 @@ describe('CompanyService', () => {
         marketCap: 3000000,
         logo: 'https://logo.example.com/aapl',
         industry: 'Technology',
+        currency: 'USD',
       });
     });
 

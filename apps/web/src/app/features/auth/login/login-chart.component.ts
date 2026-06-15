@@ -5,7 +5,9 @@ import {
   OnDestroy,
   ViewChild,
   inject,
+  signal,
 } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { Subscription } from 'rxjs';
 import {
   IChartApi,
@@ -23,9 +25,17 @@ const RED   = '#F87171'; // --pt-down
 @Component({
   standalone: true,
   selector: 'app-login-chart',
+  imports: [DecimalPipe],
   template: `
     <div class="login-chart-shell">
-      <div class="login-chart-header">AAPL</div>
+      <div class="login-chart-header">
+        <span class="chart-symbol">AAPL</span>
+        @if (aaplPrice() != null) {
+          <span class="chart-price">
+            {{ aaplPrice() | number:'1.2-2' }}<span class="chart-currency">USD</span>
+          </span>
+        }
+      </div>
       <div #host class="login-chart-container"></div>
     </div>
   `,
@@ -38,10 +48,31 @@ const RED   = '#F87171'; // --pt-down
         width: 100%;
       }
       .login-chart-header {
+        display: flex;
+        align-items: baseline;
+        gap: 0.6rem;
+        flex-wrap: wrap;
+      }
+      .chart-symbol {
         color: rgba(255, 255, 255, 0.85);
         font-weight: 600;
         font-size: 0.95rem;
         letter-spacing: 0.04em;
+      }
+      .chart-price {
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 0.85rem;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+        display: inline-flex;
+        align-items: baseline;
+        gap: 2px;
+      }
+      .chart-currency {
+        font-size: 0.6rem;
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.45);
+        letter-spacing: 0.03em;
       }
       .login-chart-container {
         width: 100%;
@@ -60,6 +91,8 @@ export class LoginChartComponent implements AfterViewInit, OnDestroy {
   @ViewChild('host', { static: true }) host!: ElementRef<HTMLDivElement>;
 
   private preview = inject(PreviewService);
+
+  protected aaplPrice = signal<number | null>(null);
 
   private chart: IChartApi | null = null;
   private series: ISeriesApi<'Line'> | null = null;
@@ -115,6 +148,7 @@ export class LoginChartComponent implements AfterViewInit, OnDestroy {
     if (this.lastTime !== null && aapl.ts <= this.lastTime) return;
 
     this.lastTime = aapl.ts;
+    this.aaplPrice.set(aapl.price);
     if (this.basePrice === null) this.basePrice = aapl.price;
     const color = aapl.price >= this.basePrice ? GREEN : RED;
     this.series.applyOptions({ color });

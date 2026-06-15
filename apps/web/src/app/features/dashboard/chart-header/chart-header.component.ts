@@ -1,4 +1,5 @@
 import { Component, input, output } from '@angular/core';
+import { DecimalPipe } from '@angular/common';
 import { OandaPipe } from '../../../core/pipes/oanda.pipe';
 import { ChartRange } from '../../../core/services/api.service';
 
@@ -7,12 +8,20 @@ const RANGES: ChartRange[] = ['1D', '1Y'];
 @Component({
   selector: 'app-chart-header',
   standalone: true,
-  imports: [OandaPipe],
+  imports: [OandaPipe, DecimalPipe],
   template: `
     <div class="chart-header">
       <div class="symbol-info">
         @if (symbol()) {
           <span class="symbol-label">{{ symbol() | oanda }}</span>
+          @if (price() != null) {
+            <span class="live-price">
+              {{ price() | number:'1.2-5' }}
+              @if (currency()) {
+                <span class="currency-unit">{{ currency() }}</span>
+              }
+            </span>
+          }
         } @else {
           <span class="placeholder">Select a symbol to view chart</span>
         }
@@ -43,10 +52,34 @@ const RANGES: ChartRange[] = ['1D', '1Y'];
       flex-shrink: 0;
     }
 
+    .symbol-info {
+      display: flex;
+      align-items: baseline;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+    }
+
     .symbol-label {
       font-size: 1.1rem;
       font-weight: 700;
       color: var(--pt-text-primary);
+    }
+
+    .live-price {
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--pt-text-secondary);
+      font-variant-numeric: tabular-nums;
+      display: inline-flex;
+      align-items: baseline;
+      gap: 2px;
+    }
+
+    .currency-unit {
+      font-size: 0.65rem;
+      font-weight: 500;
+      color: var(--pt-text-muted);
+      letter-spacing: 0.03em;
     }
 
     .placeholder {
@@ -90,6 +123,8 @@ const RANGES: ChartRange[] = ['1D', '1Y'];
 })
 export class ChartHeaderComponent {
   readonly symbol = input<string | null>(null);
+  readonly price = input<number | null>(null);
+  readonly currency = input<string | null>(null);
   readonly activeRange = input<ChartRange>('1D');
   readonly rangeChange = output<ChartRange>();
 

@@ -46,9 +46,9 @@ export function makeFetchPreviewPricesTask(config: ConfigService, cache: Preview
         const pct = r.value.pc !== 0
           ? ((r.value.c - r.value.pc) / r.value.pc) * 100
           : 0;
-        return { symbol: s.display, raw: s.raw, price: r.value.c, percentChange: pct, ts: Date.now() };
+        return { symbol: s.display, raw: s.raw, price: r.value.c, percentChange: pct, ts: Date.now(), currency: s.currency };
       }
-      return { symbol: s.display, raw: s.raw, price: null, percentChange: null, ts: Date.now() };
+      return { symbol: s.display, raw: s.raw, price: null, percentChange: null, ts: Date.now(), currency: s.currency };
     });
 
     cache.setPrices(prices);
