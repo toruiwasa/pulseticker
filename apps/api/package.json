@@ -8,7 +8,7 @@
   "license": "UNLICENSED",
   "scripts": {
     "dev": "nodemon",
-    "build": "nest build",
+    "build": "pnpm --filter @pulseticker/schemas --filter @pulseticker/logging build && nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
     "start:dev": "nest start --watch",
