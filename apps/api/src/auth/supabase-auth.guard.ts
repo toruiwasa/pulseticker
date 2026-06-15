@@ -7,7 +7,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import type { Request } from 'express';
-import { SecureLogger } from '../common/logger/secure-logger';
+import { SecureLogger } from '../common/logger/secure-logger.js';
 
 @Injectable()
 export class SupabaseAuthGuard implements CanActivate {

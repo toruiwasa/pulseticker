@@ -1,7 +1,7 @@
 import { makeWorkerUtils } from 'graphile-worker';
 import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
-import { QueueService } from './queue.service';
+import { QueueService } from './queue.service.js';
 
 jest.mock('graphile-worker', () => ({
   makeWorkerUtils: jest.fn(),

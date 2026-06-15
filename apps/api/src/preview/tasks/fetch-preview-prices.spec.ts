@@ -1,9 +1,9 @@
 import { ConfigService } from '@nestjs/config';
 import { JobHelpers } from 'graphile-worker';
-import { fetchFinnhubQuote } from '../../common/utils/finnhub-quote';
-import { fetchTwelveDataQuote } from '../../common/utils/twelve-data-quote';
-import { PreviewCacheService } from '../preview-cache.service';
-import { makeFetchPreviewPricesTask, __resetForexCacheForTests } from './fetch-preview-prices';
+import { fetchFinnhubQuote } from '../../common/utils/finnhub-quote.js';
+import { fetchTwelveDataQuote } from '../../common/utils/twelve-data-quote.js';
+import { PreviewCacheService } from '../preview-cache.service.js';
+import { makeFetchPreviewPricesTask, __resetForexCacheForTests } from './fetch-preview-prices.js';
 
 jest.mock('../../common/utils/finnhub-quote');
 jest.mock('../../common/utils/twelve-data-quote');

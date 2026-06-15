@@ -2,9 +2,9 @@ import { run } from 'graphile-worker';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Test } from '@nestjs/testing';
-import { SupabaseService } from '../supabase/supabase/supabase.service';
-import { PreviewCacheService } from '../preview/preview-cache.service';
-import { WorkerRunnerService } from './worker-runner.service';
+import { SupabaseService } from '../supabase/supabase/supabase.service.js';
+import { PreviewCacheService } from '../preview/preview-cache.service.js';
+import { WorkerRunnerService } from './worker-runner.service.js';
 
 jest.mock('graphile-worker', () => ({ run: jest.fn() }));
 jest.mock('./tasks/check-price-alert', () => ({ makeCheckPriceAlertTask: jest.fn().mockReturnValue(jest.fn()) }));

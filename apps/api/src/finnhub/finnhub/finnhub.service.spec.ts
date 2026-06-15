@@ -1,11 +1,10 @@
 jest.mock('ws');
 import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import WebSocket from 'ws';
-import { FinnhubService } from './finnhub.service';
-import { PricesGateway } from '../../gateway/prices.gateway';
-import { AlertsService } from '../../alerts/alerts/alerts.service';
-import { LiveCandleCacheService } from '../../chart/live-candle-cache.service';
+import { FinnhubService } from './finnhub.service.js';
+import { AlertsService } from '../../alerts/alerts/alerts.service.js';
 
 const WS_OPEN = 1;
 const WS_CONNECTING = 0;
@@ -43,22 +42,20 @@ afterEach(() => {
 
 async function buildService() {
   const config = { getOrThrow: jest.fn().mockReturnValue('test-key') };
-  const gateway = { broadcastPrice: jest.fn() };
+  const eventEmitter = { emit: jest.fn() };
   const alerts = { checkAlerts: jest.fn() };
-  const cache = { applyTick: jest.fn() };
 
   const moduleRef = await Test.createTestingModule({
     providers: [
       FinnhubService,
       { provide: ConfigService, useValue: config },
-      { provide: PricesGateway, useValue: gateway },
+      { provide: EventEmitter2, useValue: eventEmitter },
       { provide: AlertsService, useValue: alerts },
-      { provide: LiveCandleCacheService, useValue: cache },
     ],
   }).compile();
 
   const service = moduleRef.get(FinnhubService);
-  return { service, gateway, alerts, cache };
+  return { service, eventEmitter, alerts };
 }
 
 describe('FinnhubService', () => {
@@ -134,8 +131,8 @@ describe('FinnhubService', () => {
   });
 
   describe('message handler', () => {
-    it('broadcasts price, checks alerts, and forwards the tick to the cache', async () => {
-      const { service, gateway, alerts, cache } = await buildService();
+    it('emits price.received event and checks alerts', async () => {
+      const { service, eventEmitter, alerts } = await buildService();
       service.onModuleInit();
       const ws = FakeWS.lastInstance;
 
@@ -145,19 +142,18 @@ describe('FinnhubService', () => {
       });
       ws.trigger('message', Buffer.from(msg));
 
-      expect(gateway.broadcastPrice).toHaveBeenCalledWith('AAPL', 185.5, 1000);
+      expect(eventEmitter.emit).toHaveBeenCalledWith('price.received', { symbol: 'AAPL', price: 185.5, ts: 1000 });
       expect(alerts.checkAlerts).toHaveBeenCalledWith('AAPL', 185.5);
-      expect(cache.applyTick).toHaveBeenCalledWith('AAPL', 185.5, 1000);
     });
 
     it('ignores non-trade message types', async () => {
-      const { service, gateway } = await buildService();
+      const { service, eventEmitter } = await buildService();
       service.onModuleInit();
       const ws = FakeWS.lastInstance;
 
       ws.trigger('message', Buffer.from(JSON.stringify({ type: 'ping' })));
 
-      expect(gateway.broadcastPrice).not.toHaveBeenCalled();
+      expect(eventEmitter.emit).not.toHaveBeenCalled();
     });
 
     it('does not throw on invalid JSON', async () => {

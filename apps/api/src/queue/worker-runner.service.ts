@@ -2,11 +2,11 @@ import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Runner, run } from 'graphile-worker';
-import { SupabaseService } from '../supabase/supabase/supabase.service';
-import { PreviewCacheService } from '../preview/preview-cache.service';
-import { makeCheckPriceAlertTask } from './tasks/check-price-alert';
-import { makeFetchPreviewPricesTask } from '../preview/tasks/fetch-preview-prices';
-import { SecureLogger } from '../common/logger/secure-logger';
+import { SupabaseService } from '../supabase/supabase/supabase.service.js';
+import { PreviewCacheService } from '../preview/preview-cache.service.js';
+import { makeCheckPriceAlertTask } from './tasks/check-price-alert.js';
+import { makeFetchPreviewPricesTask } from '../preview/tasks/fetch-preview-prices.js';
+import { SecureLogger } from '../common/logger/secure-logger.js';
 
 @Injectable()
 export class WorkerRunnerService implements OnModuleInit, OnModuleDestroy {

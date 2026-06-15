@@ -1,9 +1,9 @@
 import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
 import { ZodError } from 'zod';
 import { CreateAlertSchema } from '@pulseticker/schemas';
-import { SupabaseAuthGuard } from '../../auth/supabase-auth.guard';
-import type { AuthedRequest } from '../../common/types/authed-request';
-import { AlertsService } from './alerts.service';
+import { SupabaseAuthGuard } from '../../auth/supabase-auth.guard.js';
+import type { AuthedRequest } from '../../common/types/authed-request.js';
+import { AlertsService } from './alerts.service.js';
 
 @UseGuards(SupabaseAuthGuard)
 @Controller('alerts')

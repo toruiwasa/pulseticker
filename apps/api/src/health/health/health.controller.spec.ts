@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { HealthCheckService, MemoryHealthIndicator } from '@nestjs/terminus';
-import { HealthController } from './health.controller';
-import { SupabaseHealthIndicator } from '../supabase.health';
+import { HealthController } from './health.controller.js';
+import { SupabaseHealthIndicator } from '../supabase.health.js';
 
 describe('HealthController', () => {
   let controller: HealthController;

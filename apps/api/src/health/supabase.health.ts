@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { HealthCheckError, HealthIndicator, HealthIndicatorResult } from '@nestjs/terminus';
-import { SupabaseService } from '../supabase/supabase/supabase.service';
+import { SupabaseService } from '../supabase/supabase/supabase.service.js';
 
 @Injectable()
 export class SupabaseHealthIndicator extends HealthIndicator {

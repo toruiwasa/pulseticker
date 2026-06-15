@@ -1,1 +1,1 @@
-export * from './alerts.schema';
+export * from './alerts.schema.js';

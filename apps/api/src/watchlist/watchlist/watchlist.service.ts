@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { SupabaseService } from '../../supabase/supabase/supabase.service';
-import { FinnhubQuote, fetchFinnhubQuote } from '../../common/utils/finnhub-quote';
+import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
+import { FinnhubQuote, fetchFinnhubQuote } from '../../common/utils/finnhub-quote.js';
 
 const DEFAULT_SYMBOLS = ['VOO', 'AAPL', 'MSFT', 'OANDA:AUD_USD', 'OANDA:AUD_JPY'];
 const MAX_WATCHLIST_SIZE = 50;

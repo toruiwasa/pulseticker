@@ -1,7 +1,7 @@
-import { LiveCandleCacheService } from './live-candle-cache.service';
-import { TwelveDataService } from './twelve-data.service';
-import { FinnhubService } from '../finnhub/finnhub/finnhub.service';
-import { CandlePoint } from './chart.types';
+import { LiveCandleCacheService } from './live-candle-cache.service.js';
+import { TwelveDataService } from './twelve-data.service.js';
+import { FinnhubService } from '../finnhub/finnhub/finnhub.service.js';
+import { CandlePoint } from './chart.types.js';
 
 function makeCandles(values: number[]): CandlePoint[] {
   return values.map((v, i) => ({ time: 1_700_000_000 + i * 60, value: v }));

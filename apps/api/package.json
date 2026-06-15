@@ -4,6 +4,7 @@
   "description": "",
   "author": "",
   "private": true,
+  "type": "module",
   "license": "UNLICENSED",
   "scripts": {
     "dev": "nodemon",
@@ -81,7 +82,15 @@
     "rootDir": "src",
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
-      "^.+\\.(t|j)s$": "ts-jest"
+      "^.+\\.(t|j)s$": ["ts-jest", {
+        "tsconfig": { "module": "CommonJS", "moduleResolution": "node", "resolvePackageJsonExports": false }
+      }]
+    },
+    "moduleNameMapper": {
+      "^@pulseticker/schemas$": "<rootDir>/../../../packages/schemas/src/index.ts",
+      "^@pulseticker/logging$": "<rootDir>/../../../packages/logging/src/index.ts",
+      "^@pulseticker/trading-utils$": "<rootDir>/../../../packages/trading-utils/src/index.ts",
+      "^(\\.{1,2}/.*)\\.js$": "$1"
     },
     "collectCoverageFrom": [
       "**/*.(t|j)s"

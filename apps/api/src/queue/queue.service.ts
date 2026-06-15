@@ -1,7 +1,7 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { makeWorkerUtils, WorkerUtils } from 'graphile-worker';
-import { SecureLogger } from '../common/logger/secure-logger';
+import { SecureLogger } from '../common/logger/secure-logger.js';
 
 export interface AlertJobPayload {
   alertId: string;

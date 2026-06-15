@@ -11,9 +11,9 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
-import { SupabaseAuthGuard } from '../../auth/supabase-auth.guard';
-import type { AuthedRequest } from '../../common/types/authed-request';
-import { WatchlistService } from './watchlist.service';
+import { SupabaseAuthGuard } from '../../auth/supabase-auth.guard.js';
+import type { AuthedRequest } from '../../common/types/authed-request.js';
+import { WatchlistService } from './watchlist.service.js';
 
 @UseGuards(SupabaseAuthGuard)
 @Controller('watchlist')

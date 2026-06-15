@@ -1,6 +1,6 @@
 import { BadRequestException, Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { SupabaseAuthGuard } from '../../auth/supabase-auth.guard';
-import { CompanyService } from './company.service';
+import { SupabaseAuthGuard } from '../../auth/supabase-auth.guard.js';
+import { CompanyService } from './company.service.js';
 
 @UseGuards(SupabaseAuthGuard)
 @Controller('company')

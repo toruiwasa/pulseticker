@@ -1,9 +1,9 @@
 import { ConfigService } from '@nestjs/config';
 import { JobHelpers } from 'graphile-worker';
-import { fetchFinnhubQuote, FinnhubQuote } from '../../common/utils/finnhub-quote';
-import { fetchTwelveDataQuote } from '../../common/utils/twelve-data-quote';
-import { toTwelveDataSymbol } from '../../chart/twelve-data-symbol';
-import { PreviewCacheService, PreviewPrice, PREVIEW_SYMBOLS } from '../preview-cache.service';
+import { fetchFinnhubQuote, FinnhubQuote } from '../../common/utils/finnhub-quote.js';
+import { fetchTwelveDataQuote } from '../../common/utils/twelve-data-quote.js';
+import { toTwelveDataSymbol } from '../../chart/twelve-data-symbol.js';
+import { PreviewCacheService, PreviewPrice, PREVIEW_SYMBOLS } from '../preview-cache.service.js';
 
 const FOREX_TTL_MS = 300_000;
 const forexCache = new Map<string, { quote: FinnhubQuote; fetchedAt: number }>();

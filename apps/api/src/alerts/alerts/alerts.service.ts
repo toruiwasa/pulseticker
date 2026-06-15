@@ -1,8 +1,8 @@
 import { Injectable, OnModuleInit } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { SupabaseService } from '../../supabase/supabase/supabase.service';
-import { QueueService } from '../../queue/queue.service';
-import { SecureLogger } from '../../common/logger/secure-logger';
+import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
+import { QueueService } from '../../queue/queue.service.js';
+import { SecureLogger } from '../../common/logger/secure-logger.js';
 
 interface CachedAlert {
   id: string;

@@ -1,8 +1,8 @@
 import { Test } from '@nestjs/testing';
 import { Socket } from 'socket.io';
-import { PricesGateway } from './prices.gateway';
-import { SupabaseService } from '../supabase/supabase/supabase.service';
-import { FinnhubService } from '../finnhub/finnhub/finnhub.service';
+import { PricesGateway } from './prices.gateway.js';
+import { SupabaseService } from '../supabase/supabase/supabase.service.js';
+import { FinnhubService } from '../finnhub/finnhub/finnhub.service.js';
 
 function makeSocket(token?: string): jest.Mocked<Socket> {
   return {
@@ -65,6 +65,17 @@ describe('PricesGateway', () => {
       expect(client.join).toHaveBeenCalledWith('symbol:GOOG');
       expect(finnhub.subscribe).toHaveBeenCalledWith('AAPL');
       expect(finnhub.subscribe).toHaveBeenCalledWith('GOOG');
+    });
+  });
+
+  describe('handlePriceReceived', () => {
+    it('broadcasts the price to the symbol room', () => {
+      const emitFn = jest.fn();
+      const toFn = jest.fn(() => ({ emit: emitFn }));
+      (gateway as unknown as { server: unknown }).server = { to: toFn };
+      gateway.handlePriceReceived({ symbol: 'AAPL', price: 185.5, ts: 1000 });
+      expect(toFn).toHaveBeenCalledWith('symbol:AAPL');
+      expect(emitFn).toHaveBeenCalledWith('price', { symbol: 'AAPL', price: 185.5, ts: 1000 });
     });
   });
 

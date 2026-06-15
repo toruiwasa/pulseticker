@@ -1,7 +1,7 @@
 import { BadRequestException, Controller, Get, Query, UseGuards } from '@nestjs/common';
-import { SupabaseAuthGuard } from '../auth/supabase-auth.guard';
-import { ChartService } from './chart.service';
-import { ChartRange, RESERVED_RANGES, SUPPORTED_RANGES } from './chart.types';
+import { SupabaseAuthGuard } from '../auth/supabase-auth.guard.js';
+import { ChartService } from './chart.service.js';
+import { ChartRange, RESERVED_RANGES, SUPPORTED_RANGES } from './chart.types.js';
 
 @UseGuards(SupabaseAuthGuard)
 @Controller('chart')

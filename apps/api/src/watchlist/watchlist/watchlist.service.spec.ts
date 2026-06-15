@@ -1,8 +1,8 @@
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
-import { SupabaseService } from '../../supabase/supabase/supabase.service';
-import { WatchlistService } from './watchlist.service';
+import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
+import { WatchlistService } from './watchlist.service.js';
 
 type SupabaseMock = {
   from: jest.Mock;

@@ -1,5 +1,5 @@
-import { ChartService } from './chart.service';
-import { LiveCandleCacheService } from './live-candle-cache.service';
+import { ChartService } from './chart.service.js';
+import { LiveCandleCacheService } from './live-candle-cache.service.js';
 
 describe('ChartService', () => {
   let cache: jest.Mocked<LiveCandleCacheService>;

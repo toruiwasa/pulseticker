@@ -1,8 +1,8 @@
 jest.mock('../auth/supabase-auth.guard', () => ({ SupabaseAuthGuard: class {} }));
 
 import { BadRequestException } from '@nestjs/common';
-import { ChartController } from './chart.controller';
-import { ChartService } from './chart.service';
+import { ChartController } from './chart.controller.js';
+import { ChartService } from './chart.service.js';
 
 describe('ChartController', () => {
   let controller: ChartController;

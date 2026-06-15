@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
 import { HealthCheck, HealthCheckService, MemoryHealthIndicator } from '@nestjs/terminus';
-import { SupabaseHealthIndicator } from '../supabase.health';
+import { SupabaseHealthIndicator } from '../supabase.health.js';
 
 @Controller('health')
 export class HealthController {

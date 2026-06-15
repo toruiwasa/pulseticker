@@ -1,5 +1,5 @@
 import { ConfigService } from '@nestjs/config';
-import { TwelveDataService } from './twelve-data.service';
+import { TwelveDataService } from './twelve-data.service.js';
 import { DateTime } from 'luxon';
 
 describe('TwelveDataService', () => {

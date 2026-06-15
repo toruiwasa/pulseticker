@@ -5,7 +5,7 @@
     "ng": "ng",
     "dev": "tsx scripts/set-env.ts && ng serve",
     "start": "ng serve",
-    "build": "tsx scripts/set-env.ts && ng build",
+    "build": "pnpm --filter @pulseticker/schemas --filter @pulseticker/logging --filter @pulseticker/trading-utils build && tsx scripts/set-env.ts && ng build",
     "watch": "ng build --watch --configuration development",
     "test": "ng test --watch=false",
     "test:watch": "ng test",

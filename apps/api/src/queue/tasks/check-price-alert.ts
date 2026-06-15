@@ -1,6 +1,6 @@
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { SupabaseService } from '../../supabase/supabase/supabase.service';
-import { SecureLogger } from '../../common/logger/secure-logger';
+import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
+import { SecureLogger } from '../../common/logger/secure-logger.js';
 
 const logger = new SecureLogger('CheckPriceAlertTask');
 

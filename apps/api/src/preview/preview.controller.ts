@@ -1,9 +1,9 @@
 import { Controller, Get, Sse } from '@nestjs/common';
 import { Observable, concat, from } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { LiveCandleCacheService } from '../chart/live-candle-cache.service';
-import { CandlePoint } from '../chart/chart.types';
-import { PreviewCacheService, PreviewPrice } from './preview-cache.service';
+import { LiveCandleCacheService } from '../chart/live-candle-cache.service.js';
+import { CandlePoint } from '../chart/chart.types.js';
+import { PreviewCacheService, PreviewPrice } from './preview-cache.service.js';
 
 export interface PreviewSnapshot {
   prices:  PreviewPrice[];

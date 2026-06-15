@@ -1,10 +1,9 @@
 import { forwardRef, Inject, Injectable, OnModuleInit } from '@nestjs/common';
-import { SecureLogger } from '../../common/logger/secure-logger';
+import { SecureLogger } from '../../common/logger/secure-logger.js';
 import { ConfigService } from '@nestjs/config';
+import { EventEmitter2 } from '@nestjs/event-emitter';
 import WebSocket from 'ws';
-import { PricesGateway } from '../../gateway/prices.gateway';
-import { AlertsService } from '../../alerts/alerts/alerts.service';
-import { LiveCandleCacheService } from '../../chart/live-candle-cache.service';
+import { AlertsService } from '../../alerts/alerts/alerts.service.js';
 
 // Finnhub free plan: 1 concurrent WS connection per API key.
 // reconnectDelay doubles on each close, up to maxDelay.
@@ -28,9 +27,8 @@ export class FinnhubService implements OnModuleInit {
 
   constructor(
     private config: ConfigService,
-    @Inject(forwardRef(() => PricesGateway)) private gateway: PricesGateway,
+    private eventEmitter: EventEmitter2,
     @Inject(forwardRef(() => AlertsService)) private alertsService: AlertsService,
-    @Inject(forwardRef(() => LiveCandleCacheService)) private cache: LiveCandleCacheService,
   ) {}
 
   onModuleInit() {
@@ -63,9 +61,8 @@ export class FinnhubService implements OnModuleInit {
         const msg = JSON.parse(data.toString()) as { type: string; data?: { s: string; p: number; t: number }[] };
         if (msg.type === 'trade' && msg.data) {
           for (const trade of msg.data) {
-            this.gateway.broadcastPrice(trade.s, trade.p, trade.t);
+            this.eventEmitter.emit('price.received', { symbol: trade.s, price: trade.p, ts: trade.t });
             this.alertsService.checkAlerts(trade.s, trade.p);
-            this.cache.applyTick(trade.s, trade.p, trade.t);
           }
         }
       } catch {

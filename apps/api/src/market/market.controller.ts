@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common';
-import { isMarketOpen } from '../common/utils/market-hours';
+import { isMarketOpen } from '../common/utils/market-hours.js';
 
 @Controller('market')
 export class MarketController {

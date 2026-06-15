@@ -1,8 +1,8 @@
 import { Test } from '@nestjs/testing';
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { SupabaseService } from '../../supabase/supabase/supabase.service';
-import { QueueService } from '../../queue/queue.service';
-import { AlertsService } from './alerts.service';
+import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
+import { QueueService } from '../../queue/queue.service.js';
+import { AlertsService } from './alerts.service.js';
 
 type MockSupabase = { from: jest.Mock };
 

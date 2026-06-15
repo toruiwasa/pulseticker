@@ -6,7 +6,7 @@ import {
   FinnhubMetric,
   FinnhubNewsItem,
   FinnhubProfile2,
-} from './company.types';
+} from './company.types.js';
 
 const FINNHUB_BASE = 'https://finnhub.io/api/v1';
 const TTL_MS = 5 * 60 * 1000;

@@ -1,5 +1,5 @@
 import { DateTime } from 'luxon';
-import { US_MARKET_HOLIDAYS } from './holidays';
+import { US_MARKET_HOLIDAYS } from './holidays.js';
 
 const ET_ZONE = 'America/New_York';
 

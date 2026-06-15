@@ -1,5 +1,5 @@
 import { EventEmitter2 } from '@nestjs/event-emitter';
-import { makeCheckPriceAlertTask } from './check-price-alert';
+import { makeCheckPriceAlertTask } from './check-price-alert.js';
 
 interface AlertRow {
   id: string;

@@ -1,4 +1,4 @@
-import { fetchTwelveDataQuote } from './twelve-data-quote';
+import { fetchTwelveDataQuote } from './twelve-data-quote.js';
 
 describe('fetchTwelveDataQuote', () => {
   const originalFetch = global.fetch;

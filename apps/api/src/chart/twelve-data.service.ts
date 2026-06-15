@@ -1,9 +1,9 @@
 import { Injectable } from '@nestjs/common';
-import { SecureLogger } from '../common/logger/secure-logger';
+import { SecureLogger } from '../common/logger/secure-logger.js';
 import { ConfigService } from '@nestjs/config';
 import { DateTime } from 'luxon';
-import { CandlePoint, ChartRange } from './chart.types';
-import { toTwelveDataSymbol } from './twelve-data-symbol';
+import { CandlePoint, ChartRange } from './chart.types.js';
+import { toTwelveDataSymbol } from './twelve-data-symbol.js';
 
 interface TwelveDataValue {
   datetime: string;

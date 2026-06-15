@@ -1,4 +1,4 @@
-import { PreviewCacheService, PREVIEW_SYMBOLS } from './preview-cache.service';
+import { PreviewCacheService, PREVIEW_SYMBOLS } from './preview-cache.service.js';
 
 describe('PreviewCacheService', () => {
   let service: PreviewCacheService;

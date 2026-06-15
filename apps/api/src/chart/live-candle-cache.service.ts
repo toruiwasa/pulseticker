@@ -1,7 +1,8 @@
-import { forwardRef, Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { FinnhubService } from '../finnhub/finnhub/finnhub.service';
-import { CandlePoint, ChartRange } from './chart.types';
-import { TwelveDataService } from './twelve-data.service';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { OnEvent } from '@nestjs/event-emitter';
+import { FinnhubService } from '../finnhub/finnhub/finnhub.service.js';
+import { CandlePoint, ChartRange } from './chart.types.js';
+import { TwelveDataService } from './twelve-data.service.js';
 
 interface CacheEntry {
   candles: CandlePoint[];
@@ -23,7 +24,7 @@ export class LiveCandleCacheService implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     private twelveData: TwelveDataService,
-    @Inject(forwardRef(() => FinnhubService)) private finnhub: FinnhubService,
+    private finnhub: FinnhubService,
   ) {}
 
   onModuleInit() {
@@ -59,6 +60,11 @@ export class LiveCandleCacheService implements OnModuleInit, OnModuleDestroy {
     } finally {
       this.inflight.delete(key);
     }
+  }
+
+  @OnEvent('price.received')
+  handlePriceReceived(payload: { symbol: string; price: number; ts: number }) {
+    this.applyTick(payload.symbol, payload.price, payload.ts);
   }
 
   /**

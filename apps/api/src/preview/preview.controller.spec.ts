@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { firstValueFrom, take, toArray } from 'rxjs';
-import { PreviewController } from './preview.controller';
-import { PreviewCacheService, PREVIEW_SYMBOLS } from './preview-cache.service';
-import { LiveCandleCacheService } from '../chart/live-candle-cache.service';
+import { PreviewController } from './preview.controller.js';
+import { PreviewCacheService, PREVIEW_SYMBOLS } from './preview-cache.service.js';
+import { LiveCandleCacheService } from '../chart/live-candle-cache.service.js';
 
 const makeNullPrices = () =>
   PREVIEW_SYMBOLS.map(s => ({ symbol: s.display, raw: s.raw, price: null, percentChange: null, ts: 0 }));

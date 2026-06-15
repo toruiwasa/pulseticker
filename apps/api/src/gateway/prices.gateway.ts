@@ -5,12 +5,12 @@ import {
   WebSocketGateway,
   WebSocketServer,
 } from '@nestjs/websockets';
-import { forwardRef, Inject } from '@nestjs/common';
-import { SecureLogger } from '../common/logger/secure-logger';
+
+import { SecureLogger } from '../common/logger/secure-logger.js';
 import { OnEvent } from '@nestjs/event-emitter';
 import { Server, Socket } from 'socket.io';
-import { FinnhubService } from '../finnhub/finnhub/finnhub.service';
-import { SupabaseService } from '../supabase/supabase/supabase.service';
+import { FinnhubService } from '../finnhub/finnhub/finnhub.service.js';
+import { SupabaseService } from '../supabase/supabase/supabase.service.js';
 
 interface AlertTriggeredPayload {
   alertId: string;
@@ -29,7 +29,7 @@ export class PricesGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   constructor(
     private supabase: SupabaseService,
-    @Inject(forwardRef(() => FinnhubService)) private finnhub: FinnhubService,
+    private finnhub: FinnhubService,
   ) {}
 
   async handleConnection(client: Socket) {
@@ -68,6 +68,11 @@ export class PricesGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   broadcastPrice(symbol: string, price: number, ts: number) {
     this.server.to(`symbol:${symbol}`).emit('price', { symbol, price, ts });
+  }
+
+  @OnEvent('price.received')
+  handlePriceReceived(payload: { symbol: string; price: number; ts: number }) {
+    this.broadcastPrice(payload.symbol, payload.price, payload.ts);
   }
 
   @OnEvent('alert.triggered')

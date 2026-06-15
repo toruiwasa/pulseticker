@@ -1,9 +1,9 @@
 jest.mock('../../auth/supabase-auth.guard', () => ({ SupabaseAuthGuard: class {} }));
 
 import { BadRequestException } from '@nestjs/common';
-import { WatchlistController } from './watchlist.controller';
-import { WatchlistService } from './watchlist.service';
-import type { AuthedRequest } from '../../common/types/authed-request';
+import { WatchlistController } from './watchlist.controller.js';
+import { WatchlistService } from './watchlist.service.js';
+import type { AuthedRequest } from '../../common/types/authed-request.js';
 
 function authedReq(userId = 'u1'): AuthedRequest {
   return { user: { userId, email: 'x@y.com' } } as AuthedRequest;

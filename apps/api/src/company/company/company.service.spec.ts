@@ -1,7 +1,7 @@
 import { Test } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { BadRequestException } from '@nestjs/common';
-import { CompanyService } from './company.service';
+import { CompanyService } from './company.service.js';
 
 const MOCK_PROFILE = {
   name: 'Apple Inc',

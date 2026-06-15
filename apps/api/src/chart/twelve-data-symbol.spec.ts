@@ -1,4 +1,4 @@
-import { toTwelveDataSymbol } from './twelve-data-symbol';
+import { toTwelveDataSymbol } from './twelve-data-symbol.js';
 
 describe('toTwelveDataSymbol', () => {
   it('passes US equity symbols through unchanged', () => {
