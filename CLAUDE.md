@@ -29,6 +29,16 @@ See [PLAN.md](./PLAN.md) for the full implementation plan including:
 - Deployment checklist (Render + Vercel)
 - Known pitfalls (circular deps, WebSocket guards, Graphile Worker requires Session Pooler DATABASE_URL on IPv4 platforms like Render)
 
+## Planning Workflow
+
+When a new requirement comes in, follow this order — **never skip straight to writing a plan file**:
+
+1. **Discuss first** — Ask clarifying questions in conversation. Surface ambiguities, trade-offs, and better alternatives before any exploration.
+2. **Read the codebase** — Understand the relevant existing implementation before proposing anything. Point out what already exists and how the new feature fits.
+3. **Agree on the spec** — Reach consensus in conversation. The plan file is written once, at the end, as a record of what was already agreed.
+
+The plan file is a **record of agreed decisions**, not a draft to iterate on.
+
 ## Git Workflow
 
 - **Branch per task**: Always create a new branch before starting any task (`git checkout -b <short-descriptor>`).
