@@ -31,7 +31,9 @@ See [PLAN.md](./PLAN.md) for the full implementation plan including:
 
 ## Planning Workflow
 
-When a new requirement comes in, follow this order — **never skip straight to writing a plan file**:
+See [SDLC.md](./SDLC.md) for the full development lifecycle — phases, skill assignments, exit criteria, and fast paths.
+
+Before invoking any skill:
 
 1. **Discuss first** — Ask clarifying questions in conversation. Surface ambiguities, trade-offs, and better alternatives before any exploration.
 2. **Read the codebase** — Understand the relevant existing implementation before proposing anything. Point out what already exists and how the new feature fits.
