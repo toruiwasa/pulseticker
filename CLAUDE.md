@@ -61,6 +61,7 @@ The plan file is a **record of agreed decisions**, not a draft to iterate on.
 - **Coverage target**: 90–95% per changed file. Verify with `pnpm --filter api test:cov` / `pnpm --filter web test:cov`.
 - **No Angular TestBed for pure logic**: Pipes and utility functions are instantiated directly in Jest.
 - **Mock external I/O**: Supabase client, `fetch`, and Socket.io are always mocked — never hit real services in unit tests.
+- **Coverage package version pinning**: When installing `@vitest/coverage-v8` or `@vitest/coverage-istanbul`, pin to the exact same version as `vitest` already in the project (`pnpm add -D @vitest/coverage-v8@$(node -p "require('./node_modules/vitest/package.json').version") --filter web`). A version mismatch creates two vitest instances and silently breaks `vi.mock()` intercepts.
 
 ## Validation
 

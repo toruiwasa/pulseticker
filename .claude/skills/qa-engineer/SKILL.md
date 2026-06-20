@@ -119,6 +119,8 @@ Work through each category. Not all apply to every feature — skip what is not 
 - User signs out in a second tab while still active in the first
 - User visits a protected route while unauthenticated (guard behavior)
 - Supabase RLS blocks a query unexpectedly (returns empty array instead of an error)
+- **Supabase OAuth provider defaults**: does Supabase add scopes or metadata fields that the client cannot override? (e.g. Google provider always requests `profile` regardless of the `scopes` option — any client-side restriction will silently fail)
+- **Email conflict across providers**: if a new OAuth provider is being added, confirm Supabase's email-linking behavior (auto-link vs. separate account creation) before launch — this is a project Auth setting, not a code setting
 
 ### Infrastructure
 

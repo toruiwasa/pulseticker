@@ -101,6 +101,14 @@ Flag:
 - Nullable columns have a documented reason — prefer NOT NULL with a default
 - Timestamps (`created_at`, `updated_at`) use `DEFAULT now()` and are not nullable
 
+### Supabase OAuth provider behavior
+
+If the feature involves OAuth sign-in via Supabase, verify provider-specific constraints before designing any client-side override:
+
+- **Google**: Supabase always requests `openid email profile` for Google regardless of the `scopes` field passed to `signInWithOAuth`. Client-side scope restrictions are silently ignored. Document this as a known limitation rather than attempting an override that will not take effect.
+- **Email linking**: Supabase's behavior when a new OAuth provider uses an email already registered via another provider (auto-link vs. separate account) depends on the project's Auth settings. Confirm and document the expected behavior before launch.
+- Any attempt to restrict OAuth scopes or user metadata collection that Supabase adds by default must be verified to actually work — silence from the provider does not confirm the restriction was applied.
+
 ### RLS policies
 
 - Policies are per-operation: SELECT, INSERT, UPDATE, DELETE have separate policies

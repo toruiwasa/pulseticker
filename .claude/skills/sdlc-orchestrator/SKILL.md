@@ -348,6 +348,18 @@ Phases 1–7 skipped. Retrospective is not optional after an emergency fix.
 
 ---
 
+### Minimum artifact when skipping Phase 3 (Task Breakdown)
+
+When `task-breakdown` is skipped on any fast path, the plan file **must** contain — for each changed file — the equivalent of a task-breakdown test boundary entry before Phase 7 begins:
+
+- **Boundary**: what method, controller, guard, or pipe is being tested
+- **Mock**: what is stubbed and what it returns
+- **Assertion**: what the test verifies
+
+Phase 7 (`test-engineer`) may not begin until this information is present in the plan file. If it is missing, invoke `task-breakdown` for a single-pass abbreviated run before proceeding.
+
+---
+
 ## Hard Rules
 
 **DO NOT:**
@@ -357,6 +369,7 @@ Phases 1–7 skipped. Retrospective is not optional after an emergency fix.
 - Skip `test-engineer` — test strategy must be designed before, not after, implementation
 - Skip `retrospective-engine` after any session that produced rework or an emergency fix
 - Treat any skip as implicit — always state why a phase is being skipped
+- Allow Phase 7 to begin if Phase 3 was skipped and the plan file has no test boundary entries
 
 **ALWAYS:**
 - Identify the current phase by name
