@@ -70,10 +70,46 @@ describe('AuthService', () => {
   });
 
   describe('signInWithGitHub()', () => {
-    it('calls signInWithOAuth with provider "github"', () => {
+    it('calls signInWithOAuth with provider "github" and /auth/callback redirectTo', () => {
       mockSignInWithOAuth.mockResolvedValue({ data: {}, error: null });
       service.signInWithGitHub();
       expect(mockSignInWithOAuth).toHaveBeenCalledWith(
+        expect.objectContaining({
+          provider: 'github',
+          options: expect.objectContaining({
+            redirectTo: expect.stringContaining('/auth/callback'),
+          }),
+        }),
+      );
+    });
+
+    it('does not call signInWithOAuth with provider "google"', () => {
+      mockSignInWithOAuth.mockResolvedValue({ data: {}, error: null });
+      service.signInWithGitHub();
+      expect(mockSignInWithOAuth).not.toHaveBeenCalledWith(
+        expect.objectContaining({ provider: 'google' }),
+      );
+    });
+  });
+
+  describe('signInWithGoogle()', () => {
+    it('calls signInWithOAuth with provider "google" and /auth/callback redirectTo', () => {
+      mockSignInWithOAuth.mockResolvedValue({ data: {}, error: null });
+      service.signInWithGoogle();
+      expect(mockSignInWithOAuth).toHaveBeenCalledWith(
+        expect.objectContaining({
+          provider: 'google',
+          options: expect.objectContaining({
+            redirectTo: expect.stringContaining('/auth/callback'),
+          }),
+        }),
+      );
+    });
+
+    it('does not call signInWithOAuth with provider "github"', () => {
+      mockSignInWithOAuth.mockResolvedValue({ data: {}, error: null });
+      service.signInWithGoogle();
+      expect(mockSignInWithOAuth).not.toHaveBeenCalledWith(
         expect.objectContaining({ provider: 'github' }),
       );
     });

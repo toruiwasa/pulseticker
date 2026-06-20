@@ -27,8 +27,17 @@ export class AuthService {
 
   signInWithGitHub() {
     this.logger.info('AUTH', 'signInWithGitHub started');
+    return this.signInWithOAuth('github');
+  }
+
+  signInWithGoogle() {
+    this.logger.info('AUTH', 'signInWithGoogle started');
+    return this.signInWithOAuth('google');
+  }
+
+  private signInWithOAuth(provider: 'github' | 'google') {
     return this.supabase.auth.signInWithOAuth({
-      provider: 'github',
+      provider,
       options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
   }

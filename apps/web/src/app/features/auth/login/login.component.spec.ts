@@ -22,12 +22,12 @@ const mockPrices: PreviewPrice[] = [
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
-  let authSpy: { signInWithGitHub: ReturnType<typeof vi.fn> };
+  let authSpy: { signInWithGitHub: ReturnType<typeof vi.fn>; signInWithGoogle: ReturnType<typeof vi.fn> };
   let previewSpy: { getPriceStream: ReturnType<typeof vi.fn> };
   let prices$: Subject<PreviewSnapshot>;
 
   beforeEach(async () => {
-    authSpy = { signInWithGitHub: vi.fn() };
+    authSpy = { signInWithGitHub: vi.fn(), signInWithGoogle: vi.fn() };
     prices$ = new Subject<PreviewSnapshot>();
     previewSpy = { getPriceStream: vi.fn().mockReturnValue(prices$) };
 
@@ -55,7 +55,14 @@ describe('LoginComponent', () => {
 
   it('login() calls auth.signInWithGitHub()', () => {
     component.login();
-    expect(authSpy.signInWithGitHub).toHaveBeenCalled();
+    expect(authSpy.signInWithGitHub).toHaveBeenCalledOnce();
+    expect(authSpy.signInWithGoogle).not.toHaveBeenCalled();
+  });
+
+  it('loginWithGoogle() calls auth.signInWithGoogle()', () => {
+    component.loginWithGoogle();
+    expect(authSpy.signInWithGoogle).toHaveBeenCalledOnce();
+    expect(authSpy.signInWithGitHub).not.toHaveBeenCalled();
   });
 
   it('unsubscribes from stream on destroy', () => {
