@@ -54,6 +54,7 @@ The plan file is a **record of agreed decisions**, not a draft to iterate on.
 - NestJS + Angular are intentional learning targets (developer has 6yr TS/Node/React experience but is new to both frameworks)
 - Commit once per completed feature (not per file)
 - **Library-first UI**: Always prefer existing library components (Taiga UI, Angular CDK) over custom HTML + CSS implementations. Writing custom UI or logic without justification is NG. Taiga UI components are customizable via CSS custom properties (`--tui-*`) — override tokens in `styles.css` rather than reimplementing from scratch.
+- **Library-source-first debugging**: When a library or framework behaves unexpectedly (returns null, fires at the wrong time, races with another system), read the library source before attempting a fix. Empirical trial-and-error without reading the source produces multiple fix commits for the same root cause. Minimum: read the relevant method, check the changelog, search the issue tracker for the exact symptom.
 
 ## Testing
 
@@ -91,6 +92,7 @@ The plan file is a **record of agreed decisions**, not a draft to iterate on.
 ## Planning Artifacts
 
 - `plans/` is committed to the repository. It contains per-requirement planning documents and mockups (e.g. `plans/REQ-13_Mockup.png`). Always commit new files added here.
+- **Debug session records**: When a non-obvious bug requires more than one fix attempt — especially involving library internals, async timing, or framework integration — create `plans/DEBUG_<topic>.md` capturing: observed symptom, hypotheses tested and why each was rejected, library source / changelog / issues consulted, and the final root cause. Commit the file alongside the fix commit. This is the only way to answer "why was this approach chosen?" in a future retrospective.
 
 ## Logging Strategy
 
