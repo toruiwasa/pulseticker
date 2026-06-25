@@ -5,11 +5,12 @@ description: >
   when unsure which skill to invoke next. Identifies the current delivery phase,
   checks exit criteria, and recommends the next skill. Coordinates all 10
   project skills in the correct order: product-discovery → task-breakdown →
-  architecture-review → ux-designer → qa-engineer → test-engineer →
-  backend-engineer / frontend-engineer / devops-engineer → qa-engineer →
-  retrospective-engine. Also provides fast paths for bug fixes, documentation,
-  and emergency production fixes. Does NOT implement code, design wireframes,
-  or make product decisions itself.
+  GitHub Issue creation (Phase 3.5) → architecture-review → ux-designer →
+  qa-engineer → test-engineer → backend-engineer / frontend-engineer /
+  devops-engineer (PR per task) → qa-engineer → retrospective-engine. Also
+  provides fast paths for bug fixes, documentation, and emergency production
+  fixes. Does NOT implement code, design wireframes, or make product decisions
+  itself.
 ---
 
 # SDLC Orchestrator
@@ -114,6 +115,26 @@ Never jump to implementation. Every significant feature must pass through the ap
 
 ---
 
+### Phase 3.5 — GitHub Issue Creation
+
+**Purpose**: Translate the approved task list into trackable GitHub Issues before implementation begins.
+
+**Invoke**: `gh issue create` shell script (produced by `task-breakdown` sub-output 7 — not a separate skill invocation)
+
+**Expected outputs**:
+- One GitHub Issue per task from the task-breakdown
+- Issue body contains: Goal, Scope, Test boundary, branch name, Risk level
+- Issues labelled `task` + layer (`backend`, `frontend`, `mobile`, `infra`, `shared-pkg`)
+- Issue numbers recorded in `plans/REQ-XX_*.md`
+
+**Exit criteria**:
+- [ ] Every task has a corresponding open GitHub Issue
+- [ ] Issue numbers committed to the plans file
+
+**Skip when**: Fast-path doc commit, or single-task emergency fix where issue would open and close in < 30 minutes.
+
+---
+
 ### Phase 4 — Architecture Review
 
 **Purpose**: Validate the technical approach and catch design defects before a line of code is written.
@@ -212,11 +233,14 @@ Never jump to implementation. Every significant feature must pass through the ap
 - Working implementation on a `feat/<name>` branch
 - Tests passing at 90–95% per changed file
 - No `console.log`, `any`, or class-validator in changed files
+- One merged PR per task, with `Closes #<N>` in the body
+- Corresponding GitHub Issue auto-closed by the merge
 
 **Exit criteria**:
 - Feature complete and tests pass
 - Coverage target met (run `pnpm --filter api test:cov` / `pnpm --filter web test:cov`)
-- Branch ready for QA gate
+- PR merged to main — never a direct push
+- GitHub Issue closed and linked to the PR
 
 ---
 
@@ -270,11 +294,12 @@ Never jump to implementation. Every significant feature must pass through the ap
 Phase 1 (Discovery)
 → Phase 2 (Prioritization & Roadmap)
 → Phase 3 (Task Breakdown)
+→ Phase 3.5 (GitHub Issue Creation)
 → Phase 4 (Architecture Review)
 → Phase 5 (UX Design — if frontend)
 → Phase 6 (QA Gate)
 → Phase 7 (Test Design)
-→ Phase 8 (Implementation)
+→ Phase 8 (Implementation — per task: branch → implement → PR → merge → issue closes)
 → Phase 9 (Release QA Gate)
 → Phase 10 (Retrospective)
 ```
@@ -287,9 +312,10 @@ Phase 1 (Discovery)
 
 ```
 Phase 3 (Task Breakdown — simplified, one task)
+→ Phase 3.5 (GitHub Issue Creation — one issue)
 → Phase 4 (Architecture Review — only if touching a module boundary)
 → Phase 7 (Test Design — must cover the regression case)
-→ Phase 8 (Implementation)
+→ Phase 8 (Implementation → PR → merge → issue closes)
 → Phase 9 (Release QA Gate)
 ```
 
@@ -376,6 +402,10 @@ Phase 7 (`test-engineer`) may not begin until this information is present in the
 - Check exit criteria before recommending advancement
 - Name the specific skill to invoke next
 - Explain the risk if a phase is proposed to be skipped
+- Confirm the task's GitHub Issue is open before branching for implementation
+- Include `Closes #<issue-number>` in every PR body
+- Merge via PR — never push directly to main
+- Verify the GitHub Issue is closed after the PR merges
 
 ---
 
@@ -407,6 +437,7 @@ Reason: [why this skill, why now]
 | 1 — Discovery | ✅ Completed / 🔄 In Progress / ⛔ Blocked / ⬜ Not Started |
 | 2 — Prioritization & Roadmap | ... |
 | 3 — Task Breakdown | ... |
+| 3.5 — GitHub Issue Creation | ... |
 | 4 — Architecture Review | ... |
 | 5 — UX Design | ... |
 | 6 — QA Gate (pre-impl) | ... |

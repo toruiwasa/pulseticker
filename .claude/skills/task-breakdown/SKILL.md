@@ -203,6 +203,33 @@ First task: Task N — [title]
 Reason: [why this is the correct entry point]
 ```
 
+### 7. GitHub Issue Creation Script
+
+Provide a ready-to-run shell script that opens one GitHub Issue per task. **This script is a required output — the task-breakdown is not complete until this script is produced.**
+
+```bash
+# Run from the repo root after the user approves the task-breakdown
+
+gh issue create \
+  --title "Task 1 — <title>" \
+  --body "**Goal**: <goal>
+
+**Scope**: <scope>
+
+**Branch**: \`<branch>\`
+**Test boundary**: <test boundary>
+**Risk**: <LOW|MEDIUM|HIGH>" \
+  --label "task,<layer>"
+
+gh issue create \
+  --title "Task 2 — <title>" \
+  ...
+```
+
+Labels: always include `task` plus one of `backend`, `frontend`, `mobile`, `infra`, `shared-pkg`.
+
+After running this script, record the returned issue numbers in `plans/REQ-XX_*.md` before branching for any task.
+
 ---
 
 ## Hard Rules
@@ -219,7 +246,7 @@ Reason: [why this is the correct entry point]
 - Respect the Finnhub Free Tier gate
 - Flag migration tasks before any task that depends on the new schema
 - Prefer vertical slices over horizontal layers
-- End every output with the Skill Assignment Table and Start Here pointer
+- End every output with the Skill Assignment Table, Start Here pointer, and GitHub Issue Creation Script
 
 ---
 

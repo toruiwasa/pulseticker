@@ -44,8 +44,15 @@ The plan file is a **record of agreed decisions**, not a draft to iterate on.
 ## Git Workflow
 
 - **Branch per task**: Always create a new branch before starting any task (`git checkout -b <short-descriptor>`).
-- Commit on the branch; merge into `main` when the task is complete.
-- Branch names should be short and descriptive (e.g. `feat/symbol-search`, `fix/alert-oanda-display`).
+- Commit on the branch; merge into `main` when the task is complete via a Pull Request.
+- Branch names must match the task's branch name from the task-breakdown output (e.g. `feat/symbol-search`, `fix/alert-oanda-display`).
+
+### GitHub Issues + PR rules (mandatory for every task)
+
+1. **After task-breakdown**: Open one GitHub Issue per task using `gh issue create`. Title = task title from the breakdown. Body = Goal + Scope + Test boundary. Label with `task` and the layer (`backend`, `frontend`, `mobile`, `infra`, `shared-pkg`).
+2. **Before starting a task**: Run `gh issue list` to confirm the issue is open. Reference the issue number in the branch if helpful (e.g. `feat/42-symbol-search`).
+3. **After implementation**: Create a PR with `gh pr create`. The PR body must include `Closes #<issue-number>` so GitHub auto-closes the issue on merge. Merge with `gh pr merge --squash` (or `--merge` for multi-commit PRs).
+4. **One issue = one branch = one PR = one merge.** Never merge directly to main without a PR.
 
 ## Key Principles
 
