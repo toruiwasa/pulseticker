@@ -225,7 +225,7 @@ For a portfolio project, a score above 6 should trigger a "can we deliver the sa
 [Justification — what must change before implementation begins, if anything]
 
 ## Handoffs
-- frontend-reviewer: [specific Angular findings to enforce during implementation]
+- frontend-engineer: [specific Angular findings to enforce during implementation]
 - devops-engineer: [specific infra concerns: env vars, migration, Render config]
 ```
 
@@ -241,7 +241,7 @@ Omit any section with no findings. Always include Complexity Score and Final Ver
 
 | Finding | Handoff |
 |---|---|
-| Angular patterns, TUI compliance, state ownership | `frontend-reviewer` |
+| Angular patterns, TUI compliance, state ownership | `frontend-engineer` |
 | NestJS module structure, WebSocket guards, Graphile Worker config | Backend Engineer |
 | Env vars, DATABASE_URL, Render/Vercel config changes | `devops-engineer` |
 | Supabase schema changes | `devops-engineer` (migration dry-run required) |

@@ -6,7 +6,7 @@ description: >
   checks exit criteria, and recommends the next skill. Coordinates all 10
   project skills in the correct order: product-discovery → task-breakdown →
   architecture-review → ux-designer → qa-engineer → test-engineer →
-  backend-engineer / frontend-reviewer / devops-engineer → qa-engineer →
+  backend-engineer / frontend-engineer / devops-engineer → qa-engineer →
   retrospective-engine. Also provides fast paths for bug fixes, documentation,
   and emergency production fixes. Does NOT implement code, design wireframes,
   or make product decisions itself.
@@ -19,7 +19,7 @@ You are the SDLC Coordinator for pulseticker. You determine what phase the deliv
 You are NOT:
 - A product manager (that is `product-discovery`)
 - An architect (that is `architecture-review`)
-- An implementer (that is `backend-engineer`, `frontend-reviewer`, `devops-engineer`)
+- An implementer (that is `backend-engineer`, `frontend-engineer`, `devops-engineer`)
 - A QA engineer (that is `qa-engineer`)
 
 Your only job is to keep delivery disciplined and prevent premature implementation.
@@ -45,7 +45,7 @@ Never jump to implementation. Every significant feature must pass through the ap
 | `qa-engineer` | Quality gate: missing requirements, edge cases, release readiness |
 | `test-engineer` | Test strategy, test cases, coverage design |
 | `backend-engineer` | NestJS implementation and review |
-| `frontend-reviewer` | Angular implementation and review |
+| `frontend-engineer` | Angular implementation and review |
 | `devops-engineer` | CI/CD, migrations, deployment, secrets |
 | `retrospective-engine` | Post-session improvement of the skill system itself |
 
@@ -150,7 +150,7 @@ Never jump to implementation. Every significant feature must pass through the ap
 - Wireframes (ASCII or prose) for every state: loading, empty, error, stale data, success
 - Component map (which TUI component for each element)
 - Design tokens and copy
-- Open questions for `frontend-reviewer`
+- Open questions for `frontend-engineer`
 
 **Exit criteria**:
 - All UI states are specified (not just the happy path)
@@ -205,7 +205,7 @@ Never jump to implementation. Every significant feature must pass through the ap
 | What is being built | Skill |
 |---|---|
 | NestJS modules, controllers, services, gateways, jobs | `backend-engineer` |
-| Angular components, services, guards, pipes | `frontend-reviewer` |
+| Angular components, services, guards, pipes | `frontend-engineer` |
 | CI/CD, migrations, env vars, Render/Vercel config | `devops-engineer` |
 
 **Expected outputs**:
@@ -307,7 +307,7 @@ Phase 1/2 (Discovery/Roadmap — if new feature)
 → Phase 5 (UX Design)
 → Phase 6 (QA Gate)
 → Phase 7 (Test Design)
-→ Phase 8 (frontend-reviewer only)
+→ Phase 8 (frontend-engineer only)
 → Phase 9 (Release QA Gate)
 ```
 
@@ -325,7 +325,7 @@ Phase 3 (Task Breakdown)
 → Phase 9 (Release QA Gate)
 ```
 
-Skip: `ux-designer`, `frontend-reviewer`.
+Skip: `ux-designer`, `frontend-engineer`.
 Add `devops-engineer` if env vars or deployment config changes.
 
 ---

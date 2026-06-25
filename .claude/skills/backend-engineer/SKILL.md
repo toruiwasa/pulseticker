@@ -337,7 +337,7 @@ Avoid designs that require touching 5 files to add one new alert condition.
 ## Handoffs
 - devops-engineer: [migration dry-run required / env var changes]
 - test-engineer: [test boundaries to cover]
-- frontend-reviewer: [API contract changes that affect apps/web]
+- frontend-engineer: [API contract changes that affect apps/web]
 ```
 
 Omit any section with no findings. Always include Complexity Score and Final Verdict.
@@ -355,4 +355,4 @@ Omit any section with no findings. Always include Complexity Score and Final Ver
 |---|---|
 | Schema change or migration needed | `devops-engineer` (dry-run required) |
 | Test boundary specification | `test-engineer` |
-| API contract change that affects frontend | `frontend-reviewer` |
+| API contract change that affects frontend | `frontend-engineer` |

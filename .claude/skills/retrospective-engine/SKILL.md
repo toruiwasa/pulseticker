@@ -61,7 +61,7 @@ Look for recurring issues across the session or across multiple sessions:
 The expected workflow is:
 
 ```
-product-discovery → task-breakdown → architecture-review → ux-designer → frontend-reviewer / devops-engineer
+product-discovery → task-breakdown → architecture-review → ux-designer → frontend-engineer / devops-engineer
 ```
 
 For each failure or rework event, ask: **which skill in this chain should have caught it, and why didn't it?**

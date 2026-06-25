@@ -81,7 +81,7 @@ Only start implementation after Phase 8 is approved.
 | What | Skill |
 |---|---|
 | NestJS modules, controllers, services, gateways, jobs | `backend-engineer` |
-| Angular components, services, guards, pipes | `frontend-reviewer` |
+| Angular components, services, guards, pipes | `frontend-engineer` |
 | Migrations, CI/CD, env vars, Render/Vercel config | `devops-engineer` |
 
 **Exit criteria**:
@@ -121,7 +121,7 @@ Skip Phases 1–4. Simplified Phase 5 (one task). Phase 6 only if touching a mod
 Phases 8, 9 (implementation), 10 required. Phase 11 recommended if the bug exposed a systemic gap.
 
 ### Frontend-only change
-Skip `backend-engineer`. Core path: 5 → 6 → 7 → 8 → 9 (`frontend-reviewer`) → 10.
+Skip `backend-engineer`. Core path: 5 → 6 → 7 → 8 → 9 (`frontend-engineer`) → 10.
 
 ### Backend-only change
 Skip `ux-designer`. Core path: 5 → 6 → 8 → 9 (`backend-engineer`) → 10.

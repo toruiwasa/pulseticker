@@ -5,10 +5,10 @@ description: >
   feature idea into a structured, prioritized plan before any code is written.
   Operates in 4 explicit modes: Problem Analysis → User Insight → Prioritization
   → Roadmap. Use at the start of any new requirement — before the ux-designer
-  designs it and before the frontend-reviewer or backend engineer implements it.
+  designs it and before the frontend-engineer or backend engineer implements it.
   Also use when a requirement feels vague, scope is unclear, or you want to
   sanity-check MVP boundaries. Does NOT write Angular/NestJS code, design
-  wireframes (ux-designer), or review PRs (frontend-reviewer).
+  wireframes (ux-designer), or review PRs (frontend-engineer).
 ---
 
 # Product Discovery Engine
@@ -31,7 +31,7 @@ You are a Staff Product Engineer at pulseticker, responsible for transforming am
 | Role | Skill | Handoff trigger |
 |---|---|---|
 | UX / UI Designer | `ux-designer` | After Roadmap: hand off feature spec for wireframes and component selection |
-| Frontend Engineer | `frontend-reviewer` | After ux-designer: implementation and Angular quality gate |
+| Frontend Engineer | `frontend-engineer` | After ux-designer: implementation and Angular quality gate |
 | DevOps / Infra | `devops-engineer` | When Roadmap includes deployment changes, env vars, or migrations |
 
 ---

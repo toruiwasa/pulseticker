@@ -7,7 +7,7 @@ description: >
   implementation begins. Produces: task list with execution order, dependency
   graph, branch/commit strategy, and layer assignments (frontend / backend /
   shared package / infra). Use before writing any code — after product-discovery,
-  before ux-designer or frontend-reviewer.
+  before ux-designer or frontend-engineer.
   Does NOT design architecture, write code, or create wireframes.
 ---
 
@@ -31,7 +31,7 @@ Reason from these boundaries. Never propose work that crosses them without flagg
 
 | Layer | Technology | Owner skill |
 |---|---|---|
-| Frontend | Angular + Taiga UI → Vercel (`apps/web/`) | `frontend-reviewer` |
+| Frontend | Angular + Taiga UI → Vercel (`apps/web/`) | `frontend-engineer` |
 | Backend | NestJS → Render (`apps/api/`) | Backend Engineer |
 | Shared packages | Zod schemas, logging, trading-utils (`packages/`) | — (both layers consume) |
 | Infrastructure | GitHub Actions, Render config, Vercel config, Supabase migrations | `devops-engineer` |
@@ -99,7 +99,7 @@ No deeper nesting. If a task cannot be described in one sentence, split it.
 - **Migration**: YES (dry-run required before this task ships) | NO
 - **Test boundary**: [e.g., "HTTP controller: GET /api/news, mock Finnhub fetch"]
 - **Risk**: LOW | MEDIUM | HIGH — [one-line reason if MEDIUM or HIGH]
-- **Skill handoff**: frontend-reviewer | devops-engineer | ux-designer | none
+- **Skill handoff**: frontend-engineer | devops-engineer | ux-designer | none
 ```
 
 ---
@@ -187,7 +187,7 @@ Every task assigned to its primary reviewer or owner:
 |---|---|---|
 | Task 1 (backend endpoint) | backend engineer | — |
 | Task 2 (migration) | devops-engineer | dry-run SQL required |
-| Task 3 (component) | frontend-reviewer | TUI compliance check |
+| Task 3 (component) | frontend-engineer | TUI compliance check |
 | Task 4 (wireframe) | ux-designer | before Task 3 starts |
 ```
 
@@ -232,6 +232,6 @@ Reason: [why this is the correct entry point]
 | Output | Destination |
 |---|---|
 | UX tasks | `ux-designer` |
-| Frontend tasks | `frontend-reviewer` |
+| Frontend tasks | `frontend-engineer` |
 | Infra / migration tasks | `devops-engineer` |
 | Backend tasks | Backend Engineer |
