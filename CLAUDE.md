@@ -47,6 +47,15 @@ The plan file is a **record of agreed decisions**, not a draft to iterate on.
 - Commit on the branch; merge into `main` when the task is complete via a Pull Request.
 - Branch names must match the task's branch name from the task-breakdown output (e.g. `feat/symbol-search`, `fix/alert-oanda-display`).
 
+### Dependabot PR review (mandatory before merging any Dependabot PR)
+
+Before merging any Dependabot PR or group PR:
+
+1. **Scan for major version bumps**: Run `gh pr diff <N> | grep '"version"\|specifier'` or read the PR body table. Any bump where the leading number increases (e.g. `5.x → 6.x`, `3.x → 4.x`) is a **major bump** and requires manual review.
+2. **For each major bump**: Read the package's CHANGELOG or MIGRATION guide for breaking changes before merging. Do not rely on the build passing alone — type-level breaks can hide until runtime.
+3. **Merge major-bump groups separately**: If a group PR mixes patch/minor with major bumps, consider splitting or at minimum verifying the full build (`pnpm build`) locally after merging, before pushing to main.
+4. **Verify full build after merging dep PRs**: Always run `pnpm build` after each Dependabot group merges. Vercel only tests the frontend; the API TypeScript build has no CI gate yet.
+
 ### GitHub Issues + PR rules (mandatory for every task)
 
 1. **After task-breakdown**: Open one GitHub Issue per task using `gh issue create`. Title = task title from the breakdown. Body = Goal + Scope + Test boundary. Label with `task` and the layer (`backend`, `frontend`, `mobile`, `infra`, `shared-pkg`).

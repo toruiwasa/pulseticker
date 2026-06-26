@@ -36,7 +36,10 @@ Current deployment stack — always reason from this baseline:
 - Graphile Worker requires `DATABASE_URL` pointing to the **Session Pooler** (IPv4, port 5432). The Transaction Pooler (port 6543) breaks it. Never swap these.
 - Vercel's `buildCommand` in `apps/web/vercel.json` must build shared packages first: `pnpm --filter @pulseticker/schemas --filter @pulseticker/logging --filter @pulseticker/trading-utils build && tsx scripts/set-env.ts && ng build`.
 - `scripts/set-env.ts` generates `apps/web/src/environments/environment.ts` from env vars at build time. If Vercel env vars are missing, this step silently produces a broken environment file.
-- NestJS build on Render must also build shared packages first: `pnpm --filter @pulseticker/schemas --filter @pulseticker/logging build && nest build`.
+- NestJS build on Render must build shared packages first. `apps/api/package.json`'s `build` script is just `nest build`. Render's build command must run from the **repository root** using the root `build:api` script: `pnpm install && pnpm build:api`. Do NOT set Render's root directory to `apps/api` — the shared packages will not build and `nest build` will fail on missing imports.
+- **TypeScript `incremental: true` + `deleteOutDir: true` footgun**: `nest-cli.json` sets `deleteOutDir: true`, which clears `dist/` before each build. If `tsconfig.build.json` (or the tsconfig it extends) has `"incremental": true`, TypeScript may see no changed inputs after the first run and exit without emitting, leaving `dist/` empty. Fix: always set `"incremental": false` in `tsconfig.build.json` (the build-specific config). The base `tsconfig.json` may keep `incremental: true` for IDE performance — only override it for the production build.
+- **Turbo `dependsOn` vs app build script duplication**: Turbo's `"dependsOn": ["^build"]` already guarantees shared packages (`schemas`, `logging`) build before any app. If an app's own `package.json` build script also re-runs those shared packages, TypeScript incremental on the second run sees no changes and exits without emitting — then `deleteOutDir` has already cleared `dist/`. Never duplicate shared-package builds inside an app's build script; rely on Turbo's dependency graph instead. For running builds outside Turbo (e.g., Render), use the root `build:api` script.
+- **Vercel `minimumReleaseAge` policy**: Vercel's supply-chain guardrails enforce a ~24h minimum release age on packages in `pnpm-lock.yaml`. If a Dependabot PR bumps a package published less than 24h ago, Vercel will fail with `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`. This is not a configuration error — it is a platform-level policy. The only fix is to wait until the 24h window passes and then trigger a re-deploy (e.g., via `@dependabot rebase` to regenerate the lockfile after the age check passes).
 
 ---
 
@@ -76,7 +79,7 @@ Turbo manages build ordering. The current `turbo.json` uses `"dependsOn": ["^bui
 
 ### 3. Render deployment (backend)
 
-- **Build command**: `pnpm install && pnpm run build` (run from `apps/api`)
+- **Build command**: `pnpm install && pnpm build:api` (run from the **repository root**). This invokes the root `build:api` script, which pre-builds `packages/schemas` and `packages/logging` before running `nest build`. Do not set Render's root directory to `apps/api` — the shared packages will not build.
 - **Start command**: `node dist/main`
 - **Health check path**: `GET /health`
 - Prefer creating a `render.yaml` at the repo root so Render config is code-reviewed and version-controlled rather than dashboard-only.
