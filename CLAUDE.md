@@ -52,7 +52,16 @@ The plan file is a **record of agreed decisions**, not a draft to iterate on.
 1. **After task-breakdown**: Open one GitHub Issue per task using `gh issue create`. Title = task title from the breakdown. Body = Goal + Scope + Test boundary. Label with `task` and the layer (`backend`, `frontend`, `mobile`, `infra`, `shared-pkg`).
 2. **Before starting a task**: Run `gh issue list` to confirm the issue is open. Reference the issue number in the branch if helpful (e.g. `feat/42-symbol-search`).
 3. **After implementation**: Create a PR with `gh pr create`. The PR body must include `Closes #<issue-number>` so GitHub auto-closes the issue on merge. Merge with `gh pr merge --squash` (or `--merge` for multi-commit PRs).
+   - **Stacked PRs exception**: `Closes #N` only triggers when the PR merges into `main`. If the PR targets an upstream feature branch (stacked PR), the issue will NOT be auto-closed. After the full stack merges to main, manually close every stacked PR's issue: `gh issue close <N> --comment "Completed in PR #<stacked-pr>, merged to main as <commit-sha>."` Do this as the final step of the stack merge — before moving to the next task.
 4. **One issue = one branch = one PR = one merge.** Never merge directly to main without a PR.
+
+### Post-merge local sync (mandatory after every merge to main)
+
+After every PR (or PR stack) merges to main:
+1. Switch to main and pull: `git checkout main && git pull`
+2. Review merged local branches: `git branch --merged main`
+3. Delete them safely (only fully-merged branches): `git branch -d <branch>` — never `-D` unless explicitly confirmed
+4. Confirm clean state: `git branch` (only `main` should remain) and `git status`
 
 ## Key Principles
 
