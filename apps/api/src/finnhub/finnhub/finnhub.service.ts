@@ -1,9 +1,9 @@
-import { forwardRef, Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnApplicationBootstrap, OnModuleInit } from '@nestjs/common';
 import { SecureLogger } from '../../common/logger/secure-logger.js';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import WebSocket from 'ws';
-import { AlertsService } from '../../alerts/alerts/alerts.service.js';
+import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
 
 // Finnhub free plan: 1 concurrent WS connection per API key.
 // reconnectDelay doubles on each close, up to maxDelay.
@@ -15,10 +15,11 @@ const STABLE_WINDOW_MS    = 60_000;
 const MIN_DELAY_AFTER_429 = 60_000;
 
 @Injectable()
-export class FinnhubService implements OnModuleInit {
+export class FinnhubService implements OnModuleInit, OnApplicationBootstrap {
   private readonly logger = new SecureLogger(FinnhubService.name);
   private ws: WebSocket;
   private readonly refCounts = new Map<string, number>();
+  private readonly priceCache = new Map<string, { price: number; ts: number }>();
   private reconnectDelay = 1000;
   private readonly maxDelay = 30000;
 
@@ -28,7 +29,7 @@ export class FinnhubService implements OnModuleInit {
   constructor(
     private config: ConfigService,
     private eventEmitter: EventEmitter2,
-    @Inject(forwardRef(() => AlertsService)) private alertsService: AlertsService,
+    private supabase: SupabaseService,
   ) {}
 
   onModuleInit() {
@@ -61,8 +62,8 @@ export class FinnhubService implements OnModuleInit {
         const msg = JSON.parse(data.toString()) as { type: string; data?: { s: string; p: number; t: number }[] };
         if (msg.type === 'trade' && msg.data) {
           for (const trade of msg.data) {
+            this.priceCache.set(trade.s.toUpperCase(), { price: trade.p, ts: trade.t });
             this.eventEmitter.emit('price.received', { symbol: trade.s, price: trade.p, ts: trade.t });
-            this.alertsService.checkAlerts(trade.s, trade.p);
           }
         }
       } catch {
@@ -127,5 +128,38 @@ export class FinnhubService implements OnModuleInit {
     } else {
       this.refCounts.set(symbol, next);
     }
+  }
+
+  getLastKnownPrices(symbols: string[]): Array<{ symbol: string; price: number | null; ts: number | null }> {
+    return symbols.map(sym => {
+      const cached = this.priceCache.get(sym.toUpperCase());
+      return {
+        symbol: sym.toUpperCase(),
+        price: cached?.price ?? null,
+        ts: cached?.ts ?? null,
+      };
+    });
+  }
+
+  async onApplicationBootstrap() {
+    const { data, error } = await this.supabase.client
+      .from('watchlist_items')
+      .select('symbol');
+
+    if (error) {
+      this.logger.errorData('Warm-up failed to load watchlist symbols', { code: error.code });
+      return;
+    }
+
+    if (!data) {
+      this.logger.warn('Warm-up: watchlist_items returned null — no symbols pre-subscribed');
+      return;
+    }
+
+    const symbols = [...new Set((data as { symbol: string }[]).map(row => row.symbol.toUpperCase()))];
+    for (const symbol of symbols) {
+      this.subscribe(symbol);
+    }
+    this.logger.logData('Finnhub warm-up complete', { symbolCount: symbols.length });
   }
 }
