@@ -127,6 +127,19 @@ Specifically: do NOT deploy Task 1 (forwardRef removed) without also deploying T
 - `FinnhubService` → `SupabaseService` (new — for warm-up query; SupabaseModule is @Global so no import change needed)
 - `WatchlistModule` imports `FinnhubModule` (new — for getLastKnownPrices; verify no circular dep)
 
+### Finnhub WebSocket subscription limit (50 symbols — hard cap)
+
+Finnhub Free Tier allows **50 concurrent symbol subscriptions** across the entire server process.
+With multiple users subscribing to different tickers, the union can exceed 50 and subscriptions silently stop working.
+
+**Phase 1 (portfolio scale)**: No mitigation required — logging the subscription count on warm-up is sufficient.
+
+**Future task (before public launch)**: Add per-user symbol limit + server-side subscription eviction strategy so the total never exceeds 50. Track as a separate backlog item.
+
+**Rule for `GET /watchlist/prices`**: The endpoint reads from `FinnhubService.getLastKnownPrices()` only — NO Finnhub REST fallback on cache miss. Cache miss returns `price: null`. This must be explicit in Task 5 (Issue #8) scope.
+
+---
+
 ### packages/logging — mobile safety
 `packages/logging/src/index.ts` exports only pure functions (`sanitize()`, `REDACTED_KEYS`, `LogLevel`).
 `SecureLogger` (NestJS-specific) lives in `apps/api/src/common/logger/` — NOT in the package.
@@ -180,3 +193,287 @@ Watchlist screen has 8 distinct states:
 - OAuth callback URL `?code=` param must never be logged (strip before logging)
 - No PII (email, phone, name) in mobile console logs — Australian Privacy Act APP 3, APP 11
 - `no-console: error` ESLint rule — MobileLogger is the only permitted console caller
+
+---
+
+## apps/mobile folder structure (Task 7)
+
+```
+apps/mobile/
+├── app/
+│   ├── _layout.tsx               # root layout: redirect based on session
+│   ├── (auth)/
+│   │   ├── _layout.tsx           # auth group layout (no tab bar)
+│   │   └── sign-in.tsx
+│   └── (tabs)/
+│       ├── _layout.tsx           # tab bar layout
+│       ├── watchlist.tsx
+│       └── alerts.tsx
+├── src/
+│   ├── components/
+│   │   ├── WatchlistRow.tsx
+│   │   ├── AlertRow.tsx
+│   │   ├── StatusBanner.tsx      # amber/red banners
+│   │   └── SkeletonRow.tsx
+│   ├── hooks/
+│   │   ├── useWatchlistPrices.ts # TanStack Query + polling + fetchedAt
+│   │   └── useAlerts.ts
+│   ├── lib/
+│   │   ├── supabase.ts           # createClient with expo-secure-store adapter
+│   │   ├── queryClient.ts        # QueryClient + AppState/focusManager + onlineManager
+│   │   └── logger.ts             # MobileLogger
+│   ├── store/
+│   │   └── authStore.ts          # Zustand session store
+│   └── constants/
+│       ├── colors.ts
+│       └── thresholds.ts         # STALE_WARNING_MS, STALE_DISCONNECTED_MS
+├── app.config.js
+├── metro.config.js               # see Architecture review key constraints above
+├── tsconfig.json
+├── package.json
+└── .env.example
+```
+
+---
+
+## app.config.js spec (Task 7)
+
+```javascript
+export default {
+  expo: {
+    name: 'pulseticker',
+    slug: 'pulseticker',
+    scheme: 'pulseticker',           // required for custom URL scheme OAuth
+    ios: { bundleIdentifier: 'com.pulseticker.app' },
+    android: { package: 'com.pulseticker.app' },
+    extra: {
+      supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL,
+      supabasePublishableKey: process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      apiUrl: process.env.EXPO_PUBLIC_API_URL,
+      appEnv: process.env.APP_ENV ?? 'development',
+    },
+  },
+};
+```
+
+Required `.env` vars for mobile:
+```
+EXPO_PUBLIC_SUPABASE_URL=
+EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+EXPO_PUBLIC_API_URL=
+APP_ENV=development
+```
+
+`EXPO_PUBLIC_` prefix makes vars available client-side in Expo. `SUPABASE_SECRET_KEY` never goes here.
+
+---
+
+## Zod schema shapes (Task 3)
+
+New files to create in `packages/schemas/src/`:
+
+```typescript
+// packages/schemas/src/watchlist-prices.schema.ts
+export const WatchlistPriceItemSchema = z.object({
+  id: z.string().uuid(),
+  symbol: z.string(),
+  price: z.number().nullable(),
+  ts: z.number().nullable(),        // epoch ms, null if no price in cache yet
+});
+
+export const WatchlistPricesResponseSchema = z.object({
+  cached: z.boolean(),              // false = Render cold-started, cache empty
+  items: z.array(WatchlistPriceItemSchema),
+});
+
+export type WatchlistPricesResponse = z.infer<typeof WatchlistPricesResponseSchema>;
+```
+
+```typescript
+// packages/schemas/src/alert-read.schema.ts
+export const AlertReadSchema = z.object({
+  id: z.string().uuid(),
+  symbol: z.string(),
+  threshold_price: z.number(),
+  direction: z.enum(['above', 'below']),
+  created_at: z.string(),
+  triggered_at: z.string().nullable(),  // null = pending, string = ISO timestamp
+});
+
+export type AlertRead = z.infer<typeof AlertReadSchema>;
+```
+
+Export both from `packages/schemas/src/index.ts` alongside the existing `CreateAlertSchema`.
+
+---
+
+## expo-secure-store adapter + Supabase client (Task 9)
+
+```typescript
+// src/lib/supabase.ts
+import * as SecureStore from 'expo-secure-store';
+import { createClient } from '@supabase/supabase-js';
+import Constants from 'expo-constants';
+
+const secureStoreAdapter = {
+  getItem: (key: string) => SecureStore.getItemAsync(key),
+  setItem: (key: string, value: string) => SecureStore.setItemAsync(key, value),
+  removeItem: (key: string) => SecureStore.deleteItemAsync(key),
+};
+
+export const supabase = createClient(
+  Constants.expoConfig!.extra!.supabaseUrl as string,
+  Constants.expoConfig!.extra!.supabasePublishableKey as string,
+  {
+    auth: {
+      storage: secureStoreAdapter,
+      detectSessionInUrl: false,   // CRITICAL — must be false on mobile
+      autoRefreshToken: true,
+      persistSession: true,
+    },
+  },
+);
+```
+
+---
+
+## AppState + TanStack Query integration (Task 9)
+
+Add to `src/lib/queryClient.ts` after constructing the `QueryClient`:
+
+```typescript
+import { AppState } from 'react-native';
+import { focusManager, onlineManager } from '@tanstack/react-query';
+import NetInfo from '@react-native-community/netinfo';
+
+// Re-fetch when app returns to foreground
+focusManager.setEventListener((handleFocus) => {
+  const sub = AppState.addEventListener('change', (state) => {
+    handleFocus(state === 'active');
+  });
+  return () => sub.remove();
+});
+
+// Pause all queries when device goes offline
+onlineManager.setEventListener((setOnline) => {
+  return NetInfo.addEventListener((state) => {
+    setOnline(!!state.isConnected);
+  });
+});
+```
+
+Both listeners must be registered once at app startup, not inside a component.
+
+---
+
+## Zustand auth store (Task 9)
+
+```typescript
+// src/store/authStore.ts
+import { create } from 'zustand';
+import type { Session } from '@supabase/supabase-js';
+
+interface AuthState {
+  session: Session | null;
+  setSession: (session: Session | null) => void;
+  clearSession: () => void;
+}
+
+export const useAuthStore = create<AuthState>((set) => ({
+  session: null,
+  setSession: (session) => set({ session }),
+  clearSession: () => set({ session: null }),
+}));
+```
+
+Store is populated in `app/_layout.tsx` via `supabase.auth.onAuthStateChange`. Never read `session.access_token` — pass the session object to `useAuthStore` but never log it.
+
+---
+
+## Sign-in screen spec (Task 11)
+
+**States:**
+1. Initial — Google OAuth button visible
+2. Loading — button disabled, `ActivityIndicator` shown, button text hidden
+3. Error — message shown below button, button re-enabled for retry
+
+**Wireframe:**
+```
+┌─────────────────────────────────┐
+│                                 │
+│         pulseticker             │  <- bold, centered
+│   Track your stocks, anywhere.  │  <- secondary color, centered
+│                                 │
+│  ┌─────────────────────────┐   │
+│  │   Continue with Google  │   │  <- Pressable, full-width
+│  └─────────────────────────┘   │
+│                                 │
+│   Sign-in failed. Try again.    │  <- error text, hidden unless error
+│                                 │
+└─────────────────────────────────┘
+```
+
+**Components:** `SafeAreaView`, `Text`, `Pressable`, `ActivityIndicator` — standard RN primitives only, no external UI library.
+
+**Copy:**
+| Element | Text |
+|---|---|
+| App name | "pulseticker" |
+| Tagline | "Track your stocks, anywhere." |
+| OAuth button | "Continue with Google" |
+| Generic error | "Sign-in failed. Please try again." |
+| Network error | "No internet connection." |
+| OAuth cancelled | "Sign-in was cancelled." |
+
+**OAuth redirect URLs to add to Supabase Auth → Redirect URLs (Task 6):**
+- EAS development build: `pulseticker://auth/callback`
+- Expo Go (development only): `exp+pulseticker://auth/callback`
+
+---
+
+## Alert status screen spec (Task 13)
+
+**What it shows:** The user's configured price alert conditions with pending/triggered status. Read-only in Phase 1 — alert creation stays on the web app.
+
+**Data source:** `GET /alerts` (existing NestJS endpoint used by the web app) or Supabase direct query. Use `AlertReadSchema` from Task 3 to parse the response.
+
+**States:**
+1. Loading — `SkeletonRow` × 3
+2. Empty — "No price alerts set. Add alerts on pulseticker.vercel.app to get started."
+3. Alert list — each row shows symbol, condition, status
+4. Error — "Could not load alerts. Pull to refresh." with `RefreshControl`
+
+**Wireframe (list rows):**
+```
+┌──────────────────────────────────────┐
+│ AAPL                                 │
+│ Price above $200.00        Triggered │  <- triggered_at not null
+├──────────────────────────────────────┤
+│ GOOGL                                │
+│ Price below $150.00          Pending │  <- triggered_at null
+├──────────────────────────────────────┤
+│ TSLA                                 │
+│ Price above $250.00        Triggered │
+└──────────────────────────────────────┘
+```
+
+**Components:** `FlatList`, `View`, `Text`, `RefreshControl`, `SkeletonRow`
+
+---
+
+## Test boundaries per mobile task
+
+| Task | Boundary | What to test | What to mock |
+|---|---|---|---|
+| Task 3 (schemas) | Schema parse | Valid inputs; `price: null`; `ts: null`; `triggered_at: null`; invalid shape throws | — |
+| Task 7 (scaffold) | Metro smoke test | `import { WatchlistPricesResponseSchema } from '@pulseticker/schemas'` resolves in Metro | — |
+| Task 9 — auth store | `useAuthStore` | `setSession` stores value; `clearSession` resets to null; initial state is null | — |
+| Task 9 — supabase | `supabase.ts` | Client instantiated with `detectSessionInUrl: false`; storage is the SecureStore adapter | `expo-secure-store`, `expo-constants` |
+| Task 10 (routing) | Root `_layout.tsx` | No session → renders `(auth)` group; session present → renders `(tabs)` group | `useAuthStore` |
+| Task 11 (sign-in) | `sign-in.tsx` | Button press → loading state rendered; OAuth error → error message rendered; success → `setSession` called | `expo-auth-session`, `supabase.auth.exchangeCodeForSession` |
+| Task 12 (watchlist) | `useWatchlistPrices` | `fetchedAt` set on successful response; `cached: false` maps to `price: null` items correctly | `fetch` |
+| Task 12 (watchlist) | `StatusBanner` | `age < 60s` → renders nothing; `60s–5min` → amber text; `> 5min` → red text + Retry; offline → red "No internet" | — |
+| Task 13 (alerts) | `useAlerts` | Parses `AlertRead[]`; `triggered_at: null` → status "Pending"; non-null → "Triggered" | `fetch` |
+
+Test runner: Jest + `@testing-library/react-native`. Never use `react-test-renderer` directly.
+Coverage target: 90–95% per changed file (`pnpm --filter mobile test:cov`).
