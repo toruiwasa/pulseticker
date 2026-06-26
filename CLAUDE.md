@@ -56,11 +56,27 @@ Before merging any Dependabot PR or group PR:
 3. **Merge major-bump groups separately**: If a group PR mixes patch/minor with major bumps, consider splitting or at minimum verifying the full build (`pnpm build`) locally after merging, before pushing to main.
 4. **Verify full build after merging dep PRs**: Always run `pnpm build` after each Dependabot group merges. Vercel only tests the frontend; the API TypeScript build has no CI gate yet.
 
+### Deployment configuration changes (mandatory gate before any change)
+
+Build commands, start commands, root directory settings, and environment variable names for Render and Vercel are **production deployment configuration**. They are not documentation.
+
+Before proposing or making any change to these values — regardless of whether the change is in a SKILL.md, CLAUDE.md, `render.yaml`, or a dashboard instruction — **verify the actual current state first** by opening the relevant dashboard or config file. Never infer the current state from application code alone.
+
+The correct order is:
+1. Confirm current dashboard value
+2. Determine whether a change is needed
+3. Propose the change to the user
+4. User applies the change to the dashboard
+5. Only then update any documentation to match the new confirmed state
+
+Skipping step 1 produces documentation that conflicts with the real system and causes production failures.
+
 ### GitHub Issues + PR rules (mandatory for every task)
 
 1. **After task-breakdown**: Open one GitHub Issue per task using `gh issue create`. Title = task title from the breakdown. Body = Goal + Scope + Test boundary. Label with `task` and the layer (`backend`, `frontend`, `mobile`, `infra`, `shared-pkg`).
 2. **Before starting a task**: Run `gh issue list` to confirm the issue is open. Reference the issue number in the branch if helpful (e.g. `feat/42-symbol-search`).
 3. **After implementation**: Create a PR with `gh pr create`. The PR body must include `Closes #<issue-number>` so GitHub auto-closes the issue on merge. Merge with `gh pr merge --squash` (or `--merge` for multi-commit PRs).
+   - **PR merge requires explicit instruction**: After `gh pr create`, always stop. Never call `gh pr merge` or use `--auto` unless the user says "merge" for that specific PR in the current message. The only exception is when the user's original instruction explicitly included merging (e.g., "create and merge the PR"). General task approval ("go", "proceed") does not authorize merging.
    - **Stacked PRs exception**: `Closes #N` only triggers when the PR merges into `main`. If the PR targets an upstream feature branch (stacked PR), the issue will NOT be auto-closed. After the full stack merges to main, manually close every stacked PR's issue: `gh issue close <N> --comment "Completed in PR #<stacked-pr>, merged to main as <commit-sha>."` Do this as the final step of the stack merge — before moving to the next task.
 4. **One issue = one branch = one PR = one merge.** Never merge directly to main without a PR.
 
