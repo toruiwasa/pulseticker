@@ -50,6 +50,27 @@ describe('AlertsService.onModuleInit (cache loading)', () => {
     expect(queueService.addAlertCheckJob).not.toHaveBeenCalled();
   });
 
+  it('starts with empty cache when Supabase returns null data with no error', async () => {
+    const from = jest.fn(() => ({
+      select: jest.fn(() => ({
+        eq: jest.fn().mockResolvedValue({ data: null, error: null }),
+      })),
+    }));
+    const queueService = { addAlertCheckJob: jest.fn() };
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        AlertsService,
+        { provide: SupabaseService, useValue: { client: { from } } },
+        { provide: QueueService, useValue: queueService },
+        { provide: EventEmitter2, useValue: new EventEmitter2() },
+      ],
+    }).compile();
+    const service = moduleRef.get(AlertsService);
+    await service.onModuleInit();
+    await service.checkAlerts('AAPL', 210);
+    expect(queueService.addAlertCheckJob).not.toHaveBeenCalled();
+  });
+
   it('re-throws when Supabase returns an error on startup', async () => {
     const from = jest.fn(() => ({
       select: jest.fn(() => ({

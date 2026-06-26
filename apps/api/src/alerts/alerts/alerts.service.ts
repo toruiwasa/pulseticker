@@ -45,9 +45,14 @@ export class AlertsService implements OnModuleInit {
       throw error;
     }
 
+    if (!data) {
+      this.logger.warn('Alerts cache query returned null data with no error — starting with empty cache');
+      return;
+    }
+
     this.cache.clear();
     let totalCount = 0;
-    for (const row of (data ?? []) as AlertRow[]) {
+    for (const row of data as AlertRow[]) {
       const key = row.symbol.toUpperCase();
       const list = this.cache.get(key) ?? [];
       list.push({
@@ -158,7 +163,11 @@ export class AlertsService implements OnModuleInit {
 
   @OnEvent('price.received')
   async handlePriceReceived(payload: { symbol: string; price: number }) {
-    await this.checkAlerts(payload.symbol, payload.price);
+    try {
+      await this.checkAlerts(payload.symbol, payload.price);
+    } catch (err) {
+      this.logger.error('checkAlerts failed on price event', (err as Error).stack);
+    }
   }
 
   @OnEvent('alert.triggered')
