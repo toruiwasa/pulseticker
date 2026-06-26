@@ -282,4 +282,31 @@ describe('AlertsService @OnEvent(price.received)', () => {
 
     await moduleRef.close();
   });
+
+  it('logs and swallows errors thrown by checkAlerts', async () => {
+    const from = makeActiveAlertsChain([
+      { id: 'a1', symbol: 'AAPL', user_id: 'u1', threshold_price: '200', direction: 'above' },
+    ]);
+    const queueService = {
+      addAlertCheckJob: jest.fn().mockRejectedValue(new Error('queue down')),
+    };
+
+    const moduleRef = await Test.createTestingModule({
+      imports: [EventEmitterModule.forRoot()],
+      providers: [
+        AlertsService,
+        { provide: SupabaseService, useValue: { client: { from } } },
+        { provide: QueueService, useValue: queueService },
+      ],
+    }).compile();
+
+    await moduleRef.init();
+    const emitter = moduleRef.get(EventEmitter2);
+
+    await expect(
+      emitter.emitAsync('price.received', { symbol: 'AAPL', price: 210, ts: Date.now() }),
+    ).resolves.not.toThrow();
+
+    await moduleRef.close();
+  });
 });
