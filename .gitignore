@@ -4,6 +4,7 @@ dist/
 *.env.local
 .pnpm-store/
 .turbo/
+*.tsbuildinfo
 
 # Test coverage output (jest/vitest)
 **/coverage/
