@@ -33,17 +33,17 @@
     "@pulseticker/logging": "workspace:*",
     "@pulseticker/schemas": "workspace:*",
     "@pulseticker/trading-utils": "workspace:*",
-    "@supabase/supabase-js": "^2.107.0",
+    "@supabase/supabase-js": "^2.108.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
-    "graphile-worker": "^0.16.6",
+    "graphile-worker": "^0.17.2",
     "jose": "^6.2.3",
     "luxon": "^3.7.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.3",
     "ws": "^8.21.0",
-    "zod": "^3.25.76"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
