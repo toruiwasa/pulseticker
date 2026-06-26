@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import WebSocket from 'ws';
 import { FinnhubService } from './finnhub.service.js';
+import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
 
 const WS_OPEN = 1;
 const WS_CONNECTING = 0;
@@ -39,20 +40,32 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-async function buildService() {
+function makeSupabaseMock(rows: { symbol: string }[] = []) {
+  return {
+    client: {
+      from: jest.fn(() => ({
+        select: jest.fn().mockResolvedValue({ data: rows, error: null }),
+      })),
+    },
+  };
+}
+
+async function buildService(supabaseRows: { symbol: string }[] = []) {
   const config = { getOrThrow: jest.fn().mockReturnValue('test-key') };
   const eventEmitter = { emit: jest.fn() };
+  const supabase = makeSupabaseMock(supabaseRows);
 
   const moduleRef = await Test.createTestingModule({
     providers: [
       FinnhubService,
       { provide: ConfigService, useValue: config },
       { provide: EventEmitter2, useValue: eventEmitter },
+      { provide: SupabaseService, useValue: supabase },
     ],
   }).compile();
 
   const service = moduleRef.get(FinnhubService);
-  return { service, eventEmitter };
+  return { service, eventEmitter, supabase };
 }
 
 describe('FinnhubService', () => {
@@ -142,6 +155,21 @@ describe('FinnhubService', () => {
       expect(eventEmitter.emit).toHaveBeenCalledWith('price.received', { symbol: 'AAPL', price: 185.5, ts: 1000 });
     });
 
+    it('populates the price cache on each trade', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      const ws = FakeWS.lastInstance;
+
+      ws.trigger('message', Buffer.from(JSON.stringify({
+        type: 'trade',
+        data: [{ s: 'AAPL', p: 185.5, t: 1000 }],
+      })));
+
+      expect(service.getLastKnownPrices(['AAPL'])).toEqual([
+        { symbol: 'AAPL', price: 185.5, ts: 1000 },
+      ]);
+    });
+
     it('ignores non-trade message types', async () => {
       const { service, eventEmitter } = await buildService();
       service.onModuleInit();
@@ -158,6 +186,99 @@ describe('FinnhubService', () => {
       const ws = FakeWS.lastInstance;
 
       expect(() => ws.trigger('message', Buffer.from('{bad json'))).not.toThrow();
+    });
+  });
+
+  describe('getLastKnownPrices()', () => {
+    it('returns null price and ts for an unseen symbol', async () => {
+      const { service } = await buildService();
+      expect(service.getLastKnownPrices(['AAPL'])).toEqual([
+        { symbol: 'AAPL', price: null, ts: null },
+      ]);
+    });
+
+    it('returns cached price after a trade message', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      const ws = FakeWS.lastInstance;
+
+      ws.trigger('message', Buffer.from(JSON.stringify({
+        type: 'trade',
+        data: [{ s: 'tsla', p: 250.0, t: 2000 }],
+      })));
+
+      expect(service.getLastKnownPrices(['TSLA'])).toEqual([
+        { symbol: 'TSLA', price: 250.0, ts: 2000 },
+      ]);
+    });
+
+    it('normalises symbol to uppercase in the returned array', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      const ws = FakeWS.lastInstance;
+
+      ws.trigger('message', Buffer.from(JSON.stringify({
+        type: 'trade',
+        data: [{ s: 'MSFT', p: 300.0, t: 3000 }],
+      })));
+
+      const result = service.getLastKnownPrices(['msft']);
+      expect(result[0].symbol).toBe('MSFT');
+      expect(result[0].price).toBe(300.0);
+    });
+  });
+
+  describe('onApplicationBootstrap() warm-up', () => {
+    it('subscribes all distinct symbols from watchlist_items', async () => {
+      const { service } = await buildService([
+        { symbol: 'AAPL' },
+        { symbol: 'MSFT' },
+      ]);
+      service.onModuleInit();
+      const ws = FakeWS.lastInstance;
+      ws.trigger('open');
+
+      await service.onApplicationBootstrap();
+
+      expect(ws.send).toHaveBeenCalledWith(JSON.stringify({ type: 'subscribe', symbol: 'AAPL' }));
+      expect(ws.send).toHaveBeenCalledWith(JSON.stringify({ type: 'subscribe', symbol: 'MSFT' }));
+    });
+
+    it('deduplicates symbols (same symbol multiple rows)', async () => {
+      const { service } = await buildService([
+        { symbol: 'AAPL' },
+        { symbol: 'aapl' },
+      ]);
+      service.onModuleInit();
+      const ws = FakeWS.lastInstance;
+      ws.trigger('open');
+
+      await service.onApplicationBootstrap();
+
+      const subscribeCalls = (ws.send as jest.Mock).mock.calls.filter(
+        ([msg]: [string]) => JSON.parse(msg).type === 'subscribe',
+      );
+      expect(subscribeCalls).toHaveLength(1);
+    });
+
+    it('does not throw when Supabase returns an error (non-fatal)', async () => {
+      const { service, supabase } = await buildService();
+      supabase.client.from.mockReturnValue({
+        select: jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST301' } }),
+      });
+      service.onModuleInit();
+
+      await expect(service.onApplicationBootstrap()).resolves.toBeUndefined();
+    });
+
+    it('does not throw when Supabase returns null data with no error (non-fatal)', async () => {
+      const { service, supabase } = await buildService();
+      supabase.client.from.mockReturnValue({
+        select: jest.fn().mockResolvedValue({ data: null, error: null }),
+      });
+      service.onModuleInit();
+
+      await expect(service.onApplicationBootstrap()).resolves.toBeUndefined();
     });
   });
 
@@ -298,6 +419,40 @@ describe('FinnhubService', () => {
       service.unsubscribe('GOOG');
 
       expect(ws.send).not.toHaveBeenCalled();
+    });
+
+    it('does not send a WS unsubscribe when the socket is not OPEN', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      const ws = FakeWS.lastInstance;
+
+      service.subscribe('NVDA');
+      ws.send.mockClear();
+
+      ws.readyState = WS_CONNECTING;
+      service.unsubscribe('NVDA');
+
+      expect(ws.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('close handler — reconnecting guard', () => {
+    it('does not schedule a second reconnect when close fires twice in rapid succession', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      const ws = FakeWS.lastInstance;
+
+      ws.trigger('close'); // first close: schedules reconnect, sets reconnecting=true
+      const instancesAfterFirst = (WebSocket as unknown as jest.Mock).mock.instances.length;
+
+      ws.trigger('close'); // second close: guard returns early, no second timer
+
+      jest.advanceTimersByTime(1000); // first reconnect fires
+      expect((WebSocket as unknown as jest.Mock).mock.instances.length).toBe(instancesAfterFirst + 1);
+
+      // Only one reconnect — the guard prevented a second one
+      jest.advanceTimersByTime(1000);
+      expect((WebSocket as unknown as jest.Mock).mock.instances.length).toBe(instancesAfterFirst + 1);
     });
   });
 });
