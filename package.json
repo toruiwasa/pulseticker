@@ -7,7 +7,7 @@
     "build": "turbo build",
     "dev:api": "pnpm --filter api start:dev",
     "dev:web": "pnpm --filter web start",
-    "build:api": "pnpm --filter api build",
+    "build:api": "pnpm --filter @pulseticker/schemas --filter @pulseticker/logging build && pnpm --filter api build",
     "build:web": "pnpm --filter web build",
     "test": "turbo test",
     "test:api": "pnpm --filter api test",
