@@ -83,7 +83,7 @@
     "testRegex": ".*\\.spec\\.ts$",
     "transform": {
       "^.+\\.(t|j)s$": ["ts-jest", {
-        "tsconfig": { "module": "CommonJS", "moduleResolution": "node", "resolvePackageJsonExports": false }
+        "tsconfig": { "module": "CommonJS", "moduleResolution": "node", "resolvePackageJsonExports": false, "rootDir": "./src" }
       }]
     },
     "moduleNameMapper": {

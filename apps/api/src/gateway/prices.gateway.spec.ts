@@ -24,7 +24,7 @@ describe('PricesGateway', () => {
       providers: [
         PricesGateway,
         { provide: SupabaseService, useValue: supabase },
-        { provide: FinnhubService, useValue: { subscribe: jest.fn() } },
+        { provide: FinnhubService, useValue: { subscribe: jest.fn(), unsubscribe: jest.fn() } },
       ],
     }).compile();
     gateway = moduleRef.get(PricesGateway);
@@ -39,7 +39,7 @@ describe('PricesGateway', () => {
       expect(client.join).not.toHaveBeenCalled();
     });
 
-    it('disconnects when the token is invalid', async () => {
+    it('disconnects when the token is invalid (error returned)', async () => {
       supabase.client.auth.getUser.mockResolvedValue({ data: { user: null }, error: { message: 'invalid' } });
       const client = makeSocket('bad-token');
       await gateway.handleConnection(client);
@@ -47,24 +47,54 @@ describe('PricesGateway', () => {
       expect(client.join).not.toHaveBeenCalled();
     });
 
-    it('joins user:<id> room when the token is valid', async () => {
+    it('disconnects when user is null and no error is returned', async () => {
+      supabase.client.auth.getUser.mockResolvedValue({ data: { user: null }, error: null });
+      const client = makeSocket('stale-token');
+      await gateway.handleConnection(client);
+      expect(client.disconnect).toHaveBeenCalled();
+      expect(client.join).not.toHaveBeenCalled();
+    });
+
+    it('joins user:<id> room and initialises subscribedSymbols when the token is valid', async () => {
       supabase.client.auth.getUser.mockResolvedValue({ data: { user: { id: 'u1' } }, error: null });
       const client = makeSocket('good-token');
       await gateway.handleConnection(client);
       expect(client.disconnect).not.toHaveBeenCalled();
       expect(client.join).toHaveBeenCalledWith('user:u1');
       expect(client.data.userId).toBe('u1');
+      expect(client.data.subscribedSymbols).toBeInstanceOf(Set);
+      expect((client.data.subscribedSymbols as Set<string>).size).toBe(0);
     });
   });
 
   describe('handleSubscribe', () => {
-    it('joins each symbol room and forwards to FinnhubService', () => {
+    it('joins each symbol room, forwards to FinnhubService, and tracks symbols', () => {
       const client = makeSocket();
+      client.data.subscribedSymbols = new Set<string>();
       gateway.handleSubscribe(client, { symbols: ['AAPL', 'GOOG'] });
       expect(client.join).toHaveBeenCalledWith('symbol:AAPL');
       expect(client.join).toHaveBeenCalledWith('symbol:GOOG');
       expect(finnhub.subscribe).toHaveBeenCalledWith('AAPL');
       expect(finnhub.subscribe).toHaveBeenCalledWith('GOOG');
+      expect(client.data.subscribedSymbols as Set<string>).toContain('AAPL');
+      expect(client.data.subscribedSymbols as Set<string>).toContain('GOOG');
+    });
+  });
+
+  describe('handleDisconnect', () => {
+    it('calls unsubscribe for each tracked symbol', () => {
+      const client = makeSocket();
+      client.data.subscribedSymbols = new Set(['AAPL', 'GOOG']);
+      gateway.handleDisconnect(client);
+      expect(finnhub.unsubscribe).toHaveBeenCalledWith('AAPL');
+      expect(finnhub.unsubscribe).toHaveBeenCalledWith('GOOG');
+      expect(finnhub.unsubscribe).toHaveBeenCalledTimes(2);
+    });
+
+    it('does not throw when subscribedSymbols is undefined', () => {
+      const client = makeSocket();
+      expect(() => gateway.handleDisconnect(client)).not.toThrow();
+      expect(finnhub.unsubscribe).not.toHaveBeenCalled();
     });
   });
 
