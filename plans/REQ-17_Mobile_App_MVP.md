@@ -145,34 +145,62 @@ With multiple users subscribing to different tickers, the union can exceed 50 an
 `SecureLogger` (NestJS-specific) lives in `apps/api/src/common/logger/` — NOT in the package.
 Safe to import `@pulseticker/logging` in the mobile app.
 
-### EAS build required for Task 11
-Custom URL scheme (`pulseticker://`) is not supported in Expo Go.
-Task 11 acceptance criterion ("force-close + reopen shows watchlist") requires an EAS development build on device — cannot be verified in CI.
+### Development Build is the baseline
+
+EAS Development Build is used throughout — Expo Go is not used.
+All native modules (`react-native-mmkv`, `expo-auth-session`, `expo-secure-store`, etc.) work without restriction.
+Task 11 acceptance criterion ("force-close + reopen shows watchlist") must be verified on a real device — cannot be verified in CI.
 
 ---
 
-## TanStack Query config (Task 9)
+## TanStack Query config + MMKV persister (Task 9)
 
 ```typescript
-new QueryClient({
+// src/lib/queryClient.ts
+import { MMKV } from 'react-native-mmkv';
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister';
+import { QueryClient } from '@tanstack/react-query';
+
+const mmkv = new MMKV({ id: 'query-cache' });
+
+const mmkvStorage = {
+  getItem: (key: string) => mmkv.getString(key) ?? null,
+  setItem: (key: string, value: string) => mmkv.set(key, value),
+  removeItem: (key: string) => mmkv.delete(key),
+};
+
+export const mmkvPersister = createSyncStoragePersister({
+  storage: mmkvStorage,
+  throttleTime: 1000,
+});
+
+export const persistOptions = {
+  persister: mmkvPersister,
+  maxAge: 1000 * 60 * 60 * 24,  // 24h
+  buster: 'v1',                  // bump to 'v2' when schemas change (Task 3)
+};
+
+export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 14_000,              // 1s less than refetchInterval — prevents double-fetch on tab focus
-      gcTime: 300_000,
+      staleTime: 14_000,              // 1s less than refetchInterval — prevents double-fetch on focus
+      gcTime: 1000 * 60 * 60 * 24,   // 24h — must be >= persister maxAge
       retry: 2,
       refetchIntervalInBackground: false,
     },
   },
-})
+});
 ```
-`staleTime: 0` (the default) causes a redundant fetch on every tab focus. Must be set explicitly.
+
+On app open: MMKV cache hydrates immediately → background refetch updates → stale banners reflect age.
+Skeleton (state 1) only shows on first-ever launch (empty MMKV) or after `buster` is bumped.
 
 ---
 
 ## UX states that must all be implemented (Task 12)
 
 Watchlist screen has 8 distinct states:
-1. Skeleton loading (first fetch, < 10s)
+1. Skeleton loading — only on first-ever launch (empty MMKV cache) or after `buster` bumped. Subsequent opens render cached data immediately.
 2. Cold-start banner (first fetch, > 10s) — "Connecting to server… This may take a moment."
 3. Live prices (warm cache, age < 60s) — success state
 4. Cold cache (`cached: false`, null prices) — "Prices loading…" banner, em dashes for prices
@@ -184,6 +212,9 @@ Watchlist screen has 8 distinct states:
 `fetchedAt: Date` must be tracked inside the `queryFn` (not via `dataUpdatedAt`) to drive stale banners.
 `ListHeaderComponent` must always render a container (zero-height View when no banner) to prevent layout jump.
 
+**Open with cached data**: displayed state depends on MMKV cache age at open time.
+Age < 60s → state 3 (live). 60s–5min → state 5 (stale warning). > 5min → state 6 (disconnected). Offline → state 7.
+
 ---
 
 ## Security constraints (non-negotiable)
@@ -193,6 +224,7 @@ Watchlist screen has 8 distinct states:
 - OAuth callback URL `?code=` param must never be logged (strip before logging)
 - No PII (email, phone, name) in mobile console logs — Australian Privacy Act APP 3, APP 11
 - `no-console: error` ESLint rule — MobileLogger is the only permitted console caller
+- `react-native-mmkv` (query cache) is **unencrypted** — only non-sensitive data enters the query cache: prices (public) and alert thresholds (not secret). Auth tokens live exclusively in `expo-secure-store` and never enter the query cache.
 
 ---
 
@@ -265,6 +297,21 @@ APP_ENV=development
 ```
 
 `EXPO_PUBLIC_` prefix makes vars available client-side in Expo. `SUPABASE_SECRET_KEY` never goes here.
+
+**Key dependencies for `package.json`** (beyond standard Expo SDK 53):
+```
+react-native-mmkv                        # fast synchronous KV storage
+@tanstack/react-query                    # v5
+@tanstack/react-query-persist-client     # PersistQueryClientProvider
+@tanstack/query-sync-storage-persister   # MMKV-compatible sync persister
+zustand                                  # v5
+@supabase/supabase-js                    # v2
+expo-auth-session
+expo-web-browser
+expo-secure-store
+expo-constants
+@react-native-community/netinfo          # ≥ 11.3.0
+```
 
 ---
 
@@ -339,7 +386,7 @@ export const supabase = createClient(
 
 ## AppState + TanStack Query integration (Task 9)
 
-Add to `src/lib/queryClient.ts` after constructing the `QueryClient`:
+Add to `src/lib/queryClient.ts` after the QueryClient declaration:
 
 ```typescript
 import { AppState } from 'react-native';
@@ -390,6 +437,36 @@ Store is populated in `app/_layout.tsx` via `supabase.auth.onAuthStateChange`. N
 
 ---
 
+## Root layout — PersistQueryClientProvider (Task 10)
+
+`QueryClientProvider` is replaced by `PersistQueryClientProvider` in the root layout:
+
+```tsx
+// app/_layout.tsx
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
+import { queryClient, persistOptions } from '../src/lib/queryClient';
+import { supabase } from '../src/lib/supabase';
+import { useAuthStore } from '../src/store/authStore';
+
+export default function RootLayout() {
+  const setSession = useAuthStore((s) => s.setSession);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  return (
+    <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
+      <Stack />
+    </PersistQueryClientProvider>
+  );
+}
+
+---
+
 ## Sign-in screen spec (Task 11)
 
 **States:**
@@ -426,8 +503,7 @@ Store is populated in `app/_layout.tsx` via `supabase.auth.onAuthStateChange`. N
 | OAuth cancelled | "Sign-in was cancelled." |
 
 **OAuth redirect URLs to add to Supabase Auth → Redirect URLs (Task 6):**
-- EAS development build: `pulseticker://auth/callback`
-- Expo Go (development only): `exp+pulseticker://auth/callback`
+- `pulseticker://auth/callback`
 
 ---
 
@@ -470,6 +546,7 @@ Store is populated in `app/_layout.tsx` via `supabase.auth.onAuthStateChange`. N
 | Task 9 — auth store | `useAuthStore` | `setSession` stores value; `clearSession` resets to null; initial state is null | — |
 | Task 9 — supabase | `supabase.ts` | Client instantiated with `detectSessionInUrl: false`; storage is the SecureStore adapter | `expo-secure-store`, `expo-constants` |
 | Task 10 (routing) | Root `_layout.tsx` | No session → renders `(auth)` group; session present → renders `(tabs)` group | `useAuthStore` |
+| Task 10 (routing) | `PersistQueryClientProvider` hydration | Cached data renders on open; stale banner shown when cache age > 60s | mock `react-native-mmkv` with pre-populated cache |
 | Task 11 (sign-in) | `sign-in.tsx` | Button press → loading state rendered; OAuth error → error message rendered; success → `setSession` called | `expo-auth-session`, `supabase.auth.exchangeCodeForSession` |
 | Task 12 (watchlist) | `useWatchlistPrices` | `fetchedAt` set on successful response; `cached: false` maps to `price: null` items correctly | `fetch` |
 | Task 12 (watchlist) | `StatusBanner` | `age < 60s` → renders nothing; `60s–5min` → amber text; `> 5min` → red text + Retry; offline → red "No internet" | — |
