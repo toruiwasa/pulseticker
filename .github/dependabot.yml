@@ -6,6 +6,8 @@ updates:
   # to run from subdirectories when pnpm-lock.yaml and pnpm-workspace.yaml
   # exist in a parent. Dependabot discovers workspace members via
   # pnpm-workspace.yaml and updates all of them from the root in one job.
+  # .npmrc at the repo root pins registry=https://registry.npmjs.org/ to
+  # prevent Dependabot from routing @scope/* packages through GitHub Packages.
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
