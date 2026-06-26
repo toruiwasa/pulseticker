@@ -13,7 +13,7 @@ export interface AlertJobPayload {
 @Injectable()
 export class QueueService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new SecureLogger(QueueService.name);
-  private workerUtils: WorkerUtils;
+  private workerUtils!: WorkerUtils;
 
   constructor(private config: ConfigService) {}
 
