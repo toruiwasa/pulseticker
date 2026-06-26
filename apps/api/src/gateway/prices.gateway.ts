@@ -24,7 +24,7 @@ interface AlertTriggeredPayload {
 
 @WebSocketGateway({ cors: { origin: process.env.CORS_ORIGIN }, namespace: '/prices' })
 export class PricesGateway implements OnGatewayConnection, OnGatewayDisconnect {
-  @WebSocketServer() server: Server;
+  @WebSocketServer() server!: Server;
   private readonly logger = new SecureLogger(PricesGateway.name);
 
   constructor(

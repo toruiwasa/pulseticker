@@ -17,7 +17,7 @@ const MIN_DELAY_AFTER_429 = 60_000;
 @Injectable()
 export class FinnhubService implements OnModuleInit, OnApplicationBootstrap {
   private readonly logger = new SecureLogger(FinnhubService.name);
-  private ws: WebSocket;
+  private ws!: WebSocket;
   private readonly refCounts = new Map<string, number>();
   private readonly priceCache = new Map<string, { price: number; ts: number }>();
   private reconnectDelay = 1000;

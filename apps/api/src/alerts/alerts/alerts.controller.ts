@@ -24,7 +24,7 @@ export class AlertsController {
     try {
       dto = CreateAlertSchema.parse(body);
     } catch (e) {
-      if (e instanceof ZodError) throw new BadRequestException(e.errors);
+      if (e instanceof ZodError) throw new BadRequestException(e.issues);
       throw e;
     }
     return this.alertsService.createAlert(

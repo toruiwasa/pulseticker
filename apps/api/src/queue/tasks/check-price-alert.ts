@@ -12,7 +12,8 @@ interface Payload {
 }
 
 export function makeCheckPriceAlertTask(supabase: SupabaseService, eventEmitter: EventEmitter2) {
-  return async (payload: Payload) => {
+  return async (rawPayload: unknown) => {
+    const payload = rawPayload as Payload;
     try {
       const { data: alert } = await supabase.client
         .from('alerts')
