@@ -1,0 +1,66 @@
+version: 2
+updates:
+
+  # ── npm / pnpm workspace ──────────────────────────────────────────────────
+  # Single pnpm-lock.yaml at repo root covers all six workspace members.
+  # Dependabot reads pnpm-workspace.yaml to locate each member's package.json.
+  # Listing all six directories separately causes duplicate PRs for shared
+  # deps (typescript, zod, etc.) — root directory only avoids this.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Australia/Sydney"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+    groups:
+      # Angular packages must move in lockstep — a version mismatch between
+      # @angular/core and @angular/compiler-cli breaks the build.
+      angular:
+        patterns:
+          - "@angular/*"
+          - "@angular-devkit/*"
+          - "@angular-eslint/*"
+          - "zone.js"
+
+      # NestJS framework packages are equally version-coupled.
+      nestjs:
+        patterns:
+          - "@nestjs/*"
+          - "nestjs-*"
+
+      # Remaining devDependencies not claimed by angular/nestjs above.
+      # Covers: typescript, eslint, jest, ts-jest, vitest, prettier,
+      # @types/*, nodemon, tsx, supertest, tsconfig-paths, globals, etc.
+      dev-tooling:
+        dependency-type: "development"
+        patterns:
+          - "*"
+
+      # All remaining production dependencies:
+      # @supabase/supabase-js, socket.io, graphile-worker, zod, luxon,
+      # jose, ws, rxjs, @taiga-ui/*, @maskito/*, @ng-web-apis/*,
+      # lightweight-charts, reflect-metadata, class-transformer,
+      # class-validator.
+      production-deps:
+        dependency-type: "production"
+        patterns:
+          - "*"
+
+  # ── GitHub Actions ────────────────────────────────────────────────────────
+  # keepalive.yml currently has no `uses:` references, so no PRs open today.
+  # Retained so future workflow additions (actions/checkout, etc.) are tracked
+  # from day one.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Australia/Sydney"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
