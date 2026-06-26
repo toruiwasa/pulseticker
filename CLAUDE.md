@@ -70,7 +70,7 @@ After every PR (or PR stack) merges to main:
 - NestJS + Angular are intentional learning targets (developer has 6yr TS/Node/React experience but is new to both frameworks)
 - Commit once per completed feature (not per file)
 - **Library-first UI**: Always prefer existing library components (Taiga UI, Angular CDK) over custom HTML + CSS implementations. Writing custom UI or logic without justification is NG. Taiga UI components are customizable via CSS custom properties (`--tui-*`) — override tokens in `styles.css` rather than reimplementing from scratch.
-- **Library-source-first debugging**: When a library or framework behaves unexpectedly (returns null, fires at the wrong time, races with another system), read the library source before attempting a fix. Empirical trial-and-error without reading the source produces multiple fix commits for the same root cause. Minimum: read the relevant method, check the changelog, search the issue tracker for the exact symptom.
+- **Library-source-first debugging (mandatory, not advisory)**: When a library, framework, or infra tool (Dependabot, GitHub Actions, Docker, pnpm) behaves unexpectedly — OR before proposing a fix for a config error in any of these tools — read the official documentation and search the issue tracker for the exact error message **before writing any fix**. This applies to the very first fix attempt, not only after subsequent failures. Empirical trial-and-error without reading the source produces multiple fix commits for the same root cause. Minimum: read the relevant config reference, check the changelog for breaking changes in the version in use, and search GitHub Issues / Discussions for the exact error message.
 
 ## Testing
 

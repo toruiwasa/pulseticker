@@ -50,6 +50,7 @@ Before decomposing tasks, run this checklist against the requirement. Flag any v
 | **Shared package change** | Does any task modify `packages/`? If yes, it must be built and versioned before the consuming app task. |
 | **Render config** | Does any task change `GET /health`, CORS, or env vars? Flag for `devops-engineer` coordination. |
 | **Taiga UI library-first** | Does any frontend task introduce custom HTML/CSS for a pattern TUI already covers? Flag as a TUI compliance risk. |
+| **Infra tooling compatibility** | Does any task configure or modify a CI/CD tool, package manager integration, or deployment config (Dependabot, GitHub Actions, Docker, Render/Vercel config files)? If yes, add a spike task first: "Verify [tool] compatibility with [pnpm version / Node.js version / lockfileVersion / Corepack]." Do not proceed to the config task until the spike confirms the tool works with the current toolchain. |
 | **Test coverage** | Every changed file must reach 90–95% coverage. Note which boundary (controller / gateway / guard) to test per task. |
 
 **Output:**

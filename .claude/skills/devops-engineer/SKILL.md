@@ -195,6 +195,34 @@ Migration files live in `supabase/migrations/` with timestamp-prefixed names. Ea
 
 ---
 
+### 10. Dependency automation (Dependabot)
+
+**pnpm workspace constraints — verified constraints, do not guess:**
+
+| Rule | Reason |
+|---|---|
+| `package-ecosystem: "npm"` | Dependabot has no `pnpm` ecosystem value; it detects pnpm from `pnpm-lock.yaml` automatically |
+| `directory: "/"` only — never `directories:` with subdirectory paths | pnpm refuses to run from workspace subdirectories when `pnpm-lock.yaml` and `pnpm-workspace.yaml` exist in a parent. `directories:` produces: *"Updating workspaces from inside a workspace subdirectory is not supported. Dependabot should only update from the root workspace."* |
+| Strip the SHA512 Corepack hash from `packageManager` before enabling Dependabot | `"pnpm@X.Y.Z+sha512.…"` causes Dependabot's sandbox to fail pnpm invocation: *"could not run pnpm due to a configuration error"*. The version pin `"pnpm@X.Y.Z"` (no hash) is sufficient and Dependabot-compatible. |
+| Modifying `dependabot.yml` triggers an immediate re-run; modifying `package.json` does not | To verify a `package.json` fix, make a meaningful change to `dependabot.yml` (e.g., add `commit-message` config) to force a re-run rather than waiting for the weekly schedule. |
+
+**Recommended `commit-message` config** — aligns Dependabot PRs with the conventional commit convention used in this project:
+
+```yaml
+commit-message:
+  prefix: "chore(deps)"
+  prefix-development: "chore(deps-dev)"
+  include: "scope"
+```
+
+**Recommended groups for this monorepo** (first-match wins — order matters):
+1. `angular` — patterns: `@angular/*`, `@angular-devkit/*`, `@angular-eslint/*`, `zone.js`
+2. `nestjs` — patterns: `@nestjs/*`, `nestjs-*`
+3. `dev-tooling` — `dependency-type: development`, patterns: `*`
+4. `production-deps` — `dependency-type: production`, patterns: `*`
+
+---
+
 ## What is out of scope
 
 - Angular component code, TypeScript types, frontend testing → `frontend-engineer`
