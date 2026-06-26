@@ -4,7 +4,6 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import WebSocket from 'ws';
 import { FinnhubService } from './finnhub.service.js';
-import { AlertsService } from '../../alerts/alerts/alerts.service.js';
 
 const WS_OPEN = 1;
 const WS_CONNECTING = 0;
@@ -43,19 +42,17 @@ afterEach(() => {
 async function buildService() {
   const config = { getOrThrow: jest.fn().mockReturnValue('test-key') };
   const eventEmitter = { emit: jest.fn() };
-  const alerts = { checkAlerts: jest.fn() };
 
   const moduleRef = await Test.createTestingModule({
     providers: [
       FinnhubService,
       { provide: ConfigService, useValue: config },
       { provide: EventEmitter2, useValue: eventEmitter },
-      { provide: AlertsService, useValue: alerts },
     ],
   }).compile();
 
   const service = moduleRef.get(FinnhubService);
-  return { service, eventEmitter, alerts };
+  return { service, eventEmitter };
 }
 
 describe('FinnhubService', () => {
@@ -131,8 +128,8 @@ describe('FinnhubService', () => {
   });
 
   describe('message handler', () => {
-    it('emits price.received event and checks alerts', async () => {
-      const { service, eventEmitter, alerts } = await buildService();
+    it('emits price.received event for each trade', async () => {
+      const { service, eventEmitter } = await buildService();
       service.onModuleInit();
       const ws = FakeWS.lastInstance;
 
@@ -143,7 +140,6 @@ describe('FinnhubService', () => {
       ws.trigger('message', Buffer.from(msg));
 
       expect(eventEmitter.emit).toHaveBeenCalledWith('price.received', { symbol: 'AAPL', price: 185.5, ts: 1000 });
-      expect(alerts.checkAlerts).toHaveBeenCalledWith('AAPL', 185.5);
     });
 
     it('ignores non-trade message types', async () => {

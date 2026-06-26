@@ -1,9 +1,8 @@
-import { forwardRef, Inject, Injectable, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { SecureLogger } from '../../common/logger/secure-logger.js';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import WebSocket from 'ws';
-import { AlertsService } from '../../alerts/alerts/alerts.service.js';
 
 // Finnhub free plan: 1 concurrent WS connection per API key.
 // reconnectDelay doubles on each close, up to maxDelay.
@@ -28,7 +27,6 @@ export class FinnhubService implements OnModuleInit {
   constructor(
     private config: ConfigService,
     private eventEmitter: EventEmitter2,
-    @Inject(forwardRef(() => AlertsService)) private alertsService: AlertsService,
   ) {}
 
   onModuleInit() {
@@ -62,7 +60,6 @@ export class FinnhubService implements OnModuleInit {
         if (msg.type === 'trade' && msg.data) {
           for (const trade of msg.data) {
             this.eventEmitter.emit('price.received', { symbol: trade.s, price: trade.p, ts: trade.t });
-            this.alertsService.checkAlerts(trade.s, trade.p);
           }
         }
       } catch {

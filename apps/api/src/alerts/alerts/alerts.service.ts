@@ -42,7 +42,7 @@ export class AlertsService implements OnModuleInit {
 
     if (error) {
       this.logger.errorData('Failed to load alerts cache', { code: error.code });
-      return;
+      throw error;
     }
 
     this.cache.clear();
@@ -154,6 +154,11 @@ export class AlertsService implements OnModuleInit {
         userId: alert.userId,
       });
     }
+  }
+
+  @OnEvent('price.received')
+  async handlePriceReceived(payload: { symbol: string; price: number }) {
+    await this.checkAlerts(payload.symbol, payload.price);
   }
 
   @OnEvent('alert.triggered')
