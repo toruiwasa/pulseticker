@@ -2,12 +2,18 @@ version: 2
 updates:
 
   # ── npm / pnpm workspace ──────────────────────────────────────────────────
-  # Single pnpm-lock.yaml at repo root covers all six workspace members.
-  # Dependabot reads pnpm-workspace.yaml to locate each member's package.json.
-  # Listing all six directories separately causes duplicate PRs for shared
-  # deps (typescript, zod, etc.) — root directory only avoids this.
+  # All six workspace members are listed explicitly. Dependabot reads each
+  # member's package.json directly rather than parsing the root pnpm-lock.yaml
+  # (lockfileVersion 9.0). With a single package-ecosystem entry, groups apply
+  # across all directories — shared packages like typescript batch into one PR.
   - package-ecosystem: "npm"
-    directory: "/"
+    directories:
+      - "/"
+      - "apps/web"
+      - "apps/api"
+      - "packages/schemas"
+      - "packages/logging"
+      - "packages/trading-utils"
     schedule:
       interval: "weekly"
       day: "monday"
