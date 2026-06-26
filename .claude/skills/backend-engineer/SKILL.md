@@ -283,6 +283,8 @@ Avoid designs that require touching 5 files to add one new alert condition.
 | `catch {}` without logging | Failures are invisible in production |
 | Graphile Worker with Transaction Pooler URL | Silent job dispatch failure |
 | Finnhub called outside `FinnhubService` | Rate limit coordination impossible |
+| `ReturnType<typeof Schema.parse>` as a type annotation | Zod v4 declares `parse` with a `this`-polymorphic return (`core.output<this>`); TypeScript 6.0 cannot resolve it through `ReturnType<>` and collapses to `unknown`. Use the exported `z.infer<typeof Schema>` type alias instead (e.g. `CreateAlertDto` from `packages/schemas`). |
+| `e.errors` on a `ZodError` | Renamed to `e.issues` in Zod v4. Using `.errors` is a runtime TypeError. Always use `e.issues`. |
 
 ---
 
