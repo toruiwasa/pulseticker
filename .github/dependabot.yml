@@ -2,18 +2,12 @@ version: 2
 updates:
 
   # ── npm / pnpm workspace ──────────────────────────────────────────────────
-  # All six workspace members are listed explicitly. Dependabot reads each
-  # member's package.json directly rather than parsing the root pnpm-lock.yaml
-  # (lockfileVersion 9.0). With a single package-ecosystem entry, groups apply
-  # across all directories — shared packages like typescript batch into one PR.
+  # directory: "/" is the only valid option for a pnpm workspace. pnpm refuses
+  # to run from subdirectories when pnpm-lock.yaml and pnpm-workspace.yaml
+  # exist in a parent. Dependabot discovers workspace members via
+  # pnpm-workspace.yaml and updates all of them from the root in one job.
   - package-ecosystem: "npm"
-    directories:
-      - "/"
-      - "apps/web"
-      - "apps/api"
-      - "packages/schemas"
-      - "packages/logging"
-      - "packages/trading-utils"
+    directory: "/"
     schedule:
       interval: "weekly"
       day: "monday"
