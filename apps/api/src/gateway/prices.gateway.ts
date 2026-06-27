@@ -22,7 +22,7 @@ interface AlertTriggeredPayload {
   message: string;
 }
 
-@WebSocketGateway({ cors: { origin: process.env.CORS_ORIGIN }, namespace: '/prices' })
+@WebSocketGateway({ namespace: '/prices' })
 export class PricesGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer() server!: Server;
   private readonly logger = new SecureLogger(PricesGateway.name);
@@ -50,11 +50,18 @@ export class PricesGateway implements OnGatewayConnection, OnGatewayDisconnect {
       return;
     }
     client.data.userId = data.user.id;
+    client.data.subscribedSymbols = new Set<string>();
     client.join(`user:${data.user.id}`);
     this.logger.log(`Client connected: ${data.user.id}`);
   }
 
   handleDisconnect(client: Socket) {
+    const syms = client.data.subscribedSymbols as Set<string> | undefined;
+    if (syms) {
+      for (const sym of syms) {
+        this.finnhub.unsubscribe(sym);
+      }
+    }
     this.logger.log(`Client disconnected: ${client.id}`);
   }
 
@@ -63,6 +70,7 @@ export class PricesGateway implements OnGatewayConnection, OnGatewayDisconnect {
     for (const sym of payload.symbols) {
       client.join(`symbol:${sym}`);
       this.finnhub.subscribe(sym);
+      (client.data.subscribedSymbols as Set<string>).add(sym);
     }
   }
 
