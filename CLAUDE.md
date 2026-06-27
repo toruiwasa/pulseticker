@@ -101,6 +101,10 @@ After every PR (or PR stack) merges to main:
 
 - **Boundary-first**: Always test application boundaries — HTTP controllers, WebSocket gateways, pipes. Internal service logic is tested only where needed to reach the coverage target.
 - **Coverage target**: 90–95% per changed file. Verify with `pnpm --filter api test:cov` / `pnpm --filter web test:cov`.
+- **Never use `npx jest` directly** — it is cwd-dependent and picks up all packages in the monorepo. Always use the pnpm scoped form:
+  - Full suite: `pnpm --filter api test`
+  - With coverage: `pnpm --filter api test:cov`
+  - Targeted files: `pnpm --filter api test -- --testPathPatterns "foo" "bar"` (note: `--testPathPatterns` plural — Jest 30 renamed the flag from `--testPathPattern`)
 - **No Angular TestBed for pure logic**: Pipes and utility functions are instantiated directly in Jest.
 - **Mock external I/O**: Supabase client, `fetch`, and Socket.io are always mocked — never hit real services in unit tests.
 - **Coverage package version pinning**: When installing `@vitest/coverage-v8` or `@vitest/coverage-istanbul`, pin to the exact same version as `vitest` already in the project (`pnpm add -D @vitest/coverage-v8@$(node -p "require('./node_modules/vitest/package.json').version") --filter web`). A version mismatch creates two vitest instances and silently breaks `vi.mock()` intercepts.

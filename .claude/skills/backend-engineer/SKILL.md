@@ -277,7 +277,7 @@ Avoid designs that require touching 5 files to add one new alert condition.
 | Business logic in transport layer (controller/gateway) | Untestable without full HTTP/WS stack |
 | N+1 query | Query count grows linearly with result set |
 | Missing Supabase `error` check | `null` data treated as success |
-| Direct `process.env` access in services | Bypasses ConfigModule validation; breaks test isolation |
+| Direct `process.env` access in services or `main.ts` | Bypasses ConfigModule validation; breaks test isolation; produces inconsistent fail-fast behaviour when only some callsites are migrated. **When migrating any `process.env.X` access to ConfigService, grep for all other usages of the same variable (`grep -r "process.env.CORS_ORIGIN"`) and migrate them in the same PR.** |
 | `forwardRef()` in module imports | Masks a circular dependency — restructure instead |
 | Zod schema defined in `apps/api/` for a shape used by both layers | Two sources of truth; move to `packages/schemas` |
 | `catch {}` without logging | Failures are invisible in production |
@@ -285,6 +285,35 @@ Avoid designs that require touching 5 files to add one new alert condition.
 | Finnhub called outside `FinnhubService` | Rate limit coordination impossible |
 | `ReturnType<typeof Schema.parse>` as a type annotation | Zod v4 declares `parse` with a `this`-polymorphic return (`core.output<this>`); TypeScript 6.0 cannot resolve it through `ReturnType<>` and collapses to `unknown`. Use the exported `z.infer<typeof Schema>` type alias instead (e.g. `CreateAlertDto` from `packages/schemas`). |
 | `e.errors` on a `ZodError` | Renamed to `e.issues` in Zod v4. Using `.errors` is a runtime TypeError. Always use `e.issues`. |
+
+---
+
+## TypeScript Tooling — TS5011 and isolated spec files
+
+TypeScript 6 infers `rootDir` from the set of source files in the current compilation. When a spec
+file imports only from its own directory (no cross-directory project imports), TypeScript infers
+`rootDir` as that subdirectory (e.g. `src/gateway/`) instead of `src/`. With `outDir` set in
+`tsconfig.json`, this triggers **TS5011** at compile time.
+
+**Guard:** Any time you add a new spec file whose imports are entirely self-contained within one
+subdirectory, confirm that the ts-jest inline `tsconfig` override in `apps/api/package.json`
+already includes `"rootDir": "./src"`. If it does not, add it. `tsconfig.build.json` already
+sets this for production builds, but ts-jest reads the base `tsconfig.json` and merges only the
+inline override.
+
+---
+
+## Test Commands (always use pnpm scoped form — never bare `npx jest`)
+
+```bash
+pnpm --filter api test                                    # full suite
+pnpm --filter api test:cov                                # with coverage report
+pnpm --filter api test -- --testPathPatterns "foo" "bar"  # targeted (Jest 30: plural flag)
+```
+
+`npx jest` is cwd-dependent — running it from the monorepo root picks up all packages.
+`--testPathPatterns` (plural) is the correct Jest 30 flag; the singular `--testPathPattern` was
+renamed and is silently ignored.
 
 ---
 
