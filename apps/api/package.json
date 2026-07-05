@@ -33,7 +33,7 @@
     "@pulseticker/logging": "workspace:*",
     "@pulseticker/schemas": "workspace:*",
     "@pulseticker/trading-utils": "workspace:*",
-    "@supabase/supabase-js": "^2.108.2",
+    "@supabase/supabase-js": "^2.110.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
     "graphile-worker": "^0.17.2",
