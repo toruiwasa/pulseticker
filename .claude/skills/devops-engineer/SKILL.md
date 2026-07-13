@@ -47,6 +47,12 @@ Current deployment stack — always reason from this baseline:
 
 ### 1. CI/CD (GitHub Actions)
 
+> **Current reality — this pipeline does not exist yet.** `.github/workflows/` contains only `keepalive.yml`. **Nothing runs `pnpm build` or `pnpm test` on a PR.** Vercel builds `apps/web` alone: it runs no tests and never builds the API.
+>
+> **Hard rule:** never cite a green GitHub check as evidence that tests pass or that the API builds. A green Vercel check proves exactly one thing — `apps/web` compiles. Until `.github/workflows/ci.yml` exists, every PR must be verified locally with `pnpm install --frozen-lockfile && pnpm build && pnpm test` before merge.
+>
+> The cost of this gap is already on record: an `isolate: false` bug silently defeated `vi.mock()` in 22 web tests and reached `main` undetected (`plans/DEBUG_vitest_isolate_mock_flake.md`). Closing this gap is the highest-value infra task in the repo.
+
 Design pipelines that run automatically on PRs and deployments.
 
 **Recommended pipeline structure:**
@@ -223,6 +229,30 @@ commit-message:
 2. `nestjs` — patterns: `@nestjs/*`, `nestjs-*`
 3. `dev-tooling` — `dependency-type: development`, patterns: `*`
 4. `production-deps` — `dependency-type: production`, patterns: `*`
+
+**Major-bump triage — a major bump has broken this repo twice (TypeScript 6 in PR #33, TypeScript 7 in PR #46).** Treat every major as guilty until proven innocent:
+
+1. **Check the peer range of whatever pins it, from the package itself — never from memory.**
+   ```bash
+   node -p "require('@angular/compiler-cli/package.json').peerDependencies.typescript"
+   # >=6.0 <6.1   → TypeScript 7 can never build on Angular 22
+   ```
+   Check the *target* version too (`curl -s https://registry.npmjs.org/<pkg>/<version>`), not just the installed one — a patch bump rarely widens a peer range.
+
+2. **If a hard peer range forbids it, guard it — do not merely close the PR.** A closed PR is re-proposed on the next scheduled run and keeps blocking the safe bumps grouped with it. Add to the `npm` entry of `.github/dependabot.yml`, as a sibling of `groups:`:
+   ```yaml
+   ignore:
+     # <framework> pins peer `<dep>: "<range>"` — a major bump breaks the build.
+     # Lift when <condition>.
+     - dependency-name: "<dep>"
+       update-types:
+         - "version-update:semver-major"
+   ```
+   Dependabot reads its config from the **default branch only**, so this must merge to `main` first. Then comment `@dependabot recreate` on the blocked PR — Dependabot closes it and opens a fresh one without the offending dependency.
+
+3. **Group PRs are all-or-nothing.** One un-adoptable dependency blocks every other bump in the group. That is why the `ignore` guard matters more than the individual PR.
+
+**`ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`** — pnpm 11 refuses any package published in the last 24 hours. A Dependabot PR picking up a just-published version fails to install until it ages out. This is a supply-chain control, **not** a build break: wait for the window and rebase. Never relax `minimumReleaseAge` to force a merge.
 
 ---
 

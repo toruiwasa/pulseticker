@@ -147,6 +147,15 @@ Add `devops-engineer` if migration or env var changes are needed.
 ### Documentation or `plans/` file
 Skip Phases 5–10. Commit directly. Ensure the file lands in the repo.
 
+### Dependency maintenance (Dependabot)
+Skip Phases 1–8. Invoke `devops-engineer`.
+
+No GitHub Issue is needed for the Dependabot PRs themselves — they *are* the PRs. But any repo change made **in response** (a `dependabot.yml` guard, a compatibility fix, a test-config fix) follows the normal one-issue → one-branch → one-PR rule.
+
+Mandatory: **CLAUDE.md § Dependabot PR review, in full, before any merge** — including the local `pnpm build && pnpm test` gate. A green Vercel check is not a gate; it builds `apps/web` only and runs no tests.
+
+**Phase 11 (retrospective) is mandatory if any dependency required a code change or broke CI.** A major version bump has broken this repo twice (TypeScript 6 in PR #33, TypeScript 7 in PR #46) — treat every recurrence as a systems failure, not an incident.
+
 ### Emergency production fix
 Implement immediately (Phase 9). Abbreviated Phase 10. **Phase 11 is mandatory.**
 
