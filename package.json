@@ -16,6 +16,6 @@
     "test:cov:web": "pnpm --filter web test:cov"
   },
   "devDependencies": {
-    "turbo": "^2.10.0"
+    "turbo": "^2.10.4"
   }
 }
