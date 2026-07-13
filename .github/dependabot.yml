@@ -56,6 +56,17 @@ updates:
         patterns:
           - "*"
 
+    ignore:
+      # Angular 22 pins a hard peer range: typescript ">=6.0 <6.1"
+      # (@angular/compiler-cli and @angular/build — same range on 22.0.3,
+      # 22.0.5 and 22.0.6). A TypeScript major bump makes `ng build` refuse to
+      # compile and the Vercel deploy fail; PR #46 bumped it to 7.0.2 and died.
+      # Minor and patch TypeScript updates still flow.
+      # Lift this once Angular widens the range — expected in Angular 23.
+      - dependency-name: "typescript"
+        update-types:
+          - "version-update:semver-major"
+
   # ── GitHub Actions ────────────────────────────────────────────────────────
   # keepalive.yml currently has no `uses:` references, so no PRs open today.
   # Retained so future workflow additions (actions/checkout, etc.) are tracked
