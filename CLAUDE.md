@@ -54,7 +54,17 @@ Before merging any Dependabot PR or group PR:
 1. **Scan for major version bumps**: Run `gh pr diff <N> | grep '"version"\|specifier'` or read the PR body table. Any bump where the leading number increases (e.g. `5.x → 6.x`, `3.x → 4.x`) is a **major bump** and requires manual review.
 2. **For each major bump**: Read the package's CHANGELOG or MIGRATION guide for breaking changes before merging. Do not rely on the build passing alone — type-level breaks can hide until runtime.
 3. **Merge major-bump groups separately**: If a group PR mixes patch/minor with major bumps, consider splitting or at minimum verifying the full build (`pnpm build`) locally after merging, before pushing to main.
-4. **Verify full build after merging dep PRs**: Always run `pnpm build` after each Dependabot group merges. Vercel only tests the frontend; the API TypeScript build has no CI gate yet.
+4. **Verify locally BEFORE merging — build *and* test.** A green Vercel check is not a gate: Vercel builds `apps/web` only, runs no tests, and never builds the API. For every Dependabot PR:
+   ```bash
+   gh pr checkout <N> && pnpm install --frozen-lockfile && pnpm build && pnpm test
+   ```
+   Merge only if both pass. `pnpm build` alone is insufficient — a dependency bump can leave the build green while breaking runtime or test behaviour.
+5. **Blocked majors get an `ignore` guard, not just a closed PR.** If a major bump cannot be adopted because a framework hard-pins a peer range (e.g. Angular 22 pins `typescript ">=6.0 <6.1"`), closing the Dependabot PR is not enough — it will be re-proposed on the next scheduled run and will keep blocking the safe bumps grouped with it. Add an `ignore` entry to `.github/dependabot.yml` scoped to `version-update:semver-major`, with a comment naming the pinning package and the condition for lifting it. Verify the peer range from the package itself before writing the guard:
+   ```bash
+   node -p "require('@angular/compiler-cli/package.json').peerDependencies.typescript"
+   ```
+   After the guard merges to `main` (Dependabot reads its config from the default branch only), comment `@dependabot recreate` on the blocked PR to have it rebuilt without the offending dependency.
+6. **`ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` is a security control, not a build break.** pnpm 11 refuses to install any package published within the last 24 hours. A Dependabot PR that picks up a just-published version will fail to install until it ages out. **Wait for the window to pass and rebase — never relax `minimumReleaseAge` to force a merge.** It is the repo's primary defence against a compromised fresh npm release.
 
 ### Deployment configuration changes (mandatory gate before any change)
 
@@ -77,6 +87,7 @@ Skipping step 1 produces documentation that conflicts with the real system and c
 2. **Before starting a task**: Run `gh issue list` to confirm the issue is open. Reference the issue number in the branch if helpful (e.g. `feat/42-symbol-search`).
 3. **After implementation**: Create a PR with `gh pr create`. The PR body must include `Closes #<issue-number>` so GitHub auto-closes the issue on merge. Merge with `gh pr merge --squash` (or `--merge` for multi-commit PRs).
    - **PR merge requires explicit instruction**: After `gh pr create`, always stop. Never call `gh pr merge` or use `--auto` unless the user says "merge" for that specific PR in the current message. The only exception is when the user's original instruction explicitly included merging (e.g., "create and merge the PR"). General task approval ("go", "proceed") does not authorize merging.
+   - **Plan approval is not merge approval**: approving a plan that contains a merge step authorizes the *work*, not the merge. Each `gh pr merge` still needs the user to say "merge" for that specific PR. This applies equally to PRs Claude authored itself (e.g. a config or docs PR) — authoring a PR never grants permission to merge it.
    - **Stacked PRs exception**: `Closes #N` only triggers when the PR merges into `main`. If the PR targets an upstream feature branch (stacked PR), the issue will NOT be auto-closed. After the full stack merges to main, manually close every stacked PR's issue: `gh issue close <N> --comment "Completed in PR #<stacked-pr>, merged to main as <commit-sha>."` Do this as the final step of the stack merge — before moving to the next task.
 4. **One issue = one branch = one PR = one merge.** Never merge directly to main without a PR.
 
@@ -107,7 +118,10 @@ After every PR (or PR stack) merges to main:
   - Targeted files: `pnpm --filter api test -- --testPathPatterns "foo" "bar"` (note: `--testPathPatterns` plural — Jest 30 renamed the flag from `--testPathPattern`)
 - **No Angular TestBed for pure logic**: Pipes and utility functions are instantiated directly in Jest.
 - **Mock external I/O**: Supabase client, `fetch`, and Socket.io are always mocked — never hit real services in unit tests.
+- **Test isolation is mandatory (`isolate: true`)**: `@angular/build:unit-test` defaults `isolate` to `false` ("to align with the Karma/Jasmine experience"), inverting Vitest's own default of `true`. With isolation off, spec files **share a module registry**, so any spec that transitively imports a real module defeats `vi.mock()` of that module in another spec — silently, and only under parallel load. `apps/web/angular.json` sets `"isolate": true`; never remove it. See `plans/DEBUG_vitest_isolate_mock_flake.md`.
+- **A mock that silently no-ops passes every rule above**: when mocking a bare module (`vi.mock('socket.io-client')`, `vi.mock('@supabase/supabase-js')`), assert the mock was actually **called** — not merely that the code under test behaved as expected. A mock that never intercepted lets the real module through while the suite stays green.
 - **Coverage package version pinning**: When installing `@vitest/coverage-v8` or `@vitest/coverage-istanbul`, pin to the exact same version as `vitest` already in the project (`pnpm add -D @vitest/coverage-v8@$(node -p "require('./node_modules/vitest/package.json').version") --filter web`). A version mismatch creates two vitest instances and silently breaks `vi.mock()` intercepts.
+- **Never re-run a flaky test until it goes green.** Re-running establishes nothing: at a 17% flake rate, ten consecutive clean runs happen ~15% of the time by chance. Force the nondeterminism to be deterministic (pin the schedule — single worker, `fileParallelism: false` — fix the seed, freeze the clock), then flip **one** variable to prove causation. Only then decide whether the failure is real. Delete the temporary harness afterwards and record the investigation in `plans/DEBUG_<topic>.md`.
 
 ## Validation
 

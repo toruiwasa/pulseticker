@@ -62,6 +62,26 @@ Test internal service logic only where needed to reach the 90–95% target.
 
 Never hit real services in unit tests. No exceptions.
 
+### A mock that silently no-ops satisfies every rule above
+
+Mocking is not the same as *intercepting*. A `vi.mock()` that never took effect lets the real module through while the suite stays green — the most dangerous failure mode in this repo, because it is invisible.
+
+**Two mandatory guards:**
+
+1. **`isolate: true` is required in `apps/web/angular.json`.** The `@angular/build:unit-test` builder defaults `isolate` to `false` ("to align with the Karma/Jasmine experience"), inverting Vitest's own default of `true`. With isolation off, spec files **share a module registry**: any spec that transitively imports the real module defeats `vi.mock()` of that module in another spec. It fails only under parallel load and only depending on file→worker scheduling, so it presents as a flaky test, not a config bug. Never remove that option. Full write-up: `plans/DEBUG_vitest_isolate_mock_flake.md`.
+
+2. **When mocking a bare module, assert the mock was called.** For any `vi.mock('<package>')` — `socket.io-client`, `@supabase/supabase-js`, `lightweight-charts` — the test must prove the intercept happened, not merely that the outcome looked right:
+   ```ts
+   expect(mockIo).toHaveBeenCalledOnce();   // proves vi.mock intercepted
+   ```
+   Without this, a broken intercept produces a passing test that exercises the real network client.
+
+**Before adding a spec that imports a service which wraps an external module**, check whether another spec mocks that module. If so, either mock it here too or confirm isolation is on — otherwise the new spec will poison the existing one.
+
+### Flaky tests are never cleared by re-running
+
+At a 17% flake rate, ten consecutive clean runs happen ~15% of the time by chance — re-running until green proves nothing and merges the bug. Force the nondeterminism to be deterministic (single worker, `fileParallelism: false`, fixed seed, frozen clock), then flip **one** variable to prove causation. Delete the temporary harness afterwards and record the investigation in `plans/DEBUG_<topic>.md`.
+
 ### No Angular TestBed for pure logic
 
 Pipes, utility functions, and plain classes are instantiated directly in Jest. TestBed is only for components and services that require Angular DI.
@@ -327,10 +347,12 @@ Identify which existing features could be affected by the change:
 - Write tests for third-party libraries
 - Propose E2E tests without an E2E framework in place
 - Use `jest.fn()` without specifying what it returns — undefined mock returns hide intent
+- Declare a flaky test resolved because it passed on re-run — see § Flaky tests are never cleared by re-running
 
 **ALWAYS:**
 - Test behavior at boundaries, not internal implementation
 - Specify the mock setup for every test case
 - Mock all external I/O — never hit real services
+- Assert that a bare-module `vi.mock()` was actually **called** — a mock that never intercepted passes silently while hitting the real module
 - Instantiate pipes and pure functions directly, without TestBed
 - Run the actual coverage command to verify — never estimate
