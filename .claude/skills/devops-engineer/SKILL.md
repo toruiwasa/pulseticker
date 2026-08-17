@@ -47,11 +47,15 @@ Current deployment stack — always reason from this baseline:
 
 ### 1. CI/CD (GitHub Actions)
 
-> **Current reality — this pipeline does not exist yet.** `.github/workflows/` does not exist: the repo has no GitHub Actions workflows at all. **Nothing runs `pnpm build` or `pnpm test` on a PR.** Vercel builds `apps/web` alone: it runs no tests and never builds the API.
+> **Current reality.** `.github/workflows/ci.yml` is the only workflow: on every PR to `main` and every push to `main` it runs `pnpm install --frozen-lockfile`, `pnpm build`, then `pnpm test` across the whole monorepo. Vercel is *not* a gate — it builds `apps/web` alone, runs no tests, and never builds the API.
 >
-> **Hard rule:** never cite a green GitHub check as evidence that tests pass or that the API builds. A green Vercel check proves exactly one thing — `apps/web` compiles. Until `.github/workflows/ci.yml` exists, every PR must be verified locally with `pnpm install --frozen-lockfile && pnpm build && pnpm test` before merge.
+> **Hard rule:** never cite a *green Vercel* check as evidence that tests pass or that the API builds; it proves exactly one thing — `apps/web` compiles. The `build + test` check from `ci.yml` is the one that carries that evidence.
 >
-> The cost of this gap is already on record: an `isolate: false` bug silently defeated `vi.mock()` in 22 web tests and reached `main` undetected (`plans/DEBUG_vitest_isolate_mock_flake.md`). Closing this gap is the highest-value infra task in the repo.
+> Why this workflow exists: an `isolate: false` bug silently defeated `vi.mock()` in 22 web tests and reached `main` undetected (`plans/DEBUG_vitest_isolate_mock_flake.md`) because nothing ran the suite on a PR.
+>
+> **Two constraints the workflow depends on — do not break them:**
+> - The `Test` step must stay *after* `Build`. The web suite imports the gitignored `apps/web/src/environments/environment.ts`, which only the build generates (via `scripts/set-env.ts`).
+> - Any env var `set-env.ts` reads must be listed in `turbo.json`'s `build.env`. Turbo 2 runs in strict env mode and silently drops undeclared variables — `APP_ENV` was lost this way, and the build fell back to `production` without any error.
 
 Design pipelines that run automatically on PRs and deployments.
 
