@@ -18,35 +18,26 @@ event-driven backends, and real-time UI updates.
 
 ```mermaid
 flowchart LR
-    web["Angular<br/>(Vercel)"]
+    web["Angular (Vercel)<br/>Socket.io client"]
     gh["GitHub OAuth"]
     finnhub["Finnhub"]
     twelvedata["TwelveData"]
+    pg[("Supabase<br/>Postgres + Auth")]
 
-    subgraph render["NestJS (Render)"]
-        rest["REST controllers<br/>watchlist / alerts / chart"]
+    subgraph api["NestJS (Render)"]
         gateway["Socket.io Gateway"]
-        bus(["EventEmitter"])
         finnhubSvc["Finnhub WS client"]
-        worker["Graphile Worker<br/>(price alerts)"]
+        worker["Graphile Worker<br/>(alerts)"]
+        twelveSvc["TwelveData REST client"]
     end
 
-    subgraph supa["Supabase"]
-        pg[("Postgres + Auth")]
-    end
-
-    web -->|HTTP/REST| rest
-    web -->|"/prices (JWT ES256)"| gateway
-    gateway -->|"price / alert-triggered"| web
-    web -->|PKCE| pg
-    pg <-->|OAuth2| gh
-
-    rest -->|service role| pg
-    rest -->|"REST: candles"| twelvedata
+    web -->|HTTP/REST| api
+    web <-->|"/prices"| gateway
+    web -->|"JWT (ES256)"| gh
+    gh --> pg
+    api -->|service role| pg
     finnhub -->|trades| finnhubSvc
-    finnhubSvc -->|price.received| bus
-    worker -->|alert.triggered| bus
-    bus --> gateway
+    twelvedata -->|candles| twelveSvc
     worker -->|jobs| pg
 ```
 
