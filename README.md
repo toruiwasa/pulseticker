@@ -33,11 +33,11 @@ flowchart LR
 
     web -->|HTTP/REST| api
     web <-->|"/prices"| gateway
-    web -->|"JWT (ES256)"| gh
-    gh --> pg
+    web <-->|"PKCE / JWT (ES256)"| pg
+    pg <-->|OAuth2| gh
     api -->|service role| pg
     finnhub -->|trades| finnhubSvc
-    twelvedata -->|candles| twelveSvc
+    twelveSvc -->|candles| twelvedata
     worker -->|jobs| pg
 ```
 
