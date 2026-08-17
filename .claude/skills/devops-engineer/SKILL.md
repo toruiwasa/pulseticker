@@ -47,7 +47,7 @@ Current deployment stack — always reason from this baseline:
 
 ### 1. CI/CD (GitHub Actions)
 
-> **Current reality — this pipeline does not exist yet.** `.github/workflows/` contains only `keepalive.yml`. **Nothing runs `pnpm build` or `pnpm test` on a PR.** Vercel builds `apps/web` alone: it runs no tests and never builds the API.
+> **Current reality — this pipeline does not exist yet.** `.github/workflows/` does not exist: the repo has no GitHub Actions workflows at all. **Nothing runs `pnpm build` or `pnpm test` on a PR.** Vercel builds `apps/web` alone: it runs no tests and never builds the API.
 >
 > **Hard rule:** never cite a green GitHub check as evidence that tests pass or that the API builds. A green Vercel check proves exactly one thing — `apps/web` compiles. Until `.github/workflows/ci.yml` exists, every PR must be verified locally with `pnpm install --frozen-lockfile && pnpm build && pnpm test` before merge.
 >

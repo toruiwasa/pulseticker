@@ -16,24 +16,38 @@ event-driven backends, and real-time UI updates.
 
 ## Architecture
 
-```
-┌─────────────┐ HTTP/REST  ┌──────────────┐  service role  ┌──────────┐
-│   Angular   │ ─────────▶ │   NestJS     │ ─────────────▶ │ Supabase │
-│   (Vercel)  │            │   (Render)   │                │ Postgres │
-│             │ ◀────────── │              │                │ + Auth   │
-│  Socket.io  │  /prices    │  Socket.io   │                └──────────┘
-└─────┬───────┘             │   Gateway    │
-      │ JWT (ES256)         │              │ trades  ┌──────────┐
-      ▼                     │  Finnhub WS  │ ◀────── │ Finnhub  │
-   GitHub                   │   client     │         └──────────┘
-   OAuth ───▶ Supabase Auth │              │
-                            │  Graphile    │ jobs    ┌──────────┐
-                            │  Worker      │ ──────▶ │ Supabase │
-                            │  (alerts)    │         │ Postgres │
-                            │              │         └──────────┘
-                            │  TwelveData  │ candles ┌────────────┐
-                            │  REST client │ ◀────── │ TwelveData │
-                            └──────────────┘         └────────────┘
+```mermaid
+flowchart LR
+    web["Angular<br/>(Vercel)"]
+    gh["GitHub OAuth"]
+    finnhub["Finnhub"]
+    twelvedata["TwelveData"]
+
+    subgraph render["NestJS (Render)"]
+        rest["REST controllers<br/>watchlist / alerts / chart"]
+        gateway["Socket.io Gateway"]
+        bus(["EventEmitter"])
+        finnhubSvc["Finnhub WS client"]
+        worker["Graphile Worker<br/>(price alerts)"]
+    end
+
+    subgraph supa["Supabase"]
+        pg[("Postgres + Auth")]
+    end
+
+    web -->|HTTP/REST| rest
+    web -->|"/prices (JWT ES256)"| gateway
+    gateway -->|"price / alert-triggered"| web
+    web -->|PKCE| pg
+    pg <-->|OAuth2| gh
+
+    rest -->|service role| pg
+    rest -->|"REST: candles"| twelvedata
+    finnhub -->|trades| finnhubSvc
+    finnhubSvc -->|price.received| bus
+    worker -->|alert.triggered| bus
+    bus --> gateway
+    worker -->|jobs| pg
 ```
 
 ## Stack
@@ -91,6 +105,7 @@ pnpm --filter web test:cov     # 158 tests / 18 suites — components, services,
 |---|---|
 | Render (api) | Root `apps/api`, build `pnpm install && pnpm run build`, start `node dist/main`. Set all env vars + `NODE_ENV=production`, `CORS_ORIGIN=<vercel-url>`. Add `DATABASE_URL` (Supabase Session Pooler URI). Graphile Worker auto-creates its schema on first boot. |
 | Vercel (web) | Root `apps/web`, build `tsx scripts/set-env.ts --prod && ng build`, output `dist/web/browser`. Add `vercel.json` rewrites before first deploy. |
+| Uptime monitor | UptimeRobot pings `https://pulseticker.onrender.com/health` every 13 min. Render's free tier sleeps after 15 min idle, so this keeps the demo instance from cold-starting on the first visit. `/health` must stay unauthenticated. |
 
 Supabase Auth → URL Configuration → Redirect URLs must include
 `<vercel-url>/auth/callback` (and `http://localhost:4200/auth/callback` for

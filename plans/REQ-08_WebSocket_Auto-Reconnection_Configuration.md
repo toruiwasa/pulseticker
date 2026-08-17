@@ -100,6 +100,13 @@ This mirrors the NestJS backoff cap of 30s, ensuring both ends converge to the s
 
 ## 3. Angular: Render Keep-Alive Ping
 
+> [!IMPORTANT]
+> **Superseded — this section is a historical record.** The browser-side ping was
+> moved to a GitHub Actions cron in `0e4f91b`, and that workflow was in turn
+> retired in favour of an external uptime monitor (see the Deployment table in
+> README.md). No keep-alive code remains in `apps/web`. The reconnection
+> behaviour described in the rest of this document is still current.
+
 **File:** `apps/web/src/app/app.ts`
 
 ### Implementation

@@ -68,9 +68,10 @@ updates:
           - "version-update:semver-major"
 
   # ── GitHub Actions ────────────────────────────────────────────────────────
-  # keepalive.yml currently has no `uses:` references, so no PRs open today.
-  # Retained so future workflow additions (actions/checkout, etc.) are tracked
-  # from day one.
+  # No workflows exist today — the Render keepalive cron was retired in favour of
+  # an external uptime monitor — so this ecosystem opens no PRs. Retained so the
+  # first workflow added (a CI pipeline running pnpm build / pnpm test) has its
+  # `uses:` references tracked from day one.
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:

@@ -231,7 +231,7 @@ Before merging or deploying, verify this checklist:
 
 ### Deployment stack
 
-- [ ] `GET /health` returns 200 unauthenticated (Render keepalive must not break)
+- [ ] `GET /health` returns 200 unauthenticated (external uptime monitor depends on it)
 - [ ] `CORS_ORIGIN` on Render matches the Vercel URL exactly (no trailing slash)
 - [ ] `DATABASE_URL` is Session Pooler (port 5432), not Transaction Pooler (port 6543)
 - [ ] Supabase Auth → Redirect URLs includes the current Vercel deployment URL
