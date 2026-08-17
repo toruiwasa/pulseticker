@@ -32,7 +32,7 @@ pulseticker/
     │       └── health/        ← terminus health checks (supabase + redis + memory)
     └── web/                  ← Angular standalone (zoneless + signals) → Vercel
         └── src/app/
-            ├── app.ts                                ← root component (keep-alive ping)
+            ├── app.ts                                ← root component
             ├── app.config.ts                         ← provideZonelessChangeDetection()
             ├── core/
             │   ├── guards/auth.guard.ts              ← protects /dashboard, /alerts
@@ -384,11 +384,12 @@ In `FinnhubService` price handler, also call `alertsService.checkAlerts(symbol, 
 
 ## Phase 4: Polish + Tests + README
 
-- `HealthController` uses `@nestjs/terminus` with 3 indicators: custom Supabase
-  ping (`select id from watchlist_items limit 1`), custom Redis ping
-  (`queue.getJobCounts()`), and `MemoryHealthIndicator.checkHeap` (200 MB)
-- Render keep-alive: Angular root `App` component sets a 14-min `setInterval`
-  that `fetch`es `/health` (Render free tier sleeps after 15 min idle)
+- `HealthController` uses `@nestjs/terminus` with 2 indicators: custom Supabase
+  ping (`select id from watchlist_items limit 1`) and
+  `MemoryHealthIndicator.checkHeap` (200 MB)
+- Render keep-alive: an external uptime monitor pings `/health` on a schedule
+  tighter than Render's free-tier idle timeout, so the demo instance stays warm.
+  See the Deployment table in README.md for the concrete settings.
 - Unit test `AlertsProcessor.process()`: mock Supabase + gateway, verify
   threshold logic (4 cases: inactive, above-no-trigger, above-trigger, below-trigger)
 - Unit test `PricesGateway` connection handling: verify disconnect on missing/

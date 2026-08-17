@@ -255,7 +255,7 @@ Never jump to implementation. Every significant feature must pass through the ap
 - Any blocking issues
 
 **Release checklist** (non-negotiable):
-- [ ] `GET /health` returns 200 (Render keepalive intact)
+- [ ] `GET /health` returns 200 (external uptime monitor depends on it — see README)
 - [ ] CORS_ORIGIN matches Vercel URL exactly
 - [ ] DATABASE_URL is Session Pooler (port 5432)
 - [ ] Supabase Auth Redirect URLs includes current Vercel URL

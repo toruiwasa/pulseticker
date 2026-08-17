@@ -7,7 +7,7 @@ event-driven backends, and real-time UI updates.
 ## Features
 
 - **Real-time prices** — Live stock quotes via Finnhub WebSocket (US market hours)
-- **Price chart** — Interactive OHLC candlestick chart with 1D / 1W / 1M / 6M timeframes (TwelveData)
+- **Price chart** — Interactive close-price line chart with 1D / 1Y timeframes (TwelveData)
 - **Watchlist** — Add / remove symbols; prices stream automatically once subscribed
 - **Price alerts** — Set threshold alerts; fires once then deactivates
 - **Discover** — Search and preview US-listed symbols before adding to watchlist
@@ -16,24 +16,35 @@ event-driven backends, and real-time UI updates.
 
 ## Architecture
 
-```
-┌─────────────┐ HTTP/REST  ┌──────────────┐  service role  ┌──────────┐
-│   Angular   │ ─────────▶ │   NestJS     │ ─────────────▶ │ Supabase │
-│   (Vercel)  │            │   (Render)   │                │ Postgres │
-│             │ ◀────────── │              │                │ + Auth   │
-│  Socket.io  │  /prices    │  Socket.io   │                └──────────┘
-└─────┬───────┘             │   Gateway    │
-      │ JWT (ES256)         │              │ trades  ┌──────────┐
-      ▼                     │  Finnhub WS  │ ◀────── │ Finnhub  │
-   GitHub                   │   client     │         └──────────┘
-   OAuth ───▶ Supabase Auth │              │
-                            │  Graphile    │ jobs    ┌──────────┐
-                            │  Worker      │ ──────▶ │ Supabase │
-                            │  (alerts)    │         │ Postgres │
-                            │              │         └──────────┘
-                            │  TwelveData  │ candles ┌────────────┐
-                            │  REST client │ ◀────── │ TwelveData │
-                            └──────────────┘         └────────────┘
+```mermaid
+flowchart LR
+    web["Angular (Vercel)<br/>Socket.io client"]
+    gh["GitHub OAuth"]
+    finnhub["Finnhub"]
+    twelvedata["TwelveData"]
+
+    subgraph api["NestJS (Render)"]
+        gateway["Socket.io Gateway"]
+        finnhubSvc["Finnhub WS client"]
+        worker["Graphile Worker<br/>(alerts)"]
+        twelveSvc["TwelveData REST client"]
+    end
+
+    subgraph supabase["Supabase"]
+        auth["Auth"]
+        pg[("Postgres")]
+    end
+
+    web -->|HTTP/REST| api
+    web <-->|"/prices"| gateway
+    web <-->|"PKCE / JWT (ES256)"| auth
+    auth <-->|OAuth2| gh
+    api -->|JWKS| auth
+    api -->|service role| pg
+    finnhubSvc <-->|"subscribe / trades"| finnhub
+    api -->|"quote / search / profile"| finnhub
+    twelveSvc -->|"close prices"| twelvedata
+    worker -->|jobs| pg
 ```
 
 ## Stack
@@ -45,7 +56,7 @@ event-driven backends, and real-time UI updates.
 | Auth | Supabase GitHub OAuth (PKCE, ES256 JWT verified via JWKS) |
 | Database | Supabase Postgres with row-level security |
 | Queue | Graphile Worker on Supabase PostgreSQL |
-| Prices | Finnhub WebSocket (live) + TwelveData REST (historical candles) |
+| Prices | Finnhub — WebSocket (live trades) + REST (quotes, search, company data); TwelveData REST (historical close prices) |
 | Tooling | pnpm workspaces + Turborepo |
 
 ## Local setup
@@ -56,7 +67,7 @@ event-driven backends, and real-time UI updates.
    SUPABASE_SECRET_KEY=           # service role JWT
    SUPABASE_PUBLISHABLE_KEY=      # anon/publishable JWT (browser-safe)
    FINNHUB_API_KEY=
-   TWELVEDATA_API_KEY=            # historical candle data (free tier: 800 req/day)
+   TWELVEDATA_API_KEY=            # historical price data (free tier: 800 req/day)
    DATABASE_URL=                  # Supabase Session Pooler URI (port 5432)
    API_URL=http://localhost:3000
    WS_URL=http://localhost:3000
@@ -91,6 +102,7 @@ pnpm --filter web test:cov     # 158 tests / 18 suites — components, services,
 |---|---|
 | Render (api) | Root `apps/api`, build `pnpm install && pnpm run build`, start `node dist/main`. Set all env vars + `NODE_ENV=production`, `CORS_ORIGIN=<vercel-url>`. Add `DATABASE_URL` (Supabase Session Pooler URI). Graphile Worker auto-creates its schema on first boot. |
 | Vercel (web) | Root `apps/web`, build `tsx scripts/set-env.ts --prod && ng build`, output `dist/web/browser`. Add `vercel.json` rewrites before first deploy. |
+| Uptime monitor | UptimeRobot pings `https://pulseticker.onrender.com/health` every 13 min. Render's free tier sleeps after 15 min idle, so this keeps the demo instance from cold-starting on the first visit. `/health` must stay unauthenticated. |
 
 Supabase Auth → URL Configuration → Redirect URLs must include
 `<vercel-url>/auth/callback` (and `http://localhost:4200/auth/callback` for
