@@ -41,7 +41,7 @@ flowchart LR
     auth <-->|OAuth2| gh
     api -->|JWKS| auth
     api -->|service role| pg
-    finnhub -->|trades| finnhubSvc
+    finnhubSvc <-->|"subscribe / trades"| finnhub
     twelveSvc -->|candles| twelvedata
     worker -->|jobs| pg
 ```
