@@ -22,7 +22,6 @@ flowchart LR
     gh["GitHub OAuth"]
     finnhub["Finnhub"]
     twelvedata["TwelveData"]
-    pg[("Supabase<br/>Postgres + Auth")]
 
     subgraph api["NestJS (Render)"]
         gateway["Socket.io Gateway"]
@@ -31,10 +30,16 @@ flowchart LR
         twelveSvc["TwelveData REST client"]
     end
 
+    subgraph supabase["Supabase"]
+        auth["Auth"]
+        pg[("Postgres")]
+    end
+
     web -->|HTTP/REST| api
     web <-->|"/prices"| gateway
-    web <-->|"PKCE / JWT (ES256)"| pg
-    pg <-->|OAuth2| gh
+    web <-->|"PKCE / JWT (ES256)"| auth
+    auth <-->|OAuth2| gh
+    api -->|JWKS| auth
     api -->|service role| pg
     finnhub -->|trades| finnhubSvc
     twelveSvc -->|candles| twelvedata
