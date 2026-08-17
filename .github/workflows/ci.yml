@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  # Superseded PR runs are cancelled; runs on main always finish so the
+  # default-branch pnpm store cache stays populated for PR branches to restore.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build-test:
+    name: build + test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    # apps/web/scripts/set-env.ts generates the gitignored
+    # src/environments/environment.ts and throws if any of these is missing.
+    # Its output is baked into the browser bundle, so no real value belongs
+    # here — CI only needs the build to compile, never to reach a live service.
+    # Real values live in the Vercel project settings.
+    #
+    # The values below deliberately mirror .env.example, because two web specs
+    # assert against the generated file instead of mocking it:
+    #   - api.service.spec.ts pins API_URL to http://localhost:3000
+    #   - logger.service.spec.ts requires APP_ENV=development (logLevel: debug,
+    #     appEnv: 'development')
+    # Diverging from .env.example therefore turns CI red. Decoupling those two
+    # specs from the generated file is tracked separately; until then these
+    # values are load-bearing, not arbitrary placeholders.
+    #
+    # APP_ENV does not weaken the build check: `ng build` uses the production
+    # configuration regardless of it, and nothing reads environment.production.
+    # APP_ENV must also be listed in turbo.json's build `env` — turbo 2 runs in
+    # strict env mode and drops any variable not declared there.
+    env:
+      APP_ENV: development
+      SUPABASE_URL: https://ci.invalid
+      SUPABASE_PUBLISHABLE_KEY: ci-placeholder
+      API_URL: http://localhost:3000
+      WS_URL: http://localhost:3000
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # pnpm/setup installs the pnpm version pinned by `packageManager` in the
+      # root package.json, and the Node runtime, in one step. `install: false`
+      # keeps the install an explicit step so --frozen-lockfile is visible: it
+      # is the gate that catches a lockfile out of sync with any package.json.
+      - uses: pnpm/setup@v2
+        with:
+          runtime: node@24
+          cache: true
+          install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        run: pnpm build
+
+      # Must run after Build: the web suite imports services that import the
+      # generated src/environments/environment.ts, which only `pnpm build`
+      # (via set-env.ts) produces. A fresh checkout has no such file.
+      - name: Test
+        run: pnpm test
