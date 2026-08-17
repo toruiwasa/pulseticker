@@ -7,7 +7,7 @@ event-driven backends, and real-time UI updates.
 ## Features
 
 - **Real-time prices** — Live stock quotes via Finnhub WebSocket (US market hours)
-- **Price chart** — Interactive OHLC candlestick chart with 1D / 1W / 1M / 6M timeframes (TwelveData)
+- **Price chart** — Interactive close-price line chart with 1D / 1Y timeframes (TwelveData)
 - **Watchlist** — Add / remove symbols; prices stream automatically once subscribed
 - **Price alerts** — Set threshold alerts; fires once then deactivates
 - **Discover** — Search and preview US-listed symbols before adding to watchlist
@@ -42,7 +42,8 @@ flowchart LR
     api -->|JWKS| auth
     api -->|service role| pg
     finnhubSvc <-->|"subscribe / trades"| finnhub
-    twelveSvc -->|candles| twelvedata
+    api -->|"quote / search / profile"| finnhub
+    twelveSvc -->|"close prices"| twelvedata
     worker -->|jobs| pg
 ```
 
@@ -55,7 +56,7 @@ flowchart LR
 | Auth | Supabase GitHub OAuth (PKCE, ES256 JWT verified via JWKS) |
 | Database | Supabase Postgres with row-level security |
 | Queue | Graphile Worker on Supabase PostgreSQL |
-| Prices | Finnhub WebSocket (live) + TwelveData REST (historical candles) |
+| Prices | Finnhub — WebSocket (live trades) + REST (quotes, search, company data); TwelveData REST (historical close prices) |
 | Tooling | pnpm workspaces + Turborepo |
 
 ## Local setup
@@ -66,7 +67,7 @@ flowchart LR
    SUPABASE_SECRET_KEY=           # service role JWT
    SUPABASE_PUBLISHABLE_KEY=      # anon/publishable JWT (browser-safe)
    FINNHUB_API_KEY=
-   TWELVEDATA_API_KEY=            # historical candle data (free tier: 800 req/day)
+   TWELVEDATA_API_KEY=            # historical price data (free tier: 800 req/day)
    DATABASE_URL=                  # Supabase Session Pooler URI (port 5432)
    API_URL=http://localhost:3000
    WS_URL=http://localhost:3000
