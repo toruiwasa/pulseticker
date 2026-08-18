@@ -14,23 +14,27 @@ import {
 import { WatchlistPricesResponseSchema } from '@pulseticker/schemas';
 import { SupabaseAuthGuard } from '../../auth/supabase-auth.guard.js';
 import type { AuthedRequest } from '../../common/types/authed-request.js';
+import { SymbolSearchService } from './symbol-search.service.js';
 import { WatchlistService } from './watchlist.service.js';
 
 @UseGuards(SupabaseAuthGuard)
 @Controller('watchlist')
 export class WatchlistController {
-  constructor(private watchlist: WatchlistService) {}
+  constructor(
+    private watchlist: WatchlistService,
+    private symbols: SymbolSearchService,
+  ) {}
 
   @Get('search')
   search(@Query('q') q: string) {
     if (!q?.trim()) throw new BadRequestException('q is required');
-    return this.watchlist.searchSymbols(q.trim());
+    return this.symbols.searchSymbols(q.trim());
   }
 
   @Get('quote')
   quote(@Query('symbol') symbol: string) {
     if (!symbol?.trim()) throw new BadRequestException('symbol is required');
-    return this.watchlist.getQuote(symbol.trim());
+    return this.symbols.getQuote(symbol.trim());
   }
 
   /** Last-known prices for the caller's watchlist. Parsed on the way out so a
