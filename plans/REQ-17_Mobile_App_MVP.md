@@ -339,18 +339,43 @@ export type WatchlistPricesResponse = z.infer<typeof WatchlistPricesResponseSche
 ```typescript
 // packages/schemas/src/alert-read.schema.ts
 export const AlertReadSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   symbol: z.string(),
   threshold_price: z.number(),
   direction: z.enum(['above', 'below']),
+  is_active: z.boolean(),   // true = pending, false = triggered  ← see correction below
   created_at: z.string(),
-  triggered_at: z.string().nullable(),  // null = pending, string = ISO timestamp
 });
 
 export type AlertRead = z.infer<typeof AlertReadSchema>;
 ```
 
 Export both from `packages/schemas/src/index.ts` alongside the existing `CreateAlertSchema`.
+
+> **Correction — 2026-08-18 (Task 3 / Issue #6).**
+> As originally written, this block specified `triggered_at: z.string().nullable()`.
+> That was wrong when it was written, not invalidated later: **`alerts` has no
+> `triggered_at` column**, and never did — the schema in
+> `supabase/migrations/20260609000001_init_tables.sql` predates this plan by 16 days.
+> `GET /alerts` is `select('*')` on `alerts`, so `AlertReadSchema.parse()` would have
+> thrown on **every** real response.
+>
+> Where the data actually lives: firing an alert sets `alerts.is_active = false`
+> (`check-price-alert.ts:38` — the only write) and inserts an `alert_history` row whose
+> `triggered_at` fills from `DEFAULT NOW()`. Nothing reads `alert_history`; there is no
+> SELECT against it anywhere in the codebase, though the RLS `select own` policy exists.
+>
+> **The requirement is unchanged.** This section (line ~512) asks for "pending/triggered
+> status", and the wireframe below displays only that label — no timestamp column. Only
+> the mechanism that derives the label changes, from `triggered_at != null` to
+> `is_active === false`. This is also the mapping the web app already uses
+> (`alerts.component.ts:87-88`).
+>
+> **What this gives up:** the trigger time, `price_at_trigger`, and the trigger message
+> are unreachable from `GET /alerts`. If a later requirement needs "AAPL hit $200 at
+> 14:32", it needs a separate backend task — either embedding `alert_history` in
+> `GET /alerts`, or a direct `alert_history` query from the client (already permitted by
+> RLS). Neither is in Phase 1 scope.
 
 ---
 
@@ -523,10 +548,10 @@ export default function RootLayout() {
 ```
 ┌──────────────────────────────────────┐
 │ AAPL                                 │
-│ Price above $200.00        Triggered │  <- triggered_at not null
+│ Price above $200.00        Triggered │  <- is_active === false
 ├──────────────────────────────────────┤
 │ GOOGL                                │
-│ Price below $150.00          Pending │  <- triggered_at null
+│ Price below $150.00          Pending │  <- is_active === true
 ├──────────────────────────────────────┤
 │ TSLA                                 │
 │ Price above $250.00        Triggered │
@@ -541,7 +566,7 @@ export default function RootLayout() {
 
 | Task | Boundary | What to test | What to mock |
 |---|---|---|---|
-| Task 3 (schemas) | Schema parse | Valid inputs; `price: null`; `ts: null`; `triggered_at: null`; invalid shape throws | — |
+| Task 3 (schemas) | Schema parse | Valid inputs; `price: null`; `ts: null`; `is_active` both values; invalid shape throws | — |
 | Task 7 (scaffold) | Metro smoke test | `import { WatchlistPricesResponseSchema } from '@pulseticker/schemas'` resolves in Metro | — |
 | Task 9 — auth store | `useAuthStore` | `setSession` stores value; `clearSession` resets to null; initial state is null | — |
 | Task 9 — supabase | `supabase.ts` | Client instantiated with `detectSessionInUrl: false`; storage is the SecureStore adapter | `expo-secure-store`, `expo-constants` |
@@ -550,7 +575,7 @@ export default function RootLayout() {
 | Task 11 (sign-in) | `sign-in.tsx` | Button press → loading state rendered; OAuth error → error message rendered; success → `setSession` called | `expo-auth-session`, `supabase.auth.exchangeCodeForSession` |
 | Task 12 (watchlist) | `useWatchlistPrices` | `fetchedAt` set on successful response; `cached: false` maps to `price: null` items correctly | `fetch` |
 | Task 12 (watchlist) | `StatusBanner` | `age < 60s` → renders nothing; `60s–5min` → amber text; `> 5min` → red text + Retry; offline → red "No internet" | — |
-| Task 13 (alerts) | `useAlerts` | Parses `AlertRead[]`; `triggered_at: null` → status "Pending"; non-null → "Triggered" | `fetch` |
+| Task 13 (alerts) | `useAlerts` | Parses `AlertRead[]`; `is_active: true` → status "Pending"; `false` → "Triggered" | `fetch` |
 
 Test runner: Jest + `@testing-library/react-native`. Never use `react-test-renderer` directly.
 Coverage target: 90–95% per changed file (`pnpm --filter mobile test:cov`).
