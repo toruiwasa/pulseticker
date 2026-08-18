@@ -1,6 +1,7 @@
 jest.mock('../../auth/supabase-auth.guard', () => ({ SupabaseAuthGuard: class {} }));
 
 import { BadRequestException } from '@nestjs/common';
+import { ZodError } from 'zod';
 import { WatchlistController } from './watchlist.controller.js';
 import { WatchlistService } from './watchlist.service.js';
 import type { AuthedRequest } from '../../common/types/authed-request.js';
@@ -20,6 +21,7 @@ describe('WatchlistController', () => {
       remove: jest.fn(),
       searchSymbols: jest.fn(),
       getQuote: jest.fn(),
+      getWatchlistPrices: jest.fn(),
     } as unknown as jest.Mocked<WatchlistService>;
     controller = new WatchlistController(service);
   });
@@ -69,6 +71,32 @@ describe('WatchlistController', () => {
     it('delegates to remove with userId and symbol param', () => {
       controller.remove(authedReq('u42'), 'AAPL');
       expect(service.remove).toHaveBeenCalledWith('u42', 'AAPL');
+    });
+  });
+  describe('GET /watchlist/prices', () => {
+    const UUID = '11111111-1111-4111-8111-111111111111';
+
+    it('delegates to getWatchlistPrices with userId from request', async () => {
+      service.getWatchlistPrices.mockResolvedValue({ cached: true, items: [] });
+      await controller.prices(authedReq('u42'));
+      expect(service.getWatchlistPrices).toHaveBeenCalledWith('u42');
+    });
+
+    it('returns the validated response unchanged', async () => {
+      const res = {
+        cached: true,
+        items: [{ id: UUID, symbol: 'AAPL', price: 195.23, ts: 1709123456789 }],
+      };
+      service.getWatchlistPrices.mockResolvedValue(res);
+      await expect(controller.prices(authedReq())).resolves.toEqual(res);
+    });
+
+    it('throws when the service returns a shape the schema rejects', async () => {
+      service.getWatchlistPrices.mockResolvedValue({
+        cached: true,
+        items: [{ id: UUID, symbol: 'AAPL', price: 195.23 }],
+      } as never);
+      await expect(controller.prices(authedReq())).rejects.toThrow(ZodError);
     });
   });
 });

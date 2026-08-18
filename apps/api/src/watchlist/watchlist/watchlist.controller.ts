@@ -11,6 +11,7 @@ import {
   Req,
   UseGuards,
 } from '@nestjs/common';
+import { WatchlistPricesResponseSchema } from '@pulseticker/schemas';
 import { SupabaseAuthGuard } from '../../auth/supabase-auth.guard.js';
 import type { AuthedRequest } from '../../common/types/authed-request.js';
 import { WatchlistService } from './watchlist.service.js';
@@ -30,6 +31,14 @@ export class WatchlistController {
   quote(@Query('symbol') symbol: string) {
     if (!symbol?.trim()) throw new BadRequestException('symbol is required');
     return this.watchlist.getQuote(symbol.trim());
+  }
+
+  /** Last-known prices for the caller's watchlist. Parsed on the way out so a
+   *  shape drift fails here rather than in the mobile client. */
+  @Get('prices')
+  async prices(@Req() req: AuthedRequest) {
+    const res = await this.watchlist.getWatchlistPrices(req.user.userId);
+    return WatchlistPricesResponseSchema.parse(res);
   }
 
   @Get()
