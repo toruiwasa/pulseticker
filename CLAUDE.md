@@ -83,13 +83,42 @@ Skipping step 1 produces documentation that conflicts with the real system and c
 
 ### GitHub Issues + PR rules (mandatory for every task)
 
-1. **After task-breakdown**: Open one GitHub Issue per task using `gh issue create`. Title = task title from the breakdown. Body = Goal + Scope + Test boundary. Label with `task` and the layer (`backend`, `frontend`, `mobile`, `infra`, `shared-pkg`).
+1. **After task-breakdown**: Open one GitHub Issue per task using `gh issue create`. Title = task title from the breakdown. Label with `task` and the layer (`backend`, `frontend`, `mobile`, `infra`, `shared-pkg`). Body must carry every field below — the issue is the only thing that survives the session that produced it:
+
+   | Field | Contents |
+   |---|---|
+   | **Goal** | One sentence: what is true after this task that is not true now |
+   | **Context** | Where the decision record lives (`plans/` file, PR number) and what question the task came out of. A scope list does not carry *why this shape*. |
+   | **Scope** | Files and behaviours. Name any decision left to the implementer as an **open decision**, not as ambiguity. |
+   | **Test boundary** | What is tested and what is mocked |
+   | **Done when** | An observable end state, not a restatement of scope |
+   | **Branch** | The branch name — the Git Workflow section takes it from here |
+   | **Dependency** | Issues or merges that must land first, or `none` |
+   | **Risk** | LOW / MEDIUM / HIGH + the specific failure mode |
+
+   **Reference code by identifier.** Name the method, field, or constant — `findAll()`, `MAX_WATCHLIST_SIZE`, `handleDisconnect` — so the reference still resolves after the file changes. Line numbers shift on any earlier edit: #72 and #73 were filed with line ranges and were wrong within the hour, once merging #8 grew `watchlist.service.ts` by 25 lines.
 2. **Before starting a task**: Run `gh issue list` to confirm the issue is open. Reference the issue number in the branch if helpful (e.g. `feat/42-symbol-search`).
 3. **After implementation**: Create a PR with `gh pr create`. The PR body must include `Closes #<issue-number>` so GitHub auto-closes the issue on merge. Merge with `gh pr merge --squash` (or `--merge` for multi-commit PRs).
    - **PR merge requires explicit instruction**: After `gh pr create`, always stop. Never call `gh pr merge` or use `--auto` unless the user says "merge" for that specific PR in the current message. The only exception is when the user's original instruction explicitly included merging (e.g., "create and merge the PR"). General task approval ("go", "proceed") does not authorize merging.
    - **Plan approval is not merge approval**: approving a plan that contains a merge step authorizes the *work*, not the merge. Each `gh pr merge` still needs the user to say "merge" for that specific PR. This applies equally to PRs Claude authored itself (e.g. a config or docs PR) — authoring a PR never grants permission to merge it.
    - **Stacked PRs exception**: `Closes #N` only triggers when the PR merges into `main`. If the PR targets an upstream feature branch (stacked PR), the issue will NOT be auto-closed. After the full stack merges to main, manually close every stacked PR's issue: `gh issue close <N> --comment "Completed in PR #<stacked-pr>, merged to main as <commit-sha>."` Do this as the final step of the stack merge — before moving to the next task.
 4. **One issue = one branch = one PR = one merge.** Never merge directly to main without a PR.
+
+### Recording decisions (mandatory — applies to every task, every session)
+
+Write every decision reached in discussion into a durable artifact **before reporting the task complete**, whether or not anyone asks for it. The artifact is what survives the session:
+
+| What was decided | Where it goes |
+|---|---|
+| Decisions shaping the current task | the task's `plans/` file and the PR body |
+| Work identified but deliberately not done | a GitHub Issue, opened at the moment it is identified |
+| An alternative considered and rejected | recorded **with its reason**, beside the decision it lost to, so the next reader can see it was weighed |
+| A defect found in the process itself | an issue proposing the concrete edit to `CLAUDE.md`, `SDLC.md`, or the skill file |
+
+Two rules make these artifacts usable later:
+
+- **Trace each decision to its upstream source.** When a task issue and the requirement it was generated from disagree, follow the requirement, or argue the deviation explicitly in the issue. Before treating a newer document as a revision, read the issue and PR that produced it and confirm the point was actually deliberated there — #8's `cached` conflict was settled this way, and the newer schema comment turned out never to have discussed the field.
+- **Amend requirements in place, with a dated correction note** recording the original assumption, why it was wrong, and what the correction gives up. PR #71 is the worked example.
 
 ### Post-merge local sync (mandatory after every merge to main)
 
@@ -105,6 +134,7 @@ After every PR (or PR stack) merges to main:
 - No mock data — real Finnhub prices only
 - NestJS + Angular are intentional learning targets (developer has 6yr TS/Node/React experience but is new to both frameworks)
 - Commit once per completed feature (not per file)
+- **Decompose by provider, inside the feature module that owns the concern**: `apps/api` is feature-module-per-folder (`watchlist/`, `finnhub/`, `chart/`), and splitting a responsibility means adding a provider to the owning module — the unit of decomposition is the provider, not the directory, so the folder layout stays as it is. NestJS keeps its own job: HTTP, DI, module wiring, lifecycle. Put business rules that need none of that in `packages/` as pure functions (see `packages/trading-utils`); that is what makes them testable without mocks.
 - **Library-first UI**: Always prefer existing library components (Taiga UI, Angular CDK) over custom HTML + CSS implementations. Writing custom UI or logic without justification is NG. Taiga UI components are customizable via CSS custom properties (`--tui-*`) — override tokens in `styles.css` rather than reimplementing from scratch.
 - **Library-source-first debugging (mandatory, not advisory)**: When a library, framework, or infra tool (Dependabot, GitHub Actions, Docker, pnpm) behaves unexpectedly — OR before proposing a fix for a config error in any of these tools — read the official documentation and search the issue tracker for the exact error message **before writing any fix**. This applies to the very first fix attempt, not only after subsequent failures. Empirical trial-and-error without reading the source produces multiple fix commits for the same root cause. Minimum: read the relevant config reference, check the changelog for breaking changes in the version in use, and search GitHub Issues / Discussions for the exact error message.
 

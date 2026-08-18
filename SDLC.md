@@ -63,6 +63,7 @@ All feature development follows these phases in order. Never skip a phase withou
 **Purpose**: Validate technical approach. Catch design defects before coding.
 **Exit criteria**:
 - Dependency direction check: PASS
+- **Ownership assigned**: every new method or behaviour the task introduces is recorded as `method → owning class — justifying domain noun`. Resolve it here so implementation starts with the answer; module wiring ("`WatchlistModule` imports `FinnhubModule`") is recorded separately and answers a different question.
 - No Critical risks unresolved
 - Complexity Score ≤ 6 (or redesign justified)
 - Final Verdict: Approved or Approved with Concerns
