@@ -66,6 +66,8 @@ Work through each section. Skip sections untouched by the change.
 - Does each module / service / component have a single responsibility?
 - Can each responsibility be named in one phrase without using "and"?
 - Are unrelated concerns coupled in the same class or component?
+- **Assign each new method to an owning class.** State it as `method → class — justifying domain noun`, one line per method, so implementation begins with the answer rather than deriving it under pressure.
+- **Justify any proposed new class by the state, lifecycle, or policy it owns.** Where a class would only assemble one endpoint's response, place that composition as a method on the service owning the primary noun — it separates an endpoint rather than a responsibility.
 
 ### 2. Boundaries
 
@@ -204,6 +206,10 @@ For a portfolio project, a score above 6 should trigger a "can we deliver the sa
 
 ## Dependency Direction Check
 [PASS — no inversions found | VIOLATION — [describe what is inverted and where]]
+
+## Ownership
+[For every new method or behaviour: owning class — justifying domain noun]
+[If a new class is proposed: what state, lifecycle, or policy it owns that makes it more than a composition]
 
 ## Risks
 - [Risk 1: module / coupling / testability issue]
