@@ -1,6 +1,8 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { WatchlistPricesResponse } from '@pulseticker/schemas';
 import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
+import { FinnhubService } from '../../finnhub/finnhub/finnhub.service.js';
 import { FinnhubQuote, fetchFinnhubQuote } from '../../common/utils/finnhub-quote.js';
 
 const DEFAULT_SYMBOLS = ['VOO', 'AAPL', 'MSFT', 'OANDA:AUD_USD', 'OANDA:AUD_JPY'];
@@ -26,6 +28,14 @@ export interface SymbolSearchResult {
   description: string;
 }
 
+/** Shape of the columns findAll() selects. SupabaseClient carries no Database
+ *  generic here, so its rows arrive as `any` and need naming to stay type-safe. */
+interface WatchlistRow {
+  id: string;
+  symbol: string;
+  created_at: string;
+}
+
 @Injectable()
 export class WatchlistService {
   private oandaSymbols: SymbolSearchResult[] = [];
@@ -33,6 +43,7 @@ export class WatchlistService {
   constructor(
     private supabase: SupabaseService,
     private config: ConfigService,
+    private finnhub: FinnhubService,
   ) {}
 
   async findAll(userId: string) {
@@ -72,6 +83,29 @@ export class WatchlistService {
       .order('created_at', { ascending: true });
     if (refetchError) throw refetchError;
     return seeded;
+  }
+
+  /**
+   * Watchlist rows decorated with the last price seen on the Finnhub WS.
+   *
+   * Rows come from findAll() rather than a plain select so default-symbol seeding
+   * still fires for a user whose first-ever sign-in is on mobile — REQ-17 Phase 1
+   * never calls GET /watchlist.
+   *
+   * No Finnhub REST fallback on a cache miss (REQ-17). `cached: false` therefore
+   * means the cache yielded nothing at all — a Render cold start — not that one
+   * individual symbol happens to be missing a price.
+   */
+  async getWatchlistPrices(userId: string): Promise<WatchlistPricesResponse> {
+    const rows = (await this.findAll(userId)) as WatchlistRow[];
+    const prices = this.finnhub.getLastKnownPrices(rows.map(r => r.symbol));
+    const items = rows.map((row, i) => ({
+      id:     row.id,
+      symbol: prices[i].symbol,
+      price:  prices[i].price,
+      ts:     prices[i].ts,
+    }));
+    return { cached: items.length === 0 || items.some(i => i.price !== null), items };
   }
 
   private sym(s: string) { return s.toUpperCase(); }

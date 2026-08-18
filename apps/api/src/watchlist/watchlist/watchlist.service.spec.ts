@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test } from '@nestjs/testing';
 import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
+import { FinnhubService } from '../../finnhub/finnhub/finnhub.service.js';
 import { WatchlistService } from './watchlist.service.js';
 
 type SupabaseMock = {
@@ -60,14 +61,17 @@ describe('WatchlistService', () => {
   let service: WatchlistService;
   let supabaseClient: SupabaseMock;
   let fetchMock: jest.SpyInstance;
+  let finnhub: { getLastKnownPrices: jest.Mock };
 
   beforeEach(async () => {
     supabaseClient = { from: jest.fn() };
+    finnhub = { getLastKnownPrices: jest.fn() };
     const moduleRef = await Test.createTestingModule({
       providers: [
         WatchlistService,
         { provide: SupabaseService, useValue: { client: supabaseClient } },
         { provide: ConfigService, useValue: { getOrThrow: jest.fn().mockReturnValue('test-key') } },
+        { provide: FinnhubService, useValue: finnhub },
       ],
     }).compile();
     service = moduleRef.get(WatchlistService);
@@ -324,6 +328,94 @@ describe('WatchlistService', () => {
     it('throws when the response is not ok', async () => {
       fetchMock.mockResolvedValue({ ok: false, status: 429 } as never);
       await expect(service.getQuote('AAPL')).rejects.toThrow('Finnhub quote failed for AAPL: 429');
+    });
+  });
+  describe('getWatchlistPrices', () => {
+    const ID_A = '11111111-1111-4111-8111-111111111111';
+    const ID_B = '22222222-2222-4222-8222-222222222222';
+
+    /** findAll() with an existing profile short-circuits to the first select. */
+    function seededWith(rows: unknown[]) {
+      supabaseClient.from = makeFindAllRouter({
+        profile: { data: { user_id: 'u1' }, error: null },
+        watchlist: { data: rows, error: null },
+      }).from;
+    }
+
+    it('maps rows onto cached prices and reports cached: true', async () => {
+      seededWith([
+        { id: ID_A, symbol: 'AAPL', created_at: '2026-01-01' },
+        { id: ID_B, symbol: 'OANDA:AUD_USD', created_at: '2026-01-02' },
+      ]);
+      finnhub.getLastKnownPrices.mockReturnValue([
+        { symbol: 'AAPL', price: 195.23, ts: 1709123456789 },
+        { symbol: 'OANDA:AUD_USD', price: 0.6612, ts: 1709123456790 },
+      ]);
+
+      await expect(service.getWatchlistPrices('u1')).resolves.toEqual({
+        cached: true,
+        items: [
+          { id: ID_A, symbol: 'AAPL', price: 195.23, ts: 1709123456789 },
+          { id: ID_B, symbol: 'OANDA:AUD_USD', price: 0.6612, ts: 1709123456790 },
+        ],
+      });
+    });
+
+    it('passes the watchlist symbols through to getLastKnownPrices', async () => {
+      seededWith([
+        { id: ID_A, symbol: 'AAPL', created_at: '2026-01-01' },
+        { id: ID_B, symbol: 'MSFT', created_at: '2026-01-02' },
+      ]);
+      finnhub.getLastKnownPrices.mockReturnValue([
+        { symbol: 'AAPL', price: null, ts: null },
+        { symbol: 'MSFT', price: null, ts: null },
+      ]);
+
+      await service.getWatchlistPrices('u1');
+      expect(finnhub.getLastKnownPrices).toHaveBeenCalledWith(['AAPL', 'MSFT']);
+    });
+
+    it('reports cached: false only when the cache yielded nothing at all', async () => {
+      seededWith([
+        { id: ID_A, symbol: 'AAPL', created_at: '2026-01-01' },
+        { id: ID_B, symbol: 'MSFT', created_at: '2026-01-02' },
+      ]);
+      finnhub.getLastKnownPrices.mockReturnValue([
+        { symbol: 'AAPL', price: null, ts: null },
+        { symbol: 'MSFT', price: null, ts: null },
+      ]);
+
+      await expect(service.getWatchlistPrices('u1')).resolves.toMatchObject({ cached: false });
+    });
+
+    it('stays cached: true when only some symbols are missing a price', async () => {
+      seededWith([
+        { id: ID_A, symbol: 'AAPL', created_at: '2026-01-01' },
+        { id: ID_B, symbol: 'MSFT', created_at: '2026-01-02' },
+      ]);
+      finnhub.getLastKnownPrices.mockReturnValue([
+        { symbol: 'AAPL', price: 195.23, ts: 1709123456789 },
+        { symbol: 'MSFT', price: null, ts: null },
+      ]);
+
+      const out = await service.getWatchlistPrices('u1');
+      expect(out.cached).toBe(true);
+      expect(out.items[1]).toEqual({ id: ID_B, symbol: 'MSFT', price: null, ts: null });
+    });
+
+    it('returns cached: true for an empty watchlist', async () => {
+      seededWith([]);
+      finnhub.getLastKnownPrices.mockReturnValue([]);
+
+      await expect(service.getWatchlistPrices('u1')).resolves.toEqual({ cached: true, items: [] });
+    });
+
+    it('uses the symbol as the cache normalised it, not the stored casing', async () => {
+      seededWith([{ id: ID_A, symbol: 'aapl', created_at: '2026-01-01' }]);
+      finnhub.getLastKnownPrices.mockReturnValue([{ symbol: 'AAPL', price: 1, ts: 2 }]);
+
+      const out = await service.getWatchlistPrices('u1');
+      expect(out.items[0].symbol).toBe('AAPL');
     });
   });
 });
