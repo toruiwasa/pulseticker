@@ -1,9 +1,9 @@
 import { LiveCandleCacheService } from './live-candle-cache.service.js';
 import { TwelveDataClient } from './twelve-data.client.js';
 import { FinnhubService } from '../finnhub/finnhub/finnhub.service.js';
-import { CandlePoint } from './chart.types.js';
+import type { PricePoint } from '@pulseticker/schemas';
 
-function makeCandles(values: number[]): CandlePoint[] {
+function makeCandles(values: number[]): PricePoint[] {
   return values.map((v, i) => ({ time: 1_700_000_000 + i * 60, value: v }));
 }
 
@@ -65,9 +65,9 @@ describe('LiveCandleCacheService', () => {
     });
 
     it('de-dupes concurrent cache misses for the same (symbol, range)', async () => {
-      let resolveTwelveData: (c: CandlePoint[]) => void = () => {};
+      let resolveTwelveData: (c: PricePoint[]) => void = () => {};
       twelve.getTimeSeries.mockReturnValue(
-        new Promise<CandlePoint[]>(resolve => {
+        new Promise<PricePoint[]>(resolve => {
           resolveTwelveData = resolve;
         }),
       );

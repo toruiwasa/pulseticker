@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { SecureLogger } from '../common/logger/secure-logger.js';
 import { ConfigService } from '@nestjs/config';
 import { DateTime } from 'luxon';
-import { CandlePoint, ChartRange } from './chart.types.js';
+import type { PricePoint } from '@pulseticker/schemas';
+import { ChartRange } from './chart.types.js';
 import { toTwelveDataSymbol } from './twelve-data-symbol.js';
 
 interface TwelveDataValue {
@@ -35,7 +36,7 @@ export class TwelveDataClient {
 
   constructor(private config: ConfigService) {}
 
-  async getTimeSeries(symbol: string, range: ChartRange): Promise<CandlePoint[]> {
+  async getTimeSeries(symbol: string, range: ChartRange): Promise<PricePoint[]> {
     const cfg = RANGE_CONFIG[range];
     if (!cfg) return [];
 

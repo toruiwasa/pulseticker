@@ -1,11 +1,12 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { FinnhubService } from '../finnhub/finnhub/finnhub.service.js';
-import { CandlePoint, ChartRange } from './chart.types.js';
+import type { PricePoint } from '@pulseticker/schemas';
+import { ChartRange } from './chart.types.js';
 import { TwelveDataClient } from './twelve-data.client.js';
 
 interface CacheEntry {
-  candles: CandlePoint[];
+  candles: PricePoint[];
   lastAccessed: number;
 }
 
@@ -19,7 +20,7 @@ const MAX_POINTS = 30_000;
 export class LiveCandleCacheService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(LiveCandleCacheService.name);
   private readonly cache = new Map<CacheKey, CacheEntry>();
-  private readonly inflight = new Map<CacheKey, Promise<CandlePoint[]>>();
+  private readonly inflight = new Map<CacheKey, Promise<PricePoint[]>>();
   private sweepTimer: ReturnType<typeof setInterval> | undefined;
 
   constructor(
@@ -42,7 +43,7 @@ export class LiveCandleCacheService implements OnModuleInit, OnModuleDestroy {
    * starts a live Finnhub subscription, and de-dupes concurrent misses
    * via a per-key in-flight promise so the 800 req/day budget is preserved.
    */
-  async getCandles(symbol: string, range: ChartRange): Promise<CandlePoint[]> {
+  async getCandles(symbol: string, range: ChartRange): Promise<PricePoint[]> {
     const key = this.keyFor(symbol, range);
     const hit = this.cache.get(key);
     if (hit) {
@@ -85,7 +86,7 @@ export class LiveCandleCacheService implements OnModuleInit, OnModuleDestroy {
     key: CacheKey,
     symbol: string,
     range: ChartRange,
-  ): Promise<CandlePoint[]> {
+  ): Promise<PricePoint[]> {
     const candles = await this.twelveData.getTimeSeries(symbol, range);
     const bounded = candles.length > MAX_POINTS ? candles.slice(-MAX_POINTS) : candles;
     this.cache.set(key, { candles: bounded, lastAccessed: Date.now() });

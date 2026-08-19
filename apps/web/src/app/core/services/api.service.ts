@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import type { PricePoint } from '@pulseticker/schemas';
 import { environment } from '../../../environments/environment';
 
 export interface SymbolSearchResult {
@@ -11,11 +12,6 @@ export interface QuoteResponse {
   c: number;
   pc: number;
   t: number;
-}
-
-export interface CandlePoint {
-  time: number;
-  value: number;
 }
 
 export type ChartRange = '1D' | '1Y';
@@ -73,7 +69,7 @@ export class ApiService {
   }
 
   getCandles(symbol: string, range: ChartRange = '1D') {
-    return this.get<CandlePoint[]>(
+    return this.get<PricePoint[]>(
       `/chart/candles?symbol=${encodeURIComponent(symbol)}&range=${range}`,
     );
   }

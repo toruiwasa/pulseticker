@@ -10,7 +10,7 @@ import {
 import { DecimalPipe } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { IChartApi, ISeriesApi, LineSeries, Time, createChart } from 'lightweight-charts';
-import { CandlePoint } from '../../../core/services/api.service';
+import type { PricePoint } from '@pulseticker/schemas';
 import { PreviewPrice, PreviewService } from '../../../core/services/preview.service';
 
 const GREEN = '#34D399'; // --pt-up
@@ -127,7 +127,7 @@ export class LoginChartComponent implements AfterViewInit, OnDestroy {
     this.lastTime = null;
   }
 
-  private applyHistory(candles: CandlePoint[]) {
+  private applyHistory(candles: PricePoint[]) {
     if (!this.series || candles.length === 0) return;
     this.series.setData(candles.map(c => ({ time: c.time as Time, value: c.value })));
     this.basePrice = candles[0].value;

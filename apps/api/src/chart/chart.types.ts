@@ -1,8 +1,3 @@
-export interface CandlePoint {
-  time: number;
-  value: number;
-}
-
 export type ChartRange = '1D' | '1Y';
 
 export const SUPPORTED_RANGES: readonly ChartRange[] = ['1D', '1Y'];
