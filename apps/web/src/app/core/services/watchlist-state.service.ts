@@ -3,6 +3,7 @@ import { Session } from '@supabase/supabase-js';
 import { Subscription, forkJoin } from 'rxjs';
 import { ApiService } from './api.service';
 import { SocketService } from './socket.service';
+import { canAdd, MAX_WATCHLIST_SIZE } from '@pulseticker/watchlist-rules';
 
 export interface WatchlistItem {
   id: string;
@@ -21,7 +22,7 @@ export class WatchlistStateService implements OnDestroy {
   readonly isLive = signal<Record<string, boolean>>({});
   readonly loading = signal(true);
 
-  readonly atLimit = computed(() => this.watchlist().length >= 50);
+  readonly atLimit = computed(() => !canAdd({ count: this.watchlist().length }));
 
   private loaded = false;
   private priceSub?: Subscription;

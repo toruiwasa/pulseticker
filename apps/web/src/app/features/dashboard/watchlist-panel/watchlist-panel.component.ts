@@ -4,6 +4,7 @@ import { TuiButton } from '@taiga-ui/core';
 import { OandaPipe } from '../../../core/pipes/oanda.pipe';
 import { SymbolSearchInputComponent } from '../../../core/components/symbol-search-input.component';
 import type { WatchlistItem } from '../../../core/services/watchlist-state.service';
+import { MAX_WATCHLIST_SIZE } from '@pulseticker/watchlist-rules';
 
 export type { WatchlistItem };
 
@@ -20,7 +21,7 @@ export type { WatchlistItem };
           [disabled]="atLimit()"
           (symbolSelected)="symbolAdded.emit($event)"
         />
-        <span class="count">{{ watchlist().length }}/50</span>
+        <span class="count">{{ watchlist().length }}/{{ maxWatchlistSize }}</span>
       </div>
 
       <div class="ticker-list" role="list">
@@ -87,7 +88,7 @@ export type { WatchlistItem };
       @if (!atLimit()) {
         <div class="add-hint" aria-hidden="true">Search above to add a symbol</div>
       } @else {
-        <div class="limit-msg">50-symbol limit reached</div>
+        <div class="limit-msg">{{ maxWatchlistSize }}-symbol limit reached</div>
       }
     </div>
   `,
@@ -289,6 +290,10 @@ export class WatchlistPanelComponent {
   readonly currencies = input<Record<string, string>>({});
   readonly activeSymbol = input<string | null>(null);
   readonly atLimit = input(false);
+
+  /** Rendered in the counter and the limit message — the rule lives in
+   *  @pulseticker/watchlist-rules, not in this template. */
+  protected readonly maxWatchlistSize = MAX_WATCHLIST_SIZE;
 
   readonly symbolSelected = output<string>();
   readonly symbolAdded = output<string>();

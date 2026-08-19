@@ -1,10 +1,14 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import type { WatchlistPricesResponse } from '@pulseticker/schemas';
+import {
+  canAdd,
+  DEFAULT_SYMBOLS,
+  MAX_WATCHLIST_SIZE,
+  needsSeeding,
+  normalizeSymbol,
+} from '@pulseticker/watchlist-rules';
 import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
 import { FinnhubService } from '../../finnhub/finnhub/finnhub.service.js';
-
-const DEFAULT_SYMBOLS = ['VOO', 'AAPL', 'MSFT', 'OANDA:AUD_USD', 'OANDA:AUD_JPY'];
-const MAX_WATCHLIST_SIZE = 50;
 
 /** Shape of the columns findAll() selects. SupabaseClient carries no Database
  *  generic here, so its rows arrive as `any` and need naming to stay type-safe. */
@@ -42,7 +46,7 @@ export class WatchlistService {
       .order('created_at', { ascending: true });
     if (error) throw error;
 
-    if (profile) return data;
+    if (!needsSeeding({ hasProfile: !!profile })) return data;
 
     const { error: seedError } = await this.supabase.client.from('watchlist_items').upsert(
       DEFAULT_SYMBOLS.map(symbol => ({ user_id: userId, symbol })),
@@ -87,23 +91,19 @@ export class WatchlistService {
     return { cached: items.length === 0 || items.some(i => i.price !== null), items };
   }
 
-  private sym(s: string) {
-    return s.toUpperCase();
-  }
-
   async create(userId: string, symbol: string) {
     const { count, error: countError } = await this.supabase.client
       .from('watchlist_items')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId);
     if (countError) throw countError;
-    if ((count ?? 0) >= MAX_WATCHLIST_SIZE) {
+    if (!canAdd({ count: count ?? 0 })) {
       throw new BadRequestException(`Watchlist limit of ${MAX_WATCHLIST_SIZE} symbols reached`);
     }
 
     const { data, error } = await this.supabase.client
       .from('watchlist_items')
-      .insert({ user_id: userId, symbol: this.sym(symbol) })
+      .insert({ user_id: userId, symbol: normalizeSymbol(symbol) })
       .select('id, symbol, created_at')
       .single();
     if (error) {
@@ -118,7 +118,7 @@ export class WatchlistService {
       .from('watchlist_items')
       .delete()
       .eq('user_id', userId)
-      .eq('symbol', this.sym(symbol));
+      .eq('symbol', normalizeSymbol(symbol));
     if (error) throw error;
   }
 }
