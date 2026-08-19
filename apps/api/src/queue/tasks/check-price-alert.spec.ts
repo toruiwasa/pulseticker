@@ -31,7 +31,6 @@ function makeSupabaseWithWrites(alert: AlertRow) {
   const single = jest.fn().mockResolvedValue({ data: alert, error: null });
   const eqActive = jest.fn(() => ({ single }));
   const eqId = jest.fn(() => ({ eq: eqActive }));
-  const select = jest.fn(() => ({ eq: eqId }));
   const update = { eq: jest.fn().mockResolvedValue({ error: null }) };
   const insert = jest.fn().mockResolvedValue({ error: null });
 

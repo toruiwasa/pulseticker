@@ -19,7 +19,7 @@ describe('AlertsController', () => {
       getAlerts: jest.fn(),
       createAlert: jest.fn(),
       deleteAlert: jest.fn(),
-    } as unknown as jest.Mocked<AlertsService>;
+    };
     controller = new AlertsController(service);
   });
 
@@ -68,7 +68,7 @@ describe('AlertsController', () => {
     });
 
     it('normalizes symbol to uppercase and trims whitespace', () => {
-      service.createAlert.mockResolvedValue(undefined as never);
+      service.createAlert.mockResolvedValue(undefined);
       controller.createAlert(authedReq('u1'), {
         symbol: '  aapl  ',
         threshold_price: 150,
@@ -78,7 +78,7 @@ describe('AlertsController', () => {
     });
 
     it('delegates to createAlert with valid body', () => {
-      service.createAlert.mockResolvedValue(undefined as never);
+      service.createAlert.mockResolvedValue(undefined);
       controller.createAlert(authedReq('u1'), validBody);
       expect(service.createAlert).toHaveBeenCalledWith('u1', 'AAPL', 150, 'above');
     });

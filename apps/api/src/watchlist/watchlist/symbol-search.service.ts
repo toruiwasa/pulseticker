@@ -73,7 +73,7 @@ export class SymbolSearchService {
   private searchOandaCache(q: string): SymbolSearchResult[] {
     const tokens = q
       .toLowerCase()
-      .split(/[\s\/_]+/)
+      .split(/[\s/_]+/)
       .filter(Boolean);
     if (tokens.length === 0) return [];
     return this.oandaSymbols.filter(s => {

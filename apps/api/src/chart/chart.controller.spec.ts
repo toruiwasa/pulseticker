@@ -9,7 +9,7 @@ describe('ChartController', () => {
   let service: jest.Mocked<ChartService>;
 
   beforeEach(() => {
-    service = { getCandles: jest.fn() } as unknown as jest.Mocked<ChartService>;
+    service = { getCandles: jest.fn() };
     controller = new ChartController(service);
   });
 

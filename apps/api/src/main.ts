@@ -9,4 +9,9 @@ async function bootstrap() {
   app.useWebSocketAdapter(wsAdapter);
   await app.listen(process.env.PORT ?? 3000);
 }
-bootstrap();
+// A rejected bootstrap must not become an unhandled rejection — Render would
+// report the process as healthy while nothing is listening.
+bootstrap().catch(err => {
+  console.error('Failed to start', err);
+  process.exit(1);
+});

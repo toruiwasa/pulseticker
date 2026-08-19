@@ -11,7 +11,11 @@ export class WsAdapter extends IoAdapter {
     this.corsOrigin = app.get(ConfigService).getOrThrow<string>('CORS_ORIGIN');
   }
 
-  createIOServer(port: number, options?: ServerOptions) {
-    return super.createIOServer(port, { ...options, cors: { origin: this.corsOrigin } });
+  createIOServer(port: number, options?: ServerOptions): unknown {
+    // IoAdapter.createIOServer is declared as returning `any`.
+    return super.createIOServer(port, {
+      ...options,
+      cors: { origin: this.corsOrigin },
+    }) as unknown;
   }
 }

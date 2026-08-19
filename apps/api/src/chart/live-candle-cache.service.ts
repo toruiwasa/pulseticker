@@ -64,7 +64,7 @@ export class LiveCandleCacheService implements OnModuleInit, OnModuleDestroy {
 
   @OnEvent('price.received')
   handlePriceReceived(payload: { symbol: string; price: number; ts: number }) {
-    this.applyTick(payload.symbol, payload.price, payload.ts);
+    this.applyTick(payload.symbol, payload.price);
   }
 
   /**
@@ -72,7 +72,7 @@ export class LiveCandleCacheService implements OnModuleInit, OnModuleDestroy {
    * the rightmost candle's value in place. The bucket time is not changed
    * so lightweight-charts' duplicate-time guard accepts the update.
    */
-  applyTick(symbol: string, price: number, _ts: number): void {
+  applyTick(symbol: string, price: number): void {
     for (const [key, entry] of this.cache) {
       if (!key.startsWith(`${symbol}:`)) continue;
       const last = entry.candles[entry.candles.length - 1];

@@ -10,7 +10,7 @@ function makeSocket(token?: string): jest.Mocked<Socket> {
     data: {} as Record<string, unknown>,
     disconnect: jest.fn(),
     join: jest.fn(),
-  } as unknown as jest.Mocked<Socket>;
+  };
 }
 
 describe('PricesGateway', () => {

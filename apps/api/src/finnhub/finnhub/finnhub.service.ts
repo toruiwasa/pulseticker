@@ -77,9 +77,16 @@ export class FinnhubService implements OnModuleInit {
       }
     });
 
-    this.ws.on('message', data => {
+    this.ws.on('message', (data: WebSocket.RawData) => {
       try {
-        const msg = JSON.parse(data.toString()) as {
+        // RawData is Buffer | ArrayBuffer | Buffer[]. String() on the latter two
+        // yields '[object Object]', which would silently drop every trade.
+        const text = Array.isArray(data)
+          ? Buffer.concat(data).toString('utf8')
+          : data instanceof ArrayBuffer
+            ? Buffer.from(data).toString('utf8')
+            : data.toString('utf8');
+        const msg = JSON.parse(text) as {
           type: string;
           data?: { s: string; p: number; t: number }[];
         };

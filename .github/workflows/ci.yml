@@ -71,3 +71,10 @@ jobs:
       # (via set-env.ts) produces. A fresh checkout has no such file.
       - name: Test
         run: pnpm test
+
+      # Reports only — the `lint` script no longer carries --fix (#80), so this
+      # cannot rewrite the checkout. Fails on errors; the remaining
+      # no-floating-promises findings in specs are warnings and do not gate.
+      # apps/web has no eslint configuration, so there is nothing to run there.
+      - name: Lint
+        run: pnpm --filter api lint

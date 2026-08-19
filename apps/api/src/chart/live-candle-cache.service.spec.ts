@@ -13,11 +13,11 @@ describe('LiveCandleCacheService', () => {
   let service: LiveCandleCacheService;
 
   beforeEach(() => {
-    twelve = { getTimeSeries: jest.fn() } as unknown as jest.Mocked<TwelveDataClient>;
+    twelve = { getTimeSeries: jest.fn() };
     finnhub = {
       subscribe: jest.fn(),
       unsubscribe: jest.fn(),
-    } as unknown as jest.Mocked<FinnhubService>;
+    };
     service = new LiveCandleCacheService(twelve, finnhub);
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-06-12T00:00:00Z'));
@@ -92,7 +92,7 @@ describe('LiveCandleCacheService', () => {
       const oneDay = await service.getCandles('AAPL', '1D');
       const oneYear = await service.getCandles('AAPL', '1Y');
 
-      service.applyTick('AAPL', 200, 9_999_999);
+      service.applyTick('AAPL', 200);
 
       expect(oneDay[oneDay.length - 1].value).toBe(200);
       expect(oneYear[oneYear.length - 1].value).toBe(200);
@@ -104,12 +104,12 @@ describe('LiveCandleCacheService', () => {
       twelve.getTimeSeries.mockResolvedValueOnce(makeCandles([100, 101]));
       const aapl = await service.getCandles('AAPL', '1D');
 
-      service.applyTick('MSFT', 999, 0);
+      service.applyTick('MSFT', 999);
       expect(aapl[1].value).toBe(101);
     });
 
     it('is a no-op when no cache entry exists for the symbol', () => {
-      expect(() => service.applyTick('GOOG', 100, 0)).not.toThrow();
+      expect(() => service.applyTick('GOOG', 100)).not.toThrow();
     });
   });
 

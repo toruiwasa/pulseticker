@@ -63,7 +63,7 @@ describe('CompanyService', () => {
       jest.spyOn(global, 'fetch').mockResolvedValueOnce({
         ok: true,
         json: async () => MOCK_PROFILE,
-      } as Response);
+      });
 
       const result = await service.getProfile('AAPL');
       expect(result).toEqual({
@@ -80,7 +80,7 @@ describe('CompanyService', () => {
       const fetchSpy = jest.spyOn(global, 'fetch').mockResolvedValue({
         ok: true,
         json: async () => MOCK_PROFILE,
-      } as Response);
+      });
 
       await service.getProfile('AAPL');
       await service.getProfile('AAPL');
@@ -91,7 +91,7 @@ describe('CompanyService', () => {
       jest.spyOn(global, 'fetch').mockResolvedValueOnce({
         ok: true,
         json: async () => ({}),
-      } as Response);
+      });
 
       const result = await service.getProfile('OANDA:AUD_USD');
       expect(result.name).toBe('');
@@ -101,7 +101,7 @@ describe('CompanyService', () => {
       jest.spyOn(global, 'fetch').mockResolvedValueOnce({
         ok: false,
         status: 429,
-      } as Response);
+      });
 
       await expect(service.getProfile('AAPL')).rejects.toBeInstanceOf(BadRequestException);
     });
@@ -112,7 +112,7 @@ describe('CompanyService', () => {
       jest.spyOn(global, 'fetch').mockResolvedValueOnce({
         ok: true,
         json: async () => MOCK_METRIC,
-      } as Response);
+      });
 
       const result = await service.getMetrics('AAPL');
       expect(result.pe).toBeCloseTo(28.4);
@@ -126,7 +126,7 @@ describe('CompanyService', () => {
       jest.spyOn(global, 'fetch').mockResolvedValueOnce({
         ok: true,
         json: async () => ({ metric: {} }),
-      } as Response);
+      });
 
       const result = await service.getMetrics('AAPL');
       expect(result.pe).toBeNull();
@@ -143,7 +143,7 @@ describe('CompanyService', () => {
       jest.spyOn(global, 'fetch').mockResolvedValueOnce({
         ok: true,
         json: async () => manyNews,
-      } as Response);
+      });
 
       const result = await service.getNews('AAPL');
       expect(result).toHaveLength(5);
@@ -153,7 +153,7 @@ describe('CompanyService', () => {
       jest.spyOn(global, 'fetch').mockResolvedValueOnce({
         ok: true,
         json: async () => null,
-      } as Response);
+      });
 
       const result = await service.getNews('AAPL');
       expect(result).toEqual([]);
