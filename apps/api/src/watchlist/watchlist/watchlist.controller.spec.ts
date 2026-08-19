@@ -2,6 +2,7 @@ jest.mock('../../auth/supabase-auth.guard', () => ({ SupabaseAuthGuard: class {}
 
 import { BadRequestException } from '@nestjs/common';
 import { ZodError } from 'zod';
+import { SymbolSearchService } from './symbol-search.service.js';
 import { WatchlistController } from './watchlist.controller.js';
 import { WatchlistService } from './watchlist.service.js';
 import type { AuthedRequest } from '../../common/types/authed-request.js';
@@ -13,24 +14,27 @@ function authedReq(userId = 'u1'): AuthedRequest {
 describe('WatchlistController', () => {
   let controller: WatchlistController;
   let service: jest.Mocked<WatchlistService>;
+  let symbols: jest.Mocked<SymbolSearchService>;
 
   beforeEach(() => {
     service = {
       findAll: jest.fn(),
       create: jest.fn(),
       remove: jest.fn(),
-      searchSymbols: jest.fn(),
-      getQuote: jest.fn(),
       getWatchlistPrices: jest.fn(),
     } as unknown as jest.Mocked<WatchlistService>;
-    controller = new WatchlistController(service);
+    symbols = {
+      searchSymbols: jest.fn(),
+      getQuote: jest.fn(),
+    } as unknown as jest.Mocked<SymbolSearchService>;
+    controller = new WatchlistController(service, symbols);
   });
 
   describe('GET /watchlist/search', () => {
     it('delegates to searchSymbols with trimmed query', () => {
-      service.searchSymbols.mockResolvedValue([{ symbol: 'AAPL', description: 'Apple' }]);
+      symbols.searchSymbols.mockResolvedValue([{ symbol: 'AAPL', description: 'Apple' }]);
       controller.search('  apple  ');
-      expect(service.searchSymbols).toHaveBeenCalledWith('apple');
+      expect(symbols.searchSymbols).toHaveBeenCalledWith('apple');
     });
 
     it('throws BadRequestException when q is missing', () => {
@@ -42,9 +46,9 @@ describe('WatchlistController', () => {
 
   describe('GET /watchlist/quote', () => {
     it('delegates to getQuote with trimmed symbol', () => {
-      service.getQuote.mockResolvedValue({ c: 150, pc: 149, t: 1700000000 });
+      symbols.getQuote.mockResolvedValue({ c: 150, pc: 149, t: 1700000000 });
       controller.quote('  AAPL  ');
-      expect(service.getQuote).toHaveBeenCalledWith('AAPL');
+      expect(symbols.getQuote).toHaveBeenCalledWith('AAPL');
     });
 
     it('throws BadRequestException when symbol is missing', () => {

@@ -1,32 +1,10 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import type { WatchlistPricesResponse } from '@pulseticker/schemas';
 import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
 import { FinnhubService } from '../../finnhub/finnhub/finnhub.service.js';
-import { FinnhubQuote, fetchFinnhubQuote } from '../../common/utils/finnhub-quote.js';
 
 const DEFAULT_SYMBOLS = ['VOO', 'AAPL', 'MSFT', 'OANDA:AUD_USD', 'OANDA:AUD_JPY'];
 const MAX_WATCHLIST_SIZE = 50;
-const FINNHUB_BASE = 'https://finnhub.io/api/v1';
-
-interface FinnhubSearchResult {
-  symbol: string;
-  description: string;
-  type: string;
-}
-
-interface FinnhubForexSymbol {
-  symbol: string;
-  displaySymbol?: string;
-  description: string;
-}
-
-export type { FinnhubQuote };
-
-export interface SymbolSearchResult {
-  symbol: string;
-  description: string;
-}
 
 /** Shape of the columns findAll() selects. SupabaseClient carries no Database
  *  generic here, so its rows arrive as `any` and need naming to stay type-safe. */
@@ -36,13 +14,16 @@ interface WatchlistRow {
   created_at: string;
 }
 
+/**
+ * The symbols a user tracks, and the last price seen for each.
+ *
+ * Instrument-catalog queries (symbol search, quote lookup) belong to
+ * SymbolSearchService — they are user-independent and do not touch Supabase.
+ */
 @Injectable()
 export class WatchlistService {
-  private oandaSymbols: SymbolSearchResult[] = [];
-
   constructor(
     private supabase: SupabaseService,
-    private config: ConfigService,
     private finnhub: FinnhubService,
   ) {}
 
@@ -139,50 +120,5 @@ export class WatchlistService {
       .eq('user_id', userId)
       .eq('symbol', this.sym(symbol));
     if (error) throw error;
-  }
-
-  async searchSymbols(q: string): Promise<SymbolSearchResult[]> {
-    await this.loadOandaSymbols();
-    const [equities, fx] = await Promise.all([
-      this.searchEquitiesOnFinnhub(q),
-      Promise.resolve(this.searchOandaCache(q)),
-    ]);
-    return [...fx.slice(0, 5), ...equities].slice(0, 10);
-  }
-
-  async getQuote(symbol: string): Promise<FinnhubQuote> {
-    const key = this.config.getOrThrow<string>('FINNHUB_API_KEY');
-    return fetchFinnhubQuote(symbol, key);
-  }
-
-  private async loadOandaSymbols(): Promise<void> {
-    if (this.oandaSymbols.length > 0) return;
-    const key = this.config.getOrThrow<string>('FINNHUB_API_KEY');
-    const res = await fetch(`${FINNHUB_BASE}/forex/symbol?exchange=oanda&token=${key}`);
-    if (!res.ok) return;
-    const json = (await res.json()) as FinnhubForexSymbol[];
-    this.oandaSymbols = (json ?? []).map(r => ({
-      symbol: r.symbol,
-      description: r.displaySymbol || r.description,
-    }));
-  }
-
-  private async searchEquitiesOnFinnhub(q: string): Promise<SymbolSearchResult[]> {
-    const key = this.config.getOrThrow<string>('FINNHUB_API_KEY');
-    const res = await fetch(`${FINNHUB_BASE}/search?q=${encodeURIComponent(q)}&token=${key}`);
-    if (!res.ok) throw new Error(`Finnhub search failed: ${res.status}`);
-    const json = (await res.json()) as { result?: FinnhubSearchResult[] };
-    return (json.result ?? [])
-      .filter(r => r.type === 'Common Stock' || r.type === 'ETP')
-      .map(({ symbol, description }) => ({ symbol, description }));
-  }
-
-  private searchOandaCache(q: string): SymbolSearchResult[] {
-    const tokens = q.toLowerCase().split(/[\s\/_]+/).filter(Boolean);
-    if (tokens.length === 0) return [];
-    return this.oandaSymbols.filter(s => {
-      const haystack = `${s.symbol} ${s.description}`.toLowerCase();
-      return tokens.every(t => haystack.includes(t));
-    });
   }
 }
