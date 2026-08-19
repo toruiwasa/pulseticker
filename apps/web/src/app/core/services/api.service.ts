@@ -1,7 +1,7 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import type { PricePoint } from '@pulseticker/schemas';
-import { environment } from '../../../environments/environment';
+import { ENVIRONMENT } from '../environment.token';
 
 export interface SymbolSearchResult {
   symbol: string;
@@ -48,7 +48,7 @@ export interface MarketStatus {
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
-  private base = environment.apiUrl;
+  private base = inject(ENVIRONMENT).apiUrl;
   constructor(private http: HttpClient) {}
   get<T>(path: string) {
     return this.http.get<T>(`${this.base}${path}`);

@@ -1,17 +1,29 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { TestBed } from '@angular/core/testing';
+import { ENVIRONMENT } from '../environment.token';
 import { LoggerService } from './logger.service';
+
+// The generated environment.ts is external input (gitignored, produced from
+// the repo-root .env), so specs control it through the ENVIRONMENT token
+// instead of asserting against whatever was last generated. logLevel is read
+// at construction, appEnv at call time — mutate mockEnv before TestBed.inject
+// or before the call respectively.
+const mockEnv = { logLevel: 'debug', appEnv: 'development' };
 
 describe('LoggerService', () => {
   let service: LoggerService;
 
   beforeEach(() => {
+    mockEnv.logLevel = 'debug';
+    mockEnv.appEnv = 'development';
     vi.spyOn(console, 'debug').mockImplementation(() => {});
     vi.spyOn(console, 'info').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    TestBed.configureTestingModule({ providers: [LoggerService] });
+    TestBed.configureTestingModule({
+      providers: [LoggerService, { provide: ENVIRONMENT, useValue: mockEnv }],
+    });
     service = TestBed.inject(LoggerService);
   });
 
@@ -19,7 +31,6 @@ describe('LoggerService', () => {
 
   describe('log level filtering', () => {
     it('debug() calls console.debug when logLevel allows it', () => {
-      // environment.ts has logLevel: 'debug'
       service.debug('CTX', 'hello');
       expect(console.debug).toHaveBeenCalledOnce();
     });
@@ -28,6 +39,21 @@ describe('LoggerService', () => {
       (service as unknown as { minLevel: number }).minLevel = 2; // LEVELS['warn']
       service.debug('CTX', 'hello');
       expect(console.debug).not.toHaveBeenCalled();
+    });
+
+    it('derives minLevel from the injected environment — a leaked real file fails here', () => {
+      // The generated file has logLevel 'debug' in development, so only the
+      // token override can produce a warn-level logger without poking fields.
+      mockEnv.logLevel = 'warn';
+      TestBed.resetTestingModule();
+      TestBed.configureTestingModule({
+        providers: [LoggerService, { provide: ENVIRONMENT, useValue: mockEnv }],
+      });
+      const raised = TestBed.inject(LoggerService);
+      raised.debug('CTX', 'hello');
+      expect(console.debug).not.toHaveBeenCalled();
+      raised.warn('CTX', 'warning');
+      expect(console.warn).toHaveBeenCalledOnce();
     });
 
     it('warn() is always called regardless of minLevel', () => {
@@ -75,12 +101,23 @@ describe('LoggerService', () => {
     });
 
     it('includes errorMessage in development environment', () => {
-      // environment.ts has appEnv: 'development'
       const err = new Error('secret-detail');
       service.warnWithCause('CTX', 'failed', err);
       const args = (console.warn as ReturnType<typeof vi.spyOn>).mock.calls[0];
       const data = args[2] as Record<string, unknown>;
       expect(data['errorMessage']).toBe('secret-detail');
+    });
+
+    it('omits errorMessage when appEnv is production', () => {
+      // Previously unreachable: CI pinned APP_ENV=development to keep this
+      // suite green, so the production branch of withCause was never exercised.
+      mockEnv.appEnv = 'production';
+      const err = Object.assign(new Error('secret-detail'), { name: 'AuthApiError' });
+      service.warnWithCause('CTX', 'failed', err);
+      const args = (console.warn as ReturnType<typeof vi.spyOn>).mock.calls[0];
+      const data = args[2] as Record<string, unknown>;
+      expect(data['errorMessage']).toBeUndefined();
+      expect(data['errorName']).toBe('AuthApiError');
     });
   });
 
