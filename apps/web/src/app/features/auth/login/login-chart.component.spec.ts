@@ -34,9 +34,17 @@ vi.mock('lightweight-charts', () => ({
 }));
 
 import { LoginChartComponent } from './login-chart.component';
-import { PreviewService, PreviewSnapshot, PreviewPrice } from '../../../core/services/preview.service';
+import {
+  PreviewService,
+  PreviewSnapshot,
+  PreviewPrice,
+} from '../../../core/services/preview.service';
 
-function makeSnapshot(aaplPrice: number | null, ts: number, candles: { time: number; value: number }[] | null = null): PreviewSnapshot {
+function makeSnapshot(
+  aaplPrice: number | null,
+  ts: number,
+  candles: { time: number; value: number }[] | null = null,
+): PreviewSnapshot {
   const prices: PreviewPrice[] = [
     { symbol: 'AAPL', raw: 'AAPL', currency: 'USD', price: aaplPrice, percentChange: 0, ts },
   ];
@@ -52,9 +60,7 @@ describe('LoginChartComponent', () => {
     stream = new Subject<PreviewSnapshot>();
     preview = { getPriceStream: () => stream };
     TestBed.configureTestingModule({
-      providers: [
-        { provide: PreviewService, useValue: preview },
-      ],
+      providers: [{ provide: PreviewService, useValue: preview }],
     });
   });
 
@@ -67,12 +73,19 @@ describe('LoginChartComponent', () => {
   it('builds the chart and subscribes to the preview stream on mount', () => {
     mount();
     expect(mocks.createChart).toHaveBeenCalledOnce();
-    expect(mocks.MockChart.last.addSeries).toHaveBeenCalledWith(mocks.LineSeries, { color: '#34D399' });
+    expect(mocks.MockChart.last.addSeries).toHaveBeenCalledWith(mocks.LineSeries, {
+      color: '#34D399',
+    });
   });
 
   it('seeds the series with candles from the first snapshot', () => {
     mount();
-    stream.next(makeSnapshot(180, 2000, [{ time: 1000, value: 180 }, { time: 1060, value: 182 }]));
+    stream.next(
+      makeSnapshot(180, 2000, [
+        { time: 1000, value: 180 },
+        { time: 1060, value: 182 },
+      ]),
+    );
     expect(mocks.MockSeries.last.setData).toHaveBeenCalledWith([
       { time: 1000, value: 180 },
       { time: 1060, value: 182 },
@@ -106,7 +119,7 @@ describe('LoginChartComponent', () => {
     stream.next(makeSnapshot(185, 2000, null));
     mocks.MockSeries.last.update.mockClear();
     stream.next(makeSnapshot(186, 2000, null)); // same ts
-    stream.next(makeSnapshot(186, 500, null));  // older ts
+    stream.next(makeSnapshot(186, 500, null)); // older ts
     expect(mocks.MockSeries.last.update).not.toHaveBeenCalled();
   });
 

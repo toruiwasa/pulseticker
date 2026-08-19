@@ -1,10 +1,4 @@
-import {
-  Component,
-  DestroyRef,
-  OnInit,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, DestroyRef, OnInit, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { filter, interval, startWith } from 'rxjs';
 import { Router } from '@angular/router';
@@ -37,8 +31,10 @@ import { SocketService } from '../../services/socket.service';
         @if (audUsd() !== null) {
           <span class="fx-rate" title="AUD/USD live rate">
             AUD/USD {{ audUsd()!.toFixed(5) }}
-            <span [class]="audUsdDir() === 'up' ? 'dir-up' : audUsdDir() === 'down' ? 'dir-down' : ''"
-                  [attr.aria-label]="audUsdDir()">
+            <span
+              [class]="audUsdDir() === 'up' ? 'dir-up' : audUsdDir() === 'down' ? 'dir-down' : ''"
+              [attr.aria-label]="audUsdDir()"
+            >
               {{ audUsdDir() === 'up' ? '▲' : audUsdDir() === 'down' ? '▼' : '' }}
             </span>
           </span>
@@ -60,73 +56,89 @@ import { SocketService } from '../../services/socket.service';
       </div>
     </header>
   `,
-  styles: [`
-    :host {
-      display: block;
-    }
+  styles: [
+    `
+      :host {
+        display: block;
+      }
 
-    .header-bar {
-      height: var(--pt-header-h);
-      background: var(--pt-bg-surface);
-      border-bottom: 1px solid var(--pt-border);
-      display: flex;
-      align-items: center;
-      padding: 0 1rem;
-      gap: 1rem;
-      z-index: 100;
-    }
+      .header-bar {
+        height: var(--pt-header-h);
+        background: var(--pt-bg-surface);
+        border-bottom: 1px solid var(--pt-border);
+        display: flex;
+        align-items: center;
+        padding: 0 1rem;
+        gap: 1rem;
+        z-index: 100;
+      }
 
-    .logo {
-      font-weight: 700;
-      font-size: 1.0625rem;
-      color: var(--pt-primary);
-      letter-spacing: -0.02em;
-      white-space: nowrap;
-    }
+      .logo {
+        font-weight: 700;
+        font-size: 1.0625rem;
+        color: var(--pt-primary);
+        letter-spacing: -0.02em;
+        white-space: nowrap;
+      }
 
-    .header-center {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-left: auto;
-    }
+      .header-center {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-left: auto;
+      }
 
-    .badge {
-      display: flex;
-      align-items: center;
-      gap: 0.3rem;
-      font-size: 0.75rem;
-      font-weight: 600;
-      white-space: nowrap;
-    }
+      .badge {
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        white-space: nowrap;
+      }
 
-    .badge-live { color: var(--pt-up); }
-    .badge-closed { color: var(--pt-neutral); }
+      .badge-live {
+        color: var(--pt-up);
+      }
+      .badge-closed {
+        color: var(--pt-neutral);
+      }
 
-    .dot-live { animation: pulse 2s infinite; }
+      .dot-live {
+        animation: pulse 2s infinite;
+      }
 
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.4; }
-    }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
 
-    .fx-rate {
-      font-size: 0.8rem;
-      color: var(--pt-text-secondary);
-      white-space: nowrap;
-    }
+      .fx-rate {
+        font-size: 0.8rem;
+        color: var(--pt-text-secondary);
+        white-space: nowrap;
+      }
 
-    .dir-up { color: var(--pt-up); }
-    .dir-down { color: var(--pt-down); }
+      .dir-up {
+        color: var(--pt-up);
+      }
+      .dir-down {
+        color: var(--pt-down);
+      }
 
-    .header-actions {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-left: 1rem;
-    }
-
-  `],
+      .header-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-left: 1rem;
+      }
+    `,
+  ],
 })
 export class HeaderComponent implements OnInit {
   protected auth = inject(AuthService);
@@ -155,7 +167,9 @@ export class HeaderComponent implements OnInit {
       )
       .subscribe(tick => {
         const prev = this.audUsd();
-        this.audUsdDir.set(prev === null ? '' : tick.price > prev ? 'up' : tick.price < prev ? 'down' : '');
+        this.audUsdDir.set(
+          prev === null ? '' : tick.price > prev ? 'up' : tick.price < prev ? 'down' : '',
+        );
         this.audUsd.set(tick.price);
       });
   }

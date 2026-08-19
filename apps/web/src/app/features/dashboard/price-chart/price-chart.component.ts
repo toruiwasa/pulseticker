@@ -30,11 +30,21 @@ import { ThemeService } from '../../../core/services/theme.service';
       <div class="sr-only" aria-live="polite" aria-atomic="true">{{ a11yLabel() }}</div>
     </div>
   `,
-  styles: [`
-    :host { display: block; }
-    .chart-shell { width: 100%; height: 100%; }
-    .chart-container { width: 100%; height: 100%; }
-  `],
+  styles: [
+    `
+      :host {
+        display: block;
+      }
+      .chart-shell {
+        width: 100%;
+        height: 100%;
+      }
+      .chart-container {
+        width: 100%;
+        height: 100%;
+      }
+    `,
+  ],
 })
 export class PriceChartComponent implements AfterViewInit, OnDestroy {
   @ViewChild('host', { static: true }) host!: ElementRef<HTMLDivElement>;
@@ -77,7 +87,7 @@ export class PriceChartComponent implements AfterViewInit, OnDestroy {
           horzLines: { color: c.grid, style: LineStyle.Dashed },
         },
         crosshair: { vertLine: { color: c.cross }, horzLine: { color: c.cross } },
-        timeScale:       { borderColor: c.border, timeVisible: true, secondsVisible: false },
+        timeScale: { borderColor: c.border, timeVisible: true, secondsVisible: false },
         rightPriceScale: { borderColor: c.border },
       });
     });
@@ -93,7 +103,7 @@ export class PriceChartComponent implements AfterViewInit, OnDestroy {
         horzLines: { color: c.grid, style: LineStyle.Dashed },
       },
       crosshair: { vertLine: { color: c.cross }, horzLine: { color: c.cross } },
-      timeScale:       { borderColor: c.border, timeVisible: true, secondsVisible: false },
+      timeScale: { borderColor: c.border, timeVisible: true, secondsVisible: false },
       rightPriceScale: { borderColor: c.border },
     });
     this.series = this.chart.addSeries(LineSeries, { color: this.upColor() });
@@ -113,16 +123,20 @@ export class PriceChartComponent implements AfterViewInit, OnDestroy {
     return getComputedStyle(this.host.nativeElement).getPropertyValue(name).trim();
   }
 
-  private upColor()   { return this.cssVar('--pt-up'); }
-  private downColor() { return this.cssVar('--pt-down'); }
+  private upColor() {
+    return this.cssVar('--pt-up');
+  }
+  private downColor() {
+    return this.cssVar('--pt-down');
+  }
 
   private chartColors() {
     // isDark() reactive — effect() re-runs on theme change
     void this.theme.isDark();
     return {
-      grid:   this.cssVar('--pt-chart-grid'),
-      text:   this.cssVar('--pt-chart-text'),
-      cross:  this.cssVar('--pt-chart-cross'),
+      grid: this.cssVar('--pt-chart-grid'),
+      text: this.cssVar('--pt-chart-text'),
+      cross: this.cssVar('--pt-chart-cross'),
       border: this.cssVar('--pt-border'),
     };
   }

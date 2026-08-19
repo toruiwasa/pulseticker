@@ -54,9 +54,15 @@ export interface MarketStatus {
 export class ApiService {
   private base = environment.apiUrl;
   constructor(private http: HttpClient) {}
-  get<T>(path: string) { return this.http.get<T>(`${this.base}${path}`); }
-  post<T>(path: string, body: unknown) { return this.http.post<T>(`${this.base}${path}`, body); }
-  delete<T>(path: string) { return this.http.delete<T>(`${this.base}${path}`); }
+  get<T>(path: string) {
+    return this.http.get<T>(`${this.base}${path}`);
+  }
+  post<T>(path: string, body: unknown) {
+    return this.http.post<T>(`${this.base}${path}`, body);
+  }
+  delete<T>(path: string) {
+    return this.http.delete<T>(`${this.base}${path}`);
+  }
 
   searchSymbols(q: string) {
     return this.get<SymbolSearchResult[]>(`/watchlist/search?q=${encodeURIComponent(q)}`);

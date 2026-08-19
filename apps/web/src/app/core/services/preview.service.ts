@@ -14,15 +14,22 @@ export interface PreviewPrice {
 }
 
 export interface PreviewSnapshot {
-  prices:  PreviewPrice[];
+  prices: PreviewPrice[];
   candles: CandlePoint[] | null;
 }
 
 export const PREVIEW_SYMBOLS_INITIAL: PreviewPrice[] = [
-  { symbol: 'VOO',     raw: 'VOO',           price: null, percentChange: null, ts: 0, currency: 'USD' },
-  { symbol: 'AAPL',    raw: 'AAPL',          price: null, percentChange: null, ts: 0, currency: 'USD' },
-  { symbol: 'MSFT',    raw: 'MSFT',          price: null, percentChange: null, ts: 0, currency: 'USD' },
-  { symbol: 'AUD/USD', raw: 'OANDA:AUD_USD', price: null, percentChange: null, ts: 0, currency: 'USD' },
+  { symbol: 'VOO', raw: 'VOO', price: null, percentChange: null, ts: 0, currency: 'USD' },
+  { symbol: 'AAPL', raw: 'AAPL', price: null, percentChange: null, ts: 0, currency: 'USD' },
+  { symbol: 'MSFT', raw: 'MSFT', price: null, percentChange: null, ts: 0, currency: 'USD' },
+  {
+    symbol: 'AUD/USD',
+    raw: 'OANDA:AUD_USD',
+    price: null,
+    percentChange: null,
+    ts: 0,
+    currency: 'USD',
+  },
 ];
 
 @Injectable({ providedIn: 'root' })
@@ -33,9 +40,7 @@ export class PreviewService {
       startWith(!document.hidden),
     );
 
-    return visibility$.pipe(
-      switchMap(isVisible => (isVisible ? this.connectSse() : EMPTY)),
-    );
+    return visibility$.pipe(switchMap(isVisible => (isVisible ? this.connectSse() : EMPTY)));
   }
 
   private connectSse(): Observable<PreviewSnapshot> {
@@ -50,8 +55,6 @@ export class PreviewService {
       };
       es.onerror = () => subscriber.error(new Error('SSE error'));
       return () => es.close();
-    }).pipe(
-      retry({ delay: 5000 }),
-    );
+    }).pipe(retry({ delay: 5000 }));
   }
 }

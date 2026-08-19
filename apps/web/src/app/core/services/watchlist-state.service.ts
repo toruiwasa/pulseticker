@@ -15,11 +15,11 @@ export class WatchlistStateService implements OnDestroy {
   private api = inject(ApiService);
   private socket = inject(SocketService);
 
-  readonly watchlist  = signal<WatchlistItem[]>([]);
-  readonly prices     = signal<Record<string, number>>({});
+  readonly watchlist = signal<WatchlistItem[]>([]);
+  readonly prices = signal<Record<string, number>>({});
   readonly timestamps = signal<Record<string, Date>>({});
-  readonly isLive     = signal<Record<string, boolean>>({});
-  readonly loading    = signal(true);
+  readonly isLive = signal<Record<string, boolean>>({});
+  readonly loading = signal(true);
 
   readonly atLimit = computed(() => this.watchlist().length >= 50);
 
@@ -70,9 +70,21 @@ export class WatchlistStateService implements OnDestroy {
     this.api.delete(`/watchlist/${encodeURIComponent(symbol)}`).subscribe({
       next: () => {
         this.watchlist.update(w => w.filter(i => i.symbol !== symbol));
-        this.prices.update(p => { const n = { ...p }; delete n[symbol]; return n; });
-        this.timestamps.update(t => { const n = { ...t }; delete n[symbol]; return n; });
-        this.isLive.update(l => { const n = { ...l }; delete n[symbol]; return n; });
+        this.prices.update(p => {
+          const n = { ...p };
+          delete n[symbol];
+          return n;
+        });
+        this.timestamps.update(t => {
+          const n = { ...t };
+          delete n[symbol];
+          return n;
+        });
+        this.isLive.update(l => {
+          const n = { ...l };
+          delete n[symbol];
+          return n;
+        });
       },
       error: e => console.error('Failed to remove symbol', e),
     });
@@ -89,9 +101,7 @@ export class WatchlistStateService implements OnDestroy {
     if (equitySymbols.length === 0) return;
     const now = new Date();
 
-    forkJoin(
-      Object.fromEntries(equitySymbols.map(s => [s, this.api.getQuote(s)])),
-    ).subscribe({
+    forkJoin(Object.fromEntries(equitySymbols.map(s => [s, this.api.getQuote(s)]))).subscribe({
       next: results => {
         this.prices.update(p => {
           const n = { ...p };

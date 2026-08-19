@@ -16,44 +16,52 @@ import { SidebarComponent } from '../sidebar/sidebar.component';
       </main>
     </div>
   `,
-  styles: [`
-    :host { display: contents; }
-
-    .shell-layout {
-      display: grid;
-      grid-template-areas:
-        "header header"
-        "sidebar main";
-      grid-template-rows: var(--pt-header-h) 1fr;
-      grid-template-columns: var(--pt-sidebar-w) 1fr;
-      height: 100dvh;
-      overflow: hidden;
-      background: var(--pt-bg-base);
-      color: var(--pt-text-primary);
-    }
-
-    .shell-header { grid-area: header; }
-    .shell-sidebar { grid-area: sidebar; }
-
-    .shell-main {
-      grid-area: main;
-      overflow-y: auto;
-      overflow-x: hidden;
-      min-width: 0;
-      display: flex;
-      flex-direction: column;
-    }
-
-    @media (max-width: 767px) {
-      .shell-layout {
-        grid-template-areas:
-          "header"
-          "main"
-          "sidebar";
-        grid-template-rows: var(--pt-header-h) 1fr 60px;
-        grid-template-columns: 1fr;
+  styles: [
+    `
+      :host {
+        display: contents;
       }
-    }
-  `],
+
+      .shell-layout {
+        display: grid;
+        grid-template-areas:
+          'header header'
+          'sidebar main';
+        grid-template-rows: var(--pt-header-h) 1fr;
+        grid-template-columns: var(--pt-sidebar-w) 1fr;
+        height: 100dvh;
+        overflow: hidden;
+        background: var(--pt-bg-base);
+        color: var(--pt-text-primary);
+      }
+
+      .shell-header {
+        grid-area: header;
+      }
+      .shell-sidebar {
+        grid-area: sidebar;
+      }
+
+      .shell-main {
+        grid-area: main;
+        overflow-y: auto;
+        overflow-x: hidden;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+
+      @media (max-width: 767px) {
+        .shell-layout {
+          grid-template-areas:
+            'header'
+            'main'
+            'sidebar';
+          grid-template-rows: var(--pt-header-h) 1fr 60px;
+          grid-template-columns: 1fr;
+        }
+      }
+    `,
+  ],
 })
 export class ShellComponent {}

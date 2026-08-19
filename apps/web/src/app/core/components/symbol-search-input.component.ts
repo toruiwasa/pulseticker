@@ -1,4 +1,13 @@
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output, booleanAttribute, signal } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+  booleanAttribute,
+  signal,
+} from '@angular/core';
 import { Subject, Subscription, debounceTime, distinctUntilChanged, of, switchMap } from 'rxjs';
 import { ApiService, SymbolSearchResult } from '../services/api.service';
 import { OandaPipe } from '../pipes/oanda.pipe';
@@ -37,60 +46,79 @@ import { OandaPipe } from '../pipes/oanda.pipe';
       }
     </div>
   `,
-  styles: [`
-    :host { display: block; }
+  styles: [
+    `
+      :host {
+        display: block;
+      }
 
-    .search-root { position: relative; }
+      .search-root {
+        position: relative;
+      }
 
-    .search-input {
-      width: 100%;
-      padding: 0.4rem 0.6rem;
-      box-sizing: border-box;
-      border: 1px solid var(--pt-border);
-      border-radius: 6px;
-      background: var(--pt-bg-surface);
-      color: var(--pt-text-primary);
-      font-family: inherit;
-      font-size: 0.875rem;
-      outline: none;
-      transition: border-color 0.15s;
-    }
+      .search-input {
+        width: 100%;
+        padding: 0.4rem 0.6rem;
+        box-sizing: border-box;
+        border: 1px solid var(--pt-border);
+        border-radius: 6px;
+        background: var(--pt-bg-surface);
+        color: var(--pt-text-primary);
+        font-family: inherit;
+        font-size: 0.875rem;
+        outline: none;
+        transition: border-color 0.15s;
+      }
 
-    .search-input:focus { border-color: var(--pt-primary); }
-    .search-input:disabled { opacity: 0.5; cursor: not-allowed; }
+      .search-input:focus {
+        border-color: var(--pt-primary);
+      }
+      .search-input:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
 
-    .dropdown {
-      position: absolute;
-      left: 0; right: 0; top: calc(100% + 2px);
-      background: var(--pt-bg-surface);
-      border: 1px solid var(--pt-border);
-      border-radius: 6px;
-      list-style: none;
-      margin: 0; padding: 0;
-      z-index: 200;
-      max-height: 280px;
-      overflow-y: auto;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-    }
+      .dropdown {
+        position: absolute;
+        left: 0;
+        right: 0;
+        top: calc(100% + 2px);
+        background: var(--pt-bg-surface);
+        border: 1px solid var(--pt-border);
+        border-radius: 6px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        z-index: 200;
+        max-height: 280px;
+        overflow-y: auto;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      }
 
-    .dropdown-item {
-      padding: 0.4rem 0.6rem;
-      cursor: pointer;
-      font-size: 0.875rem;
-      transition: background 0.1s;
-      display: flex;
-      align-items: baseline;
-      gap: 0.4rem;
-    }
+      .dropdown-item {
+        padding: 0.4rem 0.6rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+        transition: background 0.1s;
+        display: flex;
+        align-items: baseline;
+        gap: 0.4rem;
+      }
 
-    .dropdown-item:hover,
-    .dropdown-item.active {
-      background: color-mix(in srgb, var(--pt-primary) 8%, transparent);
-    }
+      .dropdown-item:hover,
+      .dropdown-item.active {
+        background: color-mix(in srgb, var(--pt-primary) 8%, transparent);
+      }
 
-    .dropdown-item strong { color: var(--pt-text-primary); }
-    .description { color: var(--pt-text-secondary); font-size: 0.8rem; }
-  `],
+      .dropdown-item strong {
+        color: var(--pt-text-primary);
+      }
+      .description {
+        color: var(--pt-text-secondary);
+        font-size: 0.8rem;
+      }
+    `,
+  ],
 })
 export class SymbolSearchInputComponent implements OnInit, OnDestroy {
   @Input({ transform: booleanAttribute }) clearOnSelect = false;
@@ -113,12 +141,18 @@ export class SymbolSearchInputComponent implements OnInit, OnDestroy {
         debounceTime(300),
         distinctUntilChanged(),
         switchMap(q => {
-          if (!q.trim()) { this.results.set([]); return of<SymbolSearchResult[]>([]); }
+          if (!q.trim()) {
+            this.results.set([]);
+            return of<SymbolSearchResult[]>([]);
+          }
           return this.api.searchSymbols(q.trim());
         }),
       )
       .subscribe({
-        next: results => { this.results.set(results); this.activeIndex.set(-1); },
+        next: results => {
+          this.results.set(results);
+          this.activeIndex.set(-1);
+        },
       });
   }
 
@@ -155,9 +189,7 @@ export class SymbolSearchInputComponent implements OnInit, OnDestroy {
     if (this.clearOnSelect) {
       this.clear();
     } else {
-      const display = symbol.startsWith('OANDA:')
-        ? symbol.slice(6).replace('_', '/')
-        : symbol;
+      const display = symbol.startsWith('OANDA:') ? symbol.slice(6).replace('_', '/') : symbol;
       this.searchQuery.set(display);
       this.results.set([]);
       this.activeIndex.set(-1);

@@ -9,18 +9,12 @@ import {
 } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Subscription } from 'rxjs';
-import {
-  IChartApi,
-  ISeriesApi,
-  LineSeries,
-  Time,
-  createChart,
-} from 'lightweight-charts';
+import { IChartApi, ISeriesApi, LineSeries, Time, createChart } from 'lightweight-charts';
 import { CandlePoint } from '../../../core/services/api.service';
 import { PreviewPrice, PreviewService } from '../../../core/services/preview.service';
 
 const GREEN = '#34D399'; // --pt-up
-const RED   = '#F87171'; // --pt-down
+const RED = '#F87171'; // --pt-down
 
 @Component({
   standalone: true,
@@ -32,7 +26,7 @@ const RED   = '#F87171'; // --pt-down
         <span class="chart-symbol">AAPL</span>
         @if (aaplPrice() != null) {
           <span class="chart-price">
-            {{ aaplPrice() | number:'1.2-2' }}<span class="chart-currency">USD</span>
+            {{ aaplPrice() | number: '1.2-2' }}<span class="chart-currency">USD</span>
           </span>
         }
       </div>

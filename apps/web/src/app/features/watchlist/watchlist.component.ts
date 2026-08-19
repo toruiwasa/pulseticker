@@ -25,18 +25,25 @@ import { WatchlistPanelComponent } from '../dashboard/watchlist-panel/watchlist-
       />
     }
   `,
-  styles: [`
-    :host { display: flex; flex-direction: column; height: 100%; background: var(--pt-bg-surface); }
+  styles: [
+    `
+      :host {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        background: var(--pt-bg-surface);
+      }
 
-    .loading-state {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      color: var(--pt-text-muted);
-      font-size: 0.9rem;
-    }
-  `],
+      .loading-state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--pt-text-muted);
+        font-size: 0.9rem;
+      }
+    `,
+  ],
 })
 export class WatchlistPageComponent implements OnInit {
   protected wl = inject(WatchlistStateService);

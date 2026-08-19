@@ -1,10 +1,4 @@
-import {
-  Component,
-  effect,
-  input,
-  output,
-  signal,
-} from '@angular/core';
+import { Component, effect, input, output, signal } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { TuiButton } from '@taiga-ui/core';
 import { OandaPipe } from '../../../core/pipes/oanda.pipe';
@@ -50,9 +44,9 @@ export type { WatchlistItem };
               @if (timestamps()[item.symbol]) {
                 <span class="timestamp">
                   @if (isLive()[item.symbol]) {
-                    {{ timestamps()[item.symbol] | date:'HH:mm:ss' }}
+                    {{ timestamps()[item.symbol] | date: 'HH:mm:ss' }}
                   } @else {
-                    {{ timestamps()[item.symbol] | date:'MMM d, HH:mm' }}
+                    {{ timestamps()[item.symbol] | date: 'MMM d, HH:mm' }}
                   }
                 </span>
               }
@@ -64,7 +58,8 @@ export type { WatchlistItem };
                     class="price"
                     [class.color-up]="isLive()[item.symbol]"
                     [class.color-neutral]="!isLive()[item.symbol]"
-                  >{{ prices()[item.symbol] | number:'1.2-5' }}</span>
+                    >{{ prices()[item.symbol] | number: '1.2-5' }}</span
+                  >
                   @if (currencies()[item.symbol]) {
                     <span class="currency-unit">{{ currencies()[item.symbol] }}</span>
                   }
@@ -90,163 +85,201 @@ export type { WatchlistItem };
       </div>
 
       @if (!atLimit()) {
-        <div class="add-hint" aria-hidden="true">
-          Search above to add a symbol
-        </div>
+        <div class="add-hint" aria-hidden="true">Search above to add a symbol</div>
       } @else {
         <div class="limit-msg">50-symbol limit reached</div>
       }
     </div>
   `,
-  styles: [`
-    :host { display: contents; }
+  styles: [
+    `
+      :host {
+        display: contents;
+      }
 
-    .panel {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-      overflow: hidden;
-    }
+      .panel {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        overflow: hidden;
+      }
 
-    .search-area {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.75rem;
-      border-bottom: 1px solid var(--pt-border);
-      flex-shrink: 0;
-    }
+      .search-area {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--pt-border);
+        flex-shrink: 0;
+      }
 
-    .search-area app-symbol-search { flex: 1; min-width: 0; }
+      .search-area app-symbol-search {
+        flex: 1;
+        min-width: 0;
+      }
 
-    .count {
-      font-size: 0.7rem;
-      color: var(--pt-text-muted);
-      white-space: nowrap;
-    }
+      .count {
+        font-size: 0.7rem;
+        color: var(--pt-text-muted);
+        white-space: nowrap;
+      }
 
-    .ticker-list {
-      flex: 1;
-      overflow-y: auto;
-    }
+      .ticker-list {
+        flex: 1;
+        overflow-y: auto;
+      }
 
-    .empty-msg {
-      padding: 1.5rem 1rem;
-      color: var(--pt-text-muted);
-      font-size: 0.85rem;
-      text-align: center;
-    }
+      .empty-msg {
+        padding: 1.5rem 1rem;
+        color: var(--pt-text-muted);
+        font-size: 0.85rem;
+        text-align: center;
+      }
 
-    .ticker-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0.6rem 0.75rem;
-      cursor: pointer;
-      border-left: 2px solid transparent;
-      border-bottom: 1px solid var(--pt-border);
-      transition: background 0.1s;
-      outline: none;
-    }
+      .ticker-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.6rem 0.75rem;
+        cursor: pointer;
+        border-left: 2px solid transparent;
+        border-bottom: 1px solid var(--pt-border);
+        transition: background 0.1s;
+        outline: none;
+      }
 
-    .ticker-row:hover {
-      background: var(--pt-bg-elevated);
-    }
+      .ticker-row:hover {
+        background: var(--pt-bg-elevated);
+      }
 
-    .ticker-row.active {
-      border-left-color: var(--pt-primary);
-      background: color-mix(in srgb, var(--pt-primary) 8%, transparent);
-    }
+      .ticker-row.active {
+        border-left-color: var(--pt-primary);
+        background: color-mix(in srgb, var(--pt-primary) 8%, transparent);
+      }
 
-    .ticker-row:focus-visible {
-      outline: 2px solid var(--pt-primary);
-      outline-offset: -2px;
-    }
+      .ticker-row:focus-visible {
+        outline: 2px solid var(--pt-primary);
+        outline-offset: -2px;
+      }
 
-    @keyframes flash-up {
-      0%, 100% { background: transparent; }
-      40% { background: color-mix(in srgb, var(--pt-up) 20%, transparent); }
-    }
+      @keyframes flash-up {
+        0%,
+        100% {
+          background: transparent;
+        }
+        40% {
+          background: color-mix(in srgb, var(--pt-up) 20%, transparent);
+        }
+      }
 
-    @keyframes flash-down {
-      0%, 100% { background: transparent; }
-      40% { background: color-mix(in srgb, var(--pt-down) 20%, transparent); }
-    }
+      @keyframes flash-down {
+        0%,
+        100% {
+          background: transparent;
+        }
+        40% {
+          background: color-mix(in srgb, var(--pt-down) 20%, transparent);
+        }
+      }
 
-    .ticker-row.flash-up { animation: flash-up 0.6s ease-out; }
-    .ticker-row.flash-down { animation: flash-down 0.6s ease-out; }
+      .ticker-row.flash-up {
+        animation: flash-up 0.6s ease-out;
+      }
+      .ticker-row.flash-down {
+        animation: flash-down 0.6s ease-out;
+      }
 
-    .ticker-left {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      min-width: 0;
-    }
+      .ticker-left {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
 
-    .symbol {
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--pt-text-primary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
+      .symbol {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--pt-text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
-    .timestamp {
-      font-size: 0.7rem;
-      color: var(--pt-text-muted);
-    }
+      .timestamp {
+        font-size: 0.7rem;
+        color: var(--pt-text-muted);
+      }
 
-    .ticker-right {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      flex-shrink: 0;
-    }
+      .ticker-right {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        flex-shrink: 0;
+      }
 
-    .price-group {
-      display: inline-flex;
-      align-items: baseline;
-      gap: 2px;
-    }
+      .price-group {
+        display: inline-flex;
+        align-items: baseline;
+        gap: 2px;
+      }
 
-    .price {
-      font-size: 0.85rem;
-      font-weight: 500;
-      font-variant-numeric: tabular-nums;
-    }
+      .price {
+        font-size: 0.85rem;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+      }
 
-    .currency-unit {
-      font-size: 0.65rem;
-      font-weight: 500;
-      color: var(--pt-text-muted);
-      letter-spacing: 0.03em;
-    }
+      .currency-unit {
+        font-size: 0.65rem;
+        font-weight: 500;
+        color: var(--pt-text-muted);
+        letter-spacing: 0.03em;
+      }
 
-    .color-up { color: var(--pt-up); }
-    .color-neutral { color: var(--pt-neutral); }
+      .color-up {
+        color: var(--pt-up);
+      }
+      .color-neutral {
+        color: var(--pt-neutral);
+      }
 
-    .btn-long { display: none; }
+      .btn-long {
+        display: none;
+      }
 
-    .add-hint, .limit-msg {
-      padding: 0.75rem;
-      font-size: 0.75rem;
-      color: var(--pt-text-muted);
-      text-align: center;
-      border-top: 1px dashed var(--pt-border);
-      flex-shrink: 0;
-    }
+      .add-hint,
+      .limit-msg {
+        padding: 0.75rem;
+        font-size: 0.75rem;
+        color: var(--pt-text-muted);
+        text-align: center;
+        border-top: 1px dashed var(--pt-border);
+        flex-shrink: 0;
+      }
 
-    @media (max-width: 767px) {
-      .symbol { font-size: 0.9rem; }
-      .price { font-size: 0.9rem; }
-      .currency-unit { font-size: 0.7rem; }
-      .timestamp { font-size: 0.75rem; }
+      @media (max-width: 767px) {
+        .symbol {
+          font-size: 0.9rem;
+        }
+        .price {
+          font-size: 0.9rem;
+        }
+        .currency-unit {
+          font-size: 0.7rem;
+        }
+        .timestamp {
+          font-size: 0.75rem;
+        }
 
-      .btn-short { display: none; }
-      .btn-long  { display: inline; }
-    }
-  `],
+        .btn-short {
+          display: none;
+        }
+        .btn-long {
+          display: inline;
+        }
+      }
+    `,
+  ],
 })
 export class WatchlistPanelComponent {
   readonly watchlist = input<WatchlistItem[]>([]);

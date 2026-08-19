@@ -25,19 +25,24 @@ export class ThemeService {
   toggle() {
     const p = this.pref();
     if (p === 'system') {
-      this.darkMode.set(false); this._explicitPref.set('light');
+      this.darkMode.set(false);
+      this._explicitPref.set('light');
     } else if (p === 'light') {
-      this.darkMode.set(true);  this._explicitPref.set('dark');
+      this.darkMode.set(true);
+      this._explicitPref.set('dark');
     } else {
-      this.darkMode.reset();    this._explicitPref.set(null);
+      this.darkMode.reset();
+      this._explicitPref.set(null);
     }
   }
 
   set(pref: ThemePref) {
     if (pref === 'system') {
-      this.darkMode.reset(); this._explicitPref.set(null);
+      this.darkMode.reset();
+      this._explicitPref.set(null);
     } else {
-      this.darkMode.set(pref === 'dark'); this._explicitPref.set(pref);
+      this.darkMode.set(pref === 'dark');
+      this._explicitPref.set(pref);
     }
   }
 

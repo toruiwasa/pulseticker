@@ -18,10 +18,15 @@ class MockEventSource {
     this.onmessage?.({ data: JSON.stringify(data) } as MessageEvent);
   }
 
-  close() { this.closed = true; }
+  close() {
+    this.closed = true;
+  }
 }
 
-function makeSnapshot(price: number, candles = null as typeof STUB_CANDLES | null): PreviewSnapshot {
+function makeSnapshot(
+  price: number,
+  candles = null as typeof STUB_CANDLES | null,
+): PreviewSnapshot {
   return {
     prices: PREVIEW_SYMBOLS_INITIAL.map(s => ({ ...s, price, percentChange: 1 })),
     candles,

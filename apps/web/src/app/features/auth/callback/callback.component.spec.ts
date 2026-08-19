@@ -6,8 +6,8 @@ import { LoggerService } from '../../../core/services/logger.service';
 import { CallbackComponent } from './callback.component';
 
 describe('CallbackComponent', () => {
-  let authStub:   { exchangeCode: ReturnType<typeof vi.fn> };
-  let routerStub: { navigate:     ReturnType<typeof vi.fn> };
+  let authStub: { exchangeCode: ReturnType<typeof vi.fn> };
+  let routerStub: { navigate: ReturnType<typeof vi.fn> };
   const loggerStub = { debug: vi.fn(), warn: vi.fn(), info: vi.fn(), error: vi.fn() };
 
   // Mutate this object inside tests to set query params for each scenario.
@@ -17,14 +17,14 @@ describe('CallbackComponent', () => {
   beforeEach(async () => {
     Object.keys(queryParams).forEach(k => delete queryParams[k]);
 
-    authStub   = { exchangeCode: vi.fn().mockResolvedValue(null) };
+    authStub = { exchangeCode: vi.fn().mockResolvedValue(null) };
     routerStub = { navigate: vi.fn().mockResolvedValue(true) };
 
     await TestBed.configureTestingModule({
       imports: [CallbackComponent],
       providers: [
-        { provide: AuthService,   useValue: authStub   },
-        { provide: Router,        useValue: routerStub },
+        { provide: AuthService, useValue: authStub },
+        { provide: Router, useValue: routerStub },
         { provide: LoggerService, useValue: loggerStub },
         {
           provide: ActivatedRoute,

@@ -7,7 +7,14 @@ import { US_MARKET_HOLIDAYS, isMarketOpen } from './market-holidays';
 // Simpler: build the Date in UTC at a known offset from NY time.
 // EST = UTC-5, EDT = UTC-4. For dates we use, we'll pick months that don't
 // straddle DST changes and compute the right UTC time.
-function nyDate(y: number, m: number, d: number, h: number, min: number, offsetHours: number): Date {
+function nyDate(
+  y: number,
+  m: number,
+  d: number,
+  h: number,
+  min: number,
+  offsetHours: number,
+): Date {
   // m is 1-12. offsetHours is the offset to add to NY time to get UTC.
   return new Date(Date.UTC(y, m - 1, d, h + offsetHours, min));
 }

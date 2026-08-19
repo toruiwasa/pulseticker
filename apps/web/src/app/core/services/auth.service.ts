@@ -14,7 +14,7 @@ export class AuthService {
   );
   private logger = inject(LoggerService);
 
-  session     = signal<Session | null>(null);
+  session = signal<Session | null>(null);
   initialized = signal(false);
 
   constructor() {

@@ -5,24 +5,42 @@ import { Subject } from 'rxjs';
 // LoginComponent imports LoginChartComponent which boots lightweight-charts.
 // Stub it so jsdom doesn't have to handle canvas/matchMedia.
 vi.mock('lightweight-charts', () => ({
-  createChart: vi.fn(() => ({ addSeries: vi.fn(() => ({ setData: vi.fn(), update: vi.fn(), applyOptions: vi.fn() })), remove: vi.fn() })),
+  createChart: vi.fn(() => ({
+    addSeries: vi.fn(() => ({ setData: vi.fn(), update: vi.fn(), applyOptions: vi.fn() })),
+    remove: vi.fn(),
+  })),
   LineSeries: Symbol('LineSeries'),
 }));
 
 import { AuthService } from '../../../core/services/auth.service';
-import { PreviewService, PREVIEW_SYMBOLS_INITIAL, PreviewPrice, PreviewSnapshot } from '../../../core/services/preview.service';
+import {
+  PreviewService,
+  PREVIEW_SYMBOLS_INITIAL,
+  PreviewPrice,
+  PreviewSnapshot,
+} from '../../../core/services/preview.service';
 import { LoginComponent } from './login.component';
 
 const mockPrices: PreviewPrice[] = [
-  { symbol: 'VOO',     raw: 'VOO',           currency: 'USD', price: 487.00, percentChange: 0,     ts: 1000 },
-  { symbol: 'AAPL',    raw: 'AAPL',          currency: 'USD', price: 213.42, percentChange: 0.58,  ts: 1000 },
-  { symbol: 'MSFT',    raw: 'MSFT',          currency: 'USD', price: 415.10, percentChange: -0.55, ts: 1000 },
-  { symbol: 'AUD/USD', raw: 'OANDA:AUD_USD', currency: 'USD', price: 0.6423, percentChange: 0.12,  ts: 1000 },
+  { symbol: 'VOO', raw: 'VOO', currency: 'USD', price: 487.0, percentChange: 0, ts: 1000 },
+  { symbol: 'AAPL', raw: 'AAPL', currency: 'USD', price: 213.42, percentChange: 0.58, ts: 1000 },
+  { symbol: 'MSFT', raw: 'MSFT', currency: 'USD', price: 415.1, percentChange: -0.55, ts: 1000 },
+  {
+    symbol: 'AUD/USD',
+    raw: 'OANDA:AUD_USD',
+    currency: 'USD',
+    price: 0.6423,
+    percentChange: 0.12,
+    ts: 1000,
+  },
 ];
 
 describe('LoginComponent', () => {
   let component: LoginComponent;
-  let authSpy: { signInWithGitHub: ReturnType<typeof vi.fn>; signInWithGoogle: ReturnType<typeof vi.fn> };
+  let authSpy: {
+    signInWithGitHub: ReturnType<typeof vi.fn>;
+    signInWithGoogle: ReturnType<typeof vi.fn>;
+  };
   let previewSpy: { getPriceStream: ReturnType<typeof vi.fn> };
   let prices$: Subject<PreviewSnapshot>;
 
@@ -74,7 +92,8 @@ describe('LoginComponent', () => {
 
   describe('changeClass()', () => {
     it('returns "positive" for pct > 0', () => expect(component.changeClass(0.5)).toBe('positive'));
-    it('returns "negative" for pct < 0', () => expect(component.changeClass(-0.5)).toBe('negative'));
+    it('returns "negative" for pct < 0', () =>
+      expect(component.changeClass(-0.5)).toBe('negative'));
     it('returns "neutral" for pct === 0', () => expect(component.changeClass(0)).toBe('neutral'));
     it('returns "neutral" for null', () => expect(component.changeClass(null)).toBe('neutral'));
   });

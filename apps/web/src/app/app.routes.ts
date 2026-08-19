@@ -6,12 +6,14 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    loadComponent: () => import('./features/auth/login/login.component').then(m => m.LoginComponent),
+    loadComponent: () =>
+      import('./features/auth/login/login.component').then(m => m.LoginComponent),
     canActivate: [publicOnlyGuard],
   },
   {
     path: 'auth/callback',
-    loadComponent: () => import('./features/auth/callback/callback.component').then(m => m.CallbackComponent),
+    loadComponent: () =>
+      import('./features/auth/callback/callback.component').then(m => m.CallbackComponent),
   },
   {
     path: '',
@@ -20,23 +22,28 @@ export const routes: Routes = [
     children: [
       {
         path: 'dashboard',
-        loadComponent: () => import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
+        loadComponent: () =>
+          import('./features/dashboard/dashboard.component').then(m => m.DashboardComponent),
       },
       {
         path: 'watchlist',
-        loadComponent: () => import('./features/watchlist/watchlist.component').then(m => m.WatchlistPageComponent),
+        loadComponent: () =>
+          import('./features/watchlist/watchlist.component').then(m => m.WatchlistPageComponent),
       },
       {
         path: 'alerts',
-        loadComponent: () => import('./features/alerts/alerts.component').then(m => m.AlertsComponent),
+        loadComponent: () =>
+          import('./features/alerts/alerts.component').then(m => m.AlertsComponent),
       },
       {
         path: 'discover',
-        loadComponent: () => import('./features/discover/discover.component').then(m => m.DiscoverComponent),
+        loadComponent: () =>
+          import('./features/discover/discover.component').then(m => m.DiscoverComponent),
       },
       {
         path: 'settings',
-        loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent),
+        loadComponent: () =>
+          import('./features/settings/settings.component').then(m => m.SettingsComponent),
       },
     ],
   },
