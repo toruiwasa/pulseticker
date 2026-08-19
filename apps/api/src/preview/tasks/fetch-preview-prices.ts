@@ -43,21 +43,37 @@ export function makeFetchPreviewPricesTask(config: ConfigService, cache: Preview
     const prices: PreviewPrice[] = PREVIEW_SYMBOLS.map((s, i) => {
       const r = results[i];
       if (r.status === 'fulfilled') {
-        const pct = r.value.pc !== 0
-          ? ((r.value.c - r.value.pc) / r.value.pc) * 100
-          : 0;
-        return { symbol: s.display, raw: s.raw, price: r.value.c, percentChange: pct, ts: Date.now(), currency: s.currency };
+        const pct = r.value.pc !== 0 ? ((r.value.c - r.value.pc) / r.value.pc) * 100 : 0;
+        return {
+          symbol: s.display,
+          raw: s.raw,
+          price: r.value.c,
+          percentChange: pct,
+          ts: Date.now(),
+          currency: s.currency,
+        };
       }
-      return { symbol: s.display, raw: s.raw, price: null, percentChange: null, ts: Date.now(), currency: s.currency };
+      return {
+        symbol: s.display,
+        raw: s.raw,
+        price: null,
+        percentChange: null,
+        ts: Date.now(),
+        currency: s.currency,
+      };
     });
 
     cache.setPrices(prices);
 
-    await helpers.addJob('fetch-preview-prices', {}, {
-      runAt: new Date(Date.now() + 10_000),
-      jobKey: 'preview-fetch',
-      jobKeyMode: 'replace',
-    });
+    await helpers.addJob(
+      'fetch-preview-prices',
+      {},
+      {
+        runAt: new Date(Date.now() + 10_000),
+        jobKey: 'preview-fetch',
+        jobKeyMode: 'replace',
+      },
+    );
   };
 }
 

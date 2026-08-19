@@ -7,7 +7,9 @@ describe('TwelveDataService', () => {
   const originalFetch = global.fetch;
 
   beforeEach(() => {
-    const config = { getOrThrow: jest.fn().mockReturnValue('test-key') } as unknown as ConfigService;
+    const config = {
+      getOrThrow: jest.fn().mockReturnValue('test-key'),
+    } as unknown as ConfigService;
     service = new TwelveDataService(config);
   });
 
@@ -30,7 +32,10 @@ describe('TwelveDataService', () => {
       }) as unknown as typeof fetch;
 
       const result = await service.getTimeSeries('AAPL', '1D');
-      const open = DateTime.fromObject({ year: 2026, month: 6, day: 10, hour: 9, minute: 30 }, { zone: 'America/New_York' }).toUnixInteger();
+      const open = DateTime.fromObject(
+        { year: 2026, month: 6, day: 10, hour: 9, minute: 30 },
+        { zone: 'America/New_York' },
+      ).toUnixInteger();
 
       expect(result).toEqual([
         { time: open, value: 185.5 },
@@ -97,7 +102,9 @@ describe('TwelveDataService', () => {
     });
 
     it('returns [] when fetch throws', async () => {
-      global.fetch = jest.fn().mockRejectedValue(new Error('network down')) as unknown as typeof fetch;
+      global.fetch = jest
+        .fn()
+        .mockRejectedValue(new Error('network down')) as unknown as typeof fetch;
       await expect(service.getTimeSeries('AAPL', '1D')).resolves.toEqual([]);
     });
   });

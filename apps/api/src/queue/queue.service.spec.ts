@@ -14,13 +14,19 @@ describe('QueueService', () => {
   let workerUtils: { addJob: jest.Mock; release: jest.Mock };
 
   beforeEach(async () => {
-    workerUtils = { addJob: jest.fn().mockResolvedValue(undefined), release: jest.fn().mockResolvedValue(undefined) };
+    workerUtils = {
+      addJob: jest.fn().mockResolvedValue(undefined),
+      release: jest.fn().mockResolvedValue(undefined),
+    };
     mockMakeWorkerUtils.mockResolvedValue(workerUtils);
 
     const moduleRef = await Test.createTestingModule({
       providers: [
         QueueService,
-        { provide: ConfigService, useValue: { getOrThrow: jest.fn().mockReturnValue('postgres://test') } },
+        {
+          provide: ConfigService,
+          useValue: { getOrThrow: jest.fn().mockReturnValue('postgres://test') },
+        },
       ],
     }).compile();
 
@@ -33,10 +39,14 @@ describe('QueueService', () => {
   });
 
   it('seeds the preview fetch job during onModuleInit', () => {
-    expect(workerUtils.addJob).toHaveBeenCalledWith('fetch-preview-prices', {}, {
-      jobKey: 'preview-fetch',
-      jobKeyMode: 'preserve_run_at',
-    });
+    expect(workerUtils.addJob).toHaveBeenCalledWith(
+      'fetch-preview-prices',
+      {},
+      {
+        jobKey: 'preview-fetch',
+        jobKeyMode: 'preserve_run_at',
+      },
+    );
   });
 
   it('addAlertCheckJob calls workerUtils.addJob with jobKey and replace mode', async () => {
@@ -50,10 +60,14 @@ describe('QueueService', () => {
 
   it('seedPreviewFetchJob calls workerUtils.addJob with preserve_run_at mode', async () => {
     await service.seedPreviewFetchJob();
-    expect(workerUtils.addJob).toHaveBeenCalledWith('fetch-preview-prices', {}, {
-      jobKey: 'preview-fetch',
-      jobKeyMode: 'preserve_run_at',
-    });
+    expect(workerUtils.addJob).toHaveBeenCalledWith(
+      'fetch-preview-prices',
+      {},
+      {
+        jobKey: 'preview-fetch',
+        jobKeyMode: 'preserve_run_at',
+      },
+    );
   });
 
   it('releases workerUtils on destroy', async () => {

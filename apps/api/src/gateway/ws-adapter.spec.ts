@@ -19,7 +19,10 @@ describe('WsAdapter', () => {
     const spy = jest.spyOn(IoAdapter.prototype, 'createIOServer').mockReturnValue({} as Server);
     const adapter = new WsAdapter(makeApp('http://origin.test'));
     adapter.createIOServer(3000, { path: '/prices' });
-    expect(spy).toHaveBeenCalledWith(3000, { path: '/prices', cors: { origin: 'http://origin.test' } });
+    expect(spy).toHaveBeenCalledWith(3000, {
+      path: '/prices',
+      cors: { origin: 'http://origin.test' },
+    });
     spy.mockRestore();
   });
 });

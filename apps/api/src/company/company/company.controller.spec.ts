@@ -4,9 +4,29 @@ import { BadRequestException } from '@nestjs/common';
 import { CompanyController } from './company.controller.js';
 import { CompanyService } from './company.service.js';
 
-const MOCK_PROFILE = { name: 'Apple Inc', ticker: 'AAPL', marketCap: 3000000, logo: '', industry: 'Technology' };
-const MOCK_METRICS = { pe: 28.4, weekHigh52: 237.23, weekLow52: 164.08, dividendYield: 0.44, beta: 1.24 };
-const MOCK_NEWS = [{ headline: 'Test', url: 'https://example.com', datetime: 1700000000, source: 'Reuters', summary: '' }];
+const MOCK_PROFILE = {
+  name: 'Apple Inc',
+  ticker: 'AAPL',
+  marketCap: 3000000,
+  logo: '',
+  industry: 'Technology',
+};
+const MOCK_METRICS = {
+  pe: 28.4,
+  weekHigh52: 237.23,
+  weekLow52: 164.08,
+  dividendYield: 0.44,
+  beta: 1.24,
+};
+const MOCK_NEWS = [
+  {
+    headline: 'Test',
+    url: 'https://example.com',
+    datetime: 1700000000,
+    source: 'Reuters',
+    summary: '',
+  },
+];
 
 describe('CompanyController', () => {
   let controller: CompanyController;

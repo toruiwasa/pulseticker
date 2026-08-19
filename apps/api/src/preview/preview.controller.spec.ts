@@ -5,12 +5,29 @@ import { PreviewCacheService, PREVIEW_SYMBOLS } from './preview-cache.service.js
 import { LiveCandleCacheService } from '../chart/live-candle-cache.service.js';
 
 const makeNullPrices = () =>
-  PREVIEW_SYMBOLS.map(s => ({ symbol: s.display, raw: s.raw, currency: s.currency, price: null, percentChange: null, ts: 0 }));
+  PREVIEW_SYMBOLS.map(s => ({
+    symbol: s.display,
+    raw: s.raw,
+    currency: s.currency,
+    price: null,
+    percentChange: null,
+    ts: 0,
+  }));
 
 const makePrices = (price: number) =>
-  PREVIEW_SYMBOLS.map(s => ({ symbol: s.display, raw: s.raw, currency: s.currency, price, percentChange: 1, ts: 1000 }));
+  PREVIEW_SYMBOLS.map(s => ({
+    symbol: s.display,
+    raw: s.raw,
+    currency: s.currency,
+    price,
+    percentChange: 1,
+    ts: 1000,
+  }));
 
-const STUB_CANDLES = [{ time: 1000, value: 180 }, { time: 1060, value: 182 }];
+const STUB_CANDLES = [
+  { time: 1000, value: 180 },
+  { time: 1060, value: 182 },
+];
 
 describe('PreviewController', () => {
   let controller: PreviewController;
@@ -22,10 +39,7 @@ describe('PreviewController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [PreviewController],
-      providers: [
-        PreviewCacheService,
-        { provide: LiveCandleCacheService, useValue: candleCache },
-      ],
+      providers: [PreviewCacheService, { provide: LiveCandleCacheService, useValue: candleCache }],
     }).compile();
 
     controller = module.get(PreviewController);
@@ -65,7 +79,10 @@ describe('PreviewController', () => {
 
       const results = await resultsPromise;
       expect(results).toHaveLength(2);
-      const second = (results[1] as { data: unknown }).data as { prices: unknown; candles: unknown };
+      const second = (results[1] as { data: unknown }).data as {
+        prices: unknown;
+        candles: unknown;
+      };
       expect(second.prices).toEqual(makePrices(200));
       expect(second.candles).toBeNull();
     });

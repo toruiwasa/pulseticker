@@ -1,14 +1,14 @@
-const mockOnAuthStateChange    = vi.hoisted(() => vi.fn());
-const mockSignInWithOAuth      = vi.hoisted(() => vi.fn());
-const mockSignOut              = vi.hoisted(() => vi.fn());
+const mockOnAuthStateChange = vi.hoisted(() => vi.fn());
+const mockSignInWithOAuth = vi.hoisted(() => vi.fn());
+const mockSignOut = vi.hoisted(() => vi.fn());
 const mockExchangeCodeForSession = vi.hoisted(() => vi.fn());
 
 vi.mock('@supabase/supabase-js', () => ({
   createClient: () => ({
     auth: {
-      onAuthStateChange:      mockOnAuthStateChange,
-      signInWithOAuth:        mockSignInWithOAuth,
-      signOut:                mockSignOut,
+      onAuthStateChange: mockOnAuthStateChange,
+      signInWithOAuth: mockSignInWithOAuth,
+      signOut: mockSignOut,
       exchangeCodeForSession: mockExchangeCodeForSession,
     },
   }),
@@ -20,8 +20,12 @@ import { LoggerService } from './logger.service';
 import { AuthService } from './auth.service';
 
 const loggerStub = {
-  debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn(),
-  warnWithCause: vi.fn(), errorWithCause: vi.fn(),
+  debug: vi.fn(),
+  info: vi.fn(),
+  warn: vi.fn(),
+  error: vi.fn(),
+  warnWithCause: vi.fn(),
+  errorWithCause: vi.fn(),
 };
 
 describe('AuthService', () => {
@@ -32,10 +36,7 @@ describe('AuthService', () => {
     vi.clearAllMocks();
 
     TestBed.configureTestingModule({
-      providers: [
-        AuthService,
-        { provide: LoggerService, useValue: loggerStub },
-      ],
+      providers: [AuthService, { provide: LoggerService, useValue: loggerStub }],
     });
 
     service = TestBed.inject(AuthService);

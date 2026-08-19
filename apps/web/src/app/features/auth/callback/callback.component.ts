@@ -13,7 +13,7 @@ export class CallbackComponent implements OnInit {
   ) {}
 
   async ngOnInit() {
-    const code  = this.route.snapshot.queryParamMap.get('code');
+    const code = this.route.snapshot.queryParamMap.get('code');
     const error = this.route.snapshot.queryParamMap.get('error');
     this.logger.debug('AUTH:CALLBACK', 'ngOnInit', { hasCode: !!code, hasError: !!error });
 

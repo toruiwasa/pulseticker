@@ -16,7 +16,10 @@ function makeHelpers(): JobHelpers {
 }
 
 function makeCache(): PreviewCacheService {
-  return { setPrices: jest.fn(), getPrices: jest.fn().mockReturnValue([]) } as unknown as PreviewCacheService;
+  return {
+    setPrices: jest.fn(),
+    getPrices: jest.fn().mockReturnValue([]),
+  } as unknown as PreviewCacheService;
 }
 
 function makeConfig(finnhubKey = 'finnhub-key', twelveKey = 'twelve-key'): ConfigService {
@@ -45,7 +48,9 @@ describe('makeFetchPreviewPricesTask', () => {
     expect(mockTwelve).toHaveBeenCalledTimes(1);
     expect(mockTwelve).toHaveBeenCalledWith('AUD/USD', 'twelve-key');
 
-    const [prices] = (cache.setPrices as jest.Mock).mock.calls[0] as [Array<{ symbol: string; price: number | null }>];
+    const [prices] = (cache.setPrices as jest.Mock).mock.calls[0] as [
+      Array<{ symbol: string; price: number | null }>,
+    ];
     const aud = prices.find(p => p.symbol === 'AUD/USD');
     expect(aud?.price).toBe(0.6587);
   });
@@ -95,7 +100,9 @@ describe('makeFetchPreviewPricesTask', () => {
     const task = makeFetchPreviewPricesTask(makeConfig(), cache);
     await task({}, makeHelpers());
 
-    const [prices] = (cache.setPrices as jest.Mock).mock.calls[0] as [Array<{ symbol: string; price: number | null; percentChange: number | null }>];
+    const [prices] = (cache.setPrices as jest.Mock).mock.calls[0] as [
+      Array<{ symbol: string; price: number | null; percentChange: number | null }>,
+    ];
     expect(prices[0].price).toBe(200);
     expect(prices[1].price).toBeNull();
     expect(prices[1].percentChange).toBeNull();
@@ -111,7 +118,9 @@ describe('makeFetchPreviewPricesTask', () => {
     const task = makeFetchPreviewPricesTask(makeConfig(), cache);
     await task({}, makeHelpers());
 
-    const [prices] = (cache.setPrices as jest.Mock).mock.calls[0] as [Array<{ symbol: string; price: number | null }>];
+    const [prices] = (cache.setPrices as jest.Mock).mock.calls[0] as [
+      Array<{ symbol: string; price: number | null }>,
+    ];
     expect(prices.find(p => p.symbol === 'AUD/USD')?.price).toBeNull();
   });
 
@@ -123,7 +132,9 @@ describe('makeFetchPreviewPricesTask', () => {
     const task = makeFetchPreviewPricesTask(makeConfig(), cache);
     await task({}, makeHelpers());
 
-    const [prices] = (cache.setPrices as jest.Mock).mock.calls[0] as [Array<{ symbol: string; percentChange: number | null }>];
+    const [prices] = (cache.setPrices as jest.Mock).mock.calls[0] as [
+      Array<{ symbol: string; percentChange: number | null }>,
+    ];
     expect(prices[0].percentChange).toBe(0);
   });
 

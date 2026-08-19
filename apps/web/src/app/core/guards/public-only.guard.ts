@@ -15,6 +15,6 @@ export const publicOnlyGuard: CanActivateFn = () => {
   return toObservable(auth.initialized).pipe(
     filter(Boolean),
     take(1),
-    map(() => auth.session() ? router.createUrlTree(['/dashboard']) : true),
+    map(() => (auth.session() ? router.createUrlTree(['/dashboard']) : true)),
   );
 };

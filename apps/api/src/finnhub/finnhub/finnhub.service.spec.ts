@@ -74,7 +74,9 @@ describe('FinnhubService', () => {
       const { service } = await buildService();
       service.onModuleInit();
       expect(WebSocket).toHaveBeenCalledTimes(1);
-      expect((WebSocket as unknown as jest.Mock).mock.calls[0][0]).toMatch(/wss:\/\/ws\.finnhub\.io/);
+      expect((WebSocket as unknown as jest.Mock).mock.calls[0][0]).toMatch(
+        /wss:\/\/ws\.finnhub\.io/,
+      );
     });
   });
 
@@ -152,7 +154,11 @@ describe('FinnhubService', () => {
       });
       ws.trigger('message', Buffer.from(msg));
 
-      expect(eventEmitter.emit).toHaveBeenCalledWith('price.received', { symbol: 'AAPL', price: 185.5, ts: 1000 });
+      expect(eventEmitter.emit).toHaveBeenCalledWith('price.received', {
+        symbol: 'AAPL',
+        price: 185.5,
+        ts: 1000,
+      });
     });
 
     it('populates the price cache on each trade', async () => {
@@ -160,10 +166,15 @@ describe('FinnhubService', () => {
       service.onModuleInit();
       const ws = FakeWS.lastInstance;
 
-      ws.trigger('message', Buffer.from(JSON.stringify({
-        type: 'trade',
-        data: [{ s: 'AAPL', p: 185.5, t: 1000 }],
-      })));
+      ws.trigger(
+        'message',
+        Buffer.from(
+          JSON.stringify({
+            type: 'trade',
+            data: [{ s: 'AAPL', p: 185.5, t: 1000 }],
+          }),
+        ),
+      );
 
       expect(service.getLastKnownPrices(['AAPL'])).toEqual([
         { symbol: 'AAPL', price: 185.5, ts: 1000 },
@@ -202,10 +213,15 @@ describe('FinnhubService', () => {
       service.onModuleInit();
       const ws = FakeWS.lastInstance;
 
-      ws.trigger('message', Buffer.from(JSON.stringify({
-        type: 'trade',
-        data: [{ s: 'tsla', p: 250.0, t: 2000 }],
-      })));
+      ws.trigger(
+        'message',
+        Buffer.from(
+          JSON.stringify({
+            type: 'trade',
+            data: [{ s: 'tsla', p: 250.0, t: 2000 }],
+          }),
+        ),
+      );
 
       expect(service.getLastKnownPrices(['TSLA'])).toEqual([
         { symbol: 'TSLA', price: 250.0, ts: 2000 },
@@ -217,10 +233,15 @@ describe('FinnhubService', () => {
       service.onModuleInit();
       const ws = FakeWS.lastInstance;
 
-      ws.trigger('message', Buffer.from(JSON.stringify({
-        type: 'trade',
-        data: [{ s: 'MSFT', p: 300.0, t: 3000 }],
-      })));
+      ws.trigger(
+        'message',
+        Buffer.from(
+          JSON.stringify({
+            type: 'trade',
+            data: [{ s: 'MSFT', p: 300.0, t: 3000 }],
+          }),
+        ),
+      );
 
       const result = service.getLastKnownPrices(['msft']);
       expect(result[0].symbol).toBe('MSFT');
@@ -230,10 +251,7 @@ describe('FinnhubService', () => {
 
   describe('onApplicationBootstrap() warm-up', () => {
     it('subscribes all distinct symbols from watchlist_items', async () => {
-      const { service } = await buildService([
-        { symbol: 'AAPL' },
-        { symbol: 'MSFT' },
-      ]);
+      const { service } = await buildService([{ symbol: 'AAPL' }, { symbol: 'MSFT' }]);
       service.onModuleInit();
       const ws = FakeWS.lastInstance;
       ws.trigger('open');
@@ -245,10 +263,7 @@ describe('FinnhubService', () => {
     });
 
     it('deduplicates symbols (same symbol multiple rows)', async () => {
-      const { service } = await buildService([
-        { symbol: 'AAPL' },
-        { symbol: 'aapl' },
-      ]);
+      const { service } = await buildService([{ symbol: 'AAPL' }, { symbol: 'aapl' }]);
       service.onModuleInit();
       const ws = FakeWS.lastInstance;
       ws.trigger('open');
@@ -389,7 +404,9 @@ describe('FinnhubService', () => {
 
       FakeWS.lastInstance.readyState = WS_OPEN;
       FakeWS.lastInstance.trigger('open');
-      expect(FakeWS.lastInstance.send).toHaveBeenCalledWith(JSON.stringify({ type: 'subscribe', symbol: 'TSLA' }));
+      expect(FakeWS.lastInstance.send).toHaveBeenCalledWith(
+        JSON.stringify({ type: 'subscribe', symbol: 'TSLA' }),
+      );
     });
   });
 
@@ -448,11 +465,15 @@ describe('FinnhubService', () => {
       ws.trigger('close'); // second close: guard returns early, no second timer
 
       jest.advanceTimersByTime(1000); // first reconnect fires
-      expect((WebSocket as unknown as jest.Mock).mock.instances.length).toBe(instancesAfterFirst + 1);
+      expect((WebSocket as unknown as jest.Mock).mock.instances.length).toBe(
+        instancesAfterFirst + 1,
+      );
 
       // Only one reconnect — the guard prevented a second one
       jest.advanceTimersByTime(1000);
-      expect((WebSocket as unknown as jest.Mock).mock.instances.length).toBe(instancesAfterFirst + 1);
+      expect((WebSocket as unknown as jest.Mock).mock.instances.length).toBe(
+        instancesAfterFirst + 1,
+      );
     });
   });
 });

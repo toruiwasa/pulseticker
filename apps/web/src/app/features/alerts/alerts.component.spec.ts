@@ -18,8 +18,12 @@ interface Alert {
 
 function makeAlert(overrides: Partial<Alert> = {}): Alert {
   return {
-    id: 'a1', symbol: 'AAPL', threshold_price: 200,
-    direction: 'above', is_active: true, created_at: '2024-01-01',
+    id: 'a1',
+    symbol: 'AAPL',
+    threshold_price: 200,
+    direction: 'above',
+    is_active: true,
+    created_at: '2024-01-01',
     ...overrides,
   };
 }
@@ -27,20 +31,23 @@ function makeAlert(overrides: Partial<Alert> = {}): Alert {
 describe('AlertsComponent (class logic)', () => {
   let component: AlertsComponent;
   let apiStub: {
-    get:    ReturnType<typeof vi.fn>;
-    post:   ReturnType<typeof vi.fn>;
+    get: ReturnType<typeof vi.fn>;
+    post: ReturnType<typeof vi.fn>;
     delete: ReturnType<typeof vi.fn>;
   };
   let loggerStub: { debug: ReturnType<typeof vi.fn>; error: ReturnType<typeof vi.fn> };
   let symbolSearchStub: { clear: ReturnType<typeof vi.fn> };
-  let metaStub: { currencies: ReturnType<typeof signal<Record<string, string>>>; ensureCurrency: ReturnType<typeof vi.fn> };
+  let metaStub: {
+    currencies: ReturnType<typeof signal<Record<string, string>>>;
+    ensureCurrency: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
     apiStub = {
-      get:    vi.fn().mockReturnValue(of([])),
-      post:   vi.fn(),
+      get: vi.fn().mockReturnValue(of([])),
+      post: vi.fn(),
       delete: vi.fn(),
     };
     loggerStub = { debug: vi.fn(), error: vi.fn() };
@@ -68,7 +75,6 @@ describe('AlertsComponent (class logic)', () => {
   // Boundary values tested at the edges of each partition.
 
   describe('isFormValid (equivalence partitions + boundary values)', () => {
-
     // ── EC-1: Valid cases ─────────────────────────────────────────────────────
 
     it('EC-1 / BV: valid — typical stock symbol and positive price', () => {

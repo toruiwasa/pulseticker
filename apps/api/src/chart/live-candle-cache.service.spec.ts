@@ -67,7 +67,9 @@ describe('LiveCandleCacheService', () => {
     it('de-dupes concurrent cache misses for the same (symbol, range)', async () => {
       let resolveTwelveData: (c: CandlePoint[]) => void = () => {};
       twelve.getTimeSeries.mockReturnValue(
-        new Promise<CandlePoint[]>(resolve => { resolveTwelveData = resolve; }),
+        new Promise<CandlePoint[]>(resolve => {
+          resolveTwelveData = resolve;
+        }),
       );
 
       const p1 = service.getCandles('AAPL', '1D');
@@ -141,7 +143,7 @@ describe('LiveCandleCacheService', () => {
       service.onModuleInit();
 
       jest.advanceTimersByTime(10 * 60 * 1000); // 10 min
-      jest.advanceTimersByTime(60 * 1000);      // sweep tick
+      jest.advanceTimersByTime(60 * 1000); // sweep tick
 
       expect(finnhub.unsubscribe).not.toHaveBeenCalled();
     });

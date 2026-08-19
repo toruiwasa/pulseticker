@@ -17,18 +17,18 @@ const makeItem = (symbol: string, id = symbol): WatchlistItem => ({
 describe('WatchlistStateService', () => {
   let service: WatchlistStateService;
   let apiStub: {
-    get:      ReturnType<typeof vi.fn>;
-    post:     ReturnType<typeof vi.fn>;
-    delete:   ReturnType<typeof vi.fn>;
+    get: ReturnType<typeof vi.fn>;
+    post: ReturnType<typeof vi.fn>;
+    delete: ReturnType<typeof vi.fn>;
     getQuote: ReturnType<typeof vi.fn>;
   };
   let priceSubject: Subject<{ symbol: string; price: number; ts: number }>;
   let socketStub: {
-    connect:    ReturnType<typeof vi.fn>;
+    connect: ReturnType<typeof vi.fn>;
     disconnect: ReturnType<typeof vi.fn>;
-    subscribe:  ReturnType<typeof vi.fn>;
-    price$:     Subject<{ symbol: string; price: number; ts: number }>;
-    alert$:     Subject<unknown>;
+    subscribe: ReturnType<typeof vi.fn>;
+    price$: Subject<{ symbol: string; price: number; ts: number }>;
+    alert$: Subject<unknown>;
   };
 
   beforeEach(() => {
@@ -36,23 +36,23 @@ describe('WatchlistStateService', () => {
 
     priceSubject = new Subject();
     apiStub = {
-      get:      vi.fn().mockReturnValue(of([makeItem('AAPL')])),
-      post:     vi.fn().mockReturnValue(of(makeItem('GOOG'))),
-      delete:   vi.fn().mockReturnValue(of(null)),
+      get: vi.fn().mockReturnValue(of([makeItem('AAPL')])),
+      post: vi.fn().mockReturnValue(of(makeItem('GOOG'))),
+      delete: vi.fn().mockReturnValue(of(null)),
       getQuote: vi.fn().mockReturnValue(of({ c: 150, pc: 148, t: 1000 })),
     };
     socketStub = {
-      connect:    vi.fn(),
+      connect: vi.fn(),
       disconnect: vi.fn(),
-      subscribe:  vi.fn(),
-      price$:     priceSubject,
-      alert$:     new Subject(),
+      subscribe: vi.fn(),
+      price$: priceSubject,
+      alert$: new Subject(),
     };
 
     TestBed.configureTestingModule({
       providers: [
         WatchlistStateService,
-        { provide: ApiService,    useValue: apiStub    },
+        { provide: ApiService, useValue: apiStub },
         { provide: SocketService, useValue: socketStub },
       ],
     });

@@ -44,12 +44,10 @@ export class WatchlistService {
 
     if (profile) return data;
 
-    const { error: seedError } = await this.supabase.client
-      .from('watchlist_items')
-      .upsert(
-        DEFAULT_SYMBOLS.map(symbol => ({ user_id: userId, symbol })),
-        { onConflict: 'user_id,symbol', ignoreDuplicates: true },
-      );
+    const { error: seedError } = await this.supabase.client.from('watchlist_items').upsert(
+      DEFAULT_SYMBOLS.map(symbol => ({ user_id: userId, symbol })),
+      { onConflict: 'user_id,symbol', ignoreDuplicates: true },
+    );
     if (seedError) throw seedError;
 
     const { error: profileInsertError } = await this.supabase.client
@@ -81,15 +79,17 @@ export class WatchlistService {
     const rows = (await this.findAll(userId)) as WatchlistRow[];
     const prices = this.finnhub.getLastKnownPrices(rows.map(r => r.symbol));
     const items = rows.map((row, i) => ({
-      id:     row.id,
+      id: row.id,
       symbol: prices[i].symbol,
-      price:  prices[i].price,
-      ts:     prices[i].ts,
+      price: prices[i].price,
+      ts: prices[i].ts,
     }));
     return { cached: items.length === 0 || items.some(i => i.price !== null), items };
   }
 
-  private sym(s: string) { return s.toUpperCase(); }
+  private sym(s: string) {
+    return s.toUpperCase();
+  }
 
   async create(userId: string, symbol: string) {
     const { count, error: countError } = await this.supabase.client

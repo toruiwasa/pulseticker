@@ -81,7 +81,11 @@ export class LiveCandleCacheService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  private async loadAndStore(key: CacheKey, symbol: string, range: ChartRange): Promise<CandlePoint[]> {
+  private async loadAndStore(
+    key: CacheKey,
+    symbol: string,
+    range: ChartRange,
+  ): Promise<CandlePoint[]> {
     const candles = await this.twelveData.getTimeSeries(symbol, range);
     const bounded = candles.length > MAX_POINTS ? candles.slice(-MAX_POINTS) : candles;
     this.cache.set(key, { candles: bounded, lastAccessed: Date.now() });

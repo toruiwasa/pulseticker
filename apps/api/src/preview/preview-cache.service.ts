@@ -10,6 +10,7 @@ export interface PreviewPrice {
   currency: string;
 }
 
+// prettier-ignore
 export const PREVIEW_SYMBOLS: { raw: string; display: string; currency: string }[] = [
   { raw: 'VOO',           display: 'VOO',     currency: 'USD' },
   { raw: 'AAPL',          display: 'AAPL',    currency: 'USD' },

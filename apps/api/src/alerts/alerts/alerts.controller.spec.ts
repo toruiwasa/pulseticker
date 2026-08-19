@@ -34,9 +34,9 @@ describe('AlertsController', () => {
     const validBody = { symbol: 'AAPL', threshold_price: 150, direction: 'above' };
 
     it('throws BadRequestException when symbol is missing', () => {
-      expect(() =>
-        controller.createAlert(authedReq(), { ...validBody, symbol: '' }),
-      ).toThrow(BadRequestException);
+      expect(() => controller.createAlert(authedReq(), { ...validBody, symbol: '' })).toThrow(
+        BadRequestException,
+      );
     });
 
     it('throws BadRequestException when symbol is undefined', () => {
@@ -69,7 +69,11 @@ describe('AlertsController', () => {
 
     it('normalizes symbol to uppercase and trims whitespace', () => {
       service.createAlert.mockResolvedValue(undefined as never);
-      controller.createAlert(authedReq('u1'), { symbol: '  aapl  ', threshold_price: 150, direction: 'above' });
+      controller.createAlert(authedReq('u1'), {
+        symbol: '  aapl  ',
+        threshold_price: 150,
+        direction: 'above',
+      });
       expect(service.createAlert).toHaveBeenCalledWith('u1', 'AAPL', 150, 'above');
     });
 
@@ -81,7 +85,9 @@ describe('AlertsController', () => {
 
     it('re-throws non-ZodError exceptions from the schema parse', () => {
       const boom = new Error('unexpected');
-      jest.spyOn(schemas.CreateAlertSchema, 'parse').mockImplementation(() => { throw boom; });
+      jest.spyOn(schemas.CreateAlertSchema, 'parse').mockImplementation(() => {
+        throw boom;
+      });
       expect(() => controller.createAlert(authedReq(), validBody)).toThrow(boom);
       jest.restoreAllMocks();
     });

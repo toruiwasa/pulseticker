@@ -91,7 +91,9 @@ describe('AlertsService.onModuleInit (cache loading)', () => {
 });
 
 describe('AlertsService.checkAlerts', () => {
-  async function withAlerts(alerts: { id: string; symbol: string; threshold_price: string; direction: 'above' | 'below' }[]) {
+  async function withAlerts(
+    alerts: { id: string; symbol: string; threshold_price: string; direction: 'above' | 'below' }[],
+  ) {
     const rows = alerts.map(a => ({ ...a, user_id: 'u1' }));
     return buildService(makeActiveAlertsChain(rows));
   }
@@ -160,7 +162,13 @@ describe('AlertsService.createAlert', () => {
     const initFrom = makeActiveAlertsChain([]);
     const { service, supabaseClient, queueService } = await buildService(initFrom);
 
-    const newAlert = { id: 'a2', symbol: 'MSFT', user_id: 'u1', threshold_price: '400', direction: 'above' };
+    const newAlert = {
+      id: 'a2',
+      symbol: 'MSFT',
+      user_id: 'u1',
+      threshold_price: '400',
+      direction: 'above',
+    };
     const single = jest.fn().mockResolvedValue({ data: newAlert, error: null });
     const insertSelect = jest.fn(() => ({ single }));
     const insert = jest.fn(() => ({ select: insertSelect }));

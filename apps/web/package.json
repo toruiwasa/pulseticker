@@ -9,7 +9,9 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test --watch=false",
     "test:watch": "ng test",
-    "test:cov": "ng test --coverage --watch=false"
+    "test:cov": "ng test --coverage --watch=false",
+    "format": "prettier --write \"src/**/*.{ts,html,css}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,html,css}\""
   },
   "private": true,
   "packageManager": "pnpm@11.5.2",

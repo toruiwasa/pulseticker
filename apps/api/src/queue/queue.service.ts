@@ -42,9 +42,13 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
   }
 
   async seedPreviewFetchJob() {
-    await this.workerUtils.addJob('fetch-preview-prices', {}, {
-      jobKey: 'preview-fetch',
-      jobKeyMode: 'preserve_run_at',
-    });
+    await this.workerUtils.addJob(
+      'fetch-preview-prices',
+      {},
+      {
+        jobKey: 'preview-fetch',
+        jobKeyMode: 'preserve_run_at',
+      },
+    );
   }
 }

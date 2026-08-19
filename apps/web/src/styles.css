@@ -1,5 +1,6 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
+/* prettier-ignore */
 :root {
   --pt-primary:        #2953B2;
   --pt-primary-hover:  #1e3f8a;
@@ -28,6 +29,7 @@
   --tui-text-action:                  var(--pt-primary);
 }
 
+/* prettier-ignore */
 html.tui-theme-dark {
   --pt-primary:        #4A72D6;
   --pt-primary-hover:  #3560c4;
@@ -51,12 +53,25 @@ html.tui-theme-dark {
   color: var(--pt-down) !important;
 }
 
-*, *::before, *::after { box-sizing: border-box; }
-html, body {
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+html,
+body {
   margin: 0;
   padding: 0;
   height: 100%;
-  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Helvetica,
+    Arial,
+    sans-serif;
   font-size: 16px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

@@ -1,4 +1,11 @@
-import { ChangeDetectionStrategy, Component, OnInit, ViewChild, computed, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  ViewChild,
+  computed,
+  signal,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { TuiButton } from '@taiga-ui/core';
@@ -28,10 +35,7 @@ interface Alert {
 
       <h2>Create alert</h2>
       <form class="form-row" (ngSubmit)="createAlert()">
-        <app-symbol-search
-          class="symbol-search"
-          (symbolSelected)="selectSymbol($event)"
-        />
+        <app-symbol-search class="symbol-search" (symbolSelected)="selectSymbol($event)" />
         <input
           [ngModel]="price()"
           (ngModelChange)="price.set($event)"
@@ -52,7 +56,9 @@ interface Alert {
           <option value="above">Above</option>
           <option value="below">Below</option>
         </select>
-        <button tuiButton type="submit" appearance="primary" size="s" [disabled]="!isFormValid()">Add alert</button>
+        <button tuiButton type="submit" appearance="primary" size="s" [disabled]="!isFormValid()">
+          Add alert
+        </button>
       </form>
 
       <h2>Active alerts</h2>
@@ -97,7 +103,9 @@ interface Alert {
                     class="btn-outline-destructive"
                     [attr.aria-label]="'Delete alert for ' + (alert.symbol | oanda)"
                     (click)="deleteAlert(alert.id)"
-                  >Delete</button>
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
             }
@@ -118,7 +126,9 @@ interface Alert {
                   class="btn-outline-destructive"
                   [attr.aria-label]="'Delete alert for ' + (alert.symbol | oanda)"
                   (click)="deleteAlert(alert.id)"
-                >Delete</button>
+                >
+                  Delete
+                </button>
               </div>
               <div class="card-grid">
                 <div class="card-field">
@@ -136,8 +146,10 @@ interface Alert {
                 </div>
                 <div class="card-field">
                   <span class="field-label">Status</span>
-                  <span class="field-value"
-                    [class]="alert.is_active ? 'status-active' : 'status-triggered'">
+                  <span
+                    class="field-value"
+                    [class]="alert.is_active ? 'status-active' : 'status-triggered'"
+                  >
                     {{ alert.is_active ? 'Active' : 'Triggered' }}
                   </span>
                 </div>
@@ -148,202 +160,242 @@ interface Alert {
       }
     </div>
   `,
-  styles: [`
-    :host { display: block; }
+  styles: [
+    `
+      :host {
+        display: block;
+      }
 
-    .page {
-      padding: 2rem;
-      color: var(--pt-text-primary);
-      max-width: 900px;
-    }
+      .page {
+        padding: 2rem;
+        color: var(--pt-text-primary);
+        max-width: 900px;
+      }
 
-    h1 {
-      font-size: 1.5rem;
-      font-weight: 700;
-      margin: 0 0 1.5rem;
-      color: var(--pt-text-primary);
-    }
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 0 1.5rem;
+        color: var(--pt-text-primary);
+      }
 
-    h2 {
-      font-weight: 600;
-      margin: 1.5rem 0 0.75rem;
-      color: var(--pt-text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      font-size: 0.75rem;
-    }
+      h2 {
+        font-weight: 600;
+        margin: 1.5rem 0 0.75rem;
+        color: var(--pt-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        font-size: 0.75rem;
+      }
 
-    .form-row {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-      align-items: flex-end;
-      margin-bottom: 1rem;
-    }
+      .form-row {
+        display: flex;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        margin-bottom: 1rem;
+      }
 
-    .symbol-search { flex: 1; min-width: 160px; max-width: 240px; }
+      .symbol-search {
+        flex: 1;
+        min-width: 160px;
+        max-width: 240px;
+      }
 
-    .price-input, .direction-select {
-      padding: 0.4rem 0.6rem;
-      border: 1px solid var(--pt-border);
-      border-radius: 6px;
-      background: var(--pt-bg-surface);
-      color: var(--pt-text-primary);
-      font-family: inherit;
-      font-size: 0.875rem;
-      outline: none;
-      transition: border-color 0.15s;
-    }
+      .price-input,
+      .direction-select {
+        padding: 0.4rem 0.6rem;
+        border: 1px solid var(--pt-border);
+        border-radius: 6px;
+        background: var(--pt-bg-surface);
+        color: var(--pt-text-primary);
+        font-family: inherit;
+        font-size: 0.875rem;
+        outline: none;
+        transition: border-color 0.15s;
+      }
 
-    .price-input { width: 120px; }
-    .direction-select { cursor: pointer; }
+      .price-input {
+        width: 120px;
+      }
+      .direction-select {
+        cursor: pointer;
+      }
 
-    .price-input:focus,
-    .direction-select:focus { border-color: var(--pt-primary); }
+      .price-input:focus,
+      .direction-select:focus {
+        border-color: var(--pt-primary);
+      }
 
-    .empty-msg {
-      color: var(--pt-text-muted);
-      font-size: 0.875rem;
-      margin: 0;
-    }
+      .empty-msg {
+        color: var(--pt-text-muted);
+        font-size: 0.875rem;
+        margin: 0;
+      }
 
-    /* ── Desktop table ── */
+      /* ── Desktop table ── */
 
-    .alert-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.875rem;
-    }
+      .alert-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.875rem;
+      }
 
-    th {
-      text-align: left;
-      padding: 0.5rem 0.75rem;
-      font-size: 0.7rem;
-      font-weight: 600;
-      color: var(--pt-text-muted);
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      border-bottom: 2px solid var(--pt-border);
-    }
+      th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--pt-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        border-bottom: 2px solid var(--pt-border);
+      }
 
-    td {
-      padding: 0.5rem 0.75rem;
-      border-bottom: 1px solid var(--pt-border);
-      color: var(--pt-text-primary);
-    }
+      td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid var(--pt-border);
+        color: var(--pt-text-primary);
+      }
 
-    .col-symbol { font-weight: 600; }
+      .col-symbol {
+        font-weight: 600;
+      }
 
-    .col-price {
-      font-variant-numeric: tabular-nums;
-      white-space: nowrap;
-    }
+      .col-price {
+        font-variant-numeric: tabular-nums;
+        white-space: nowrap;
+      }
 
-    .currency-unit {
-      font-size: 0.65rem;
-      font-weight: 500;
-      color: var(--pt-text-muted);
-      margin-left: 2px;
-      letter-spacing: 0.03em;
-      vertical-align: middle;
-    }
+      .currency-unit {
+        font-size: 0.65rem;
+        font-weight: 500;
+        color: var(--pt-text-muted);
+        margin-left: 2px;
+        letter-spacing: 0.03em;
+        vertical-align: middle;
+      }
 
-    .status-active    { color: var(--pt-up); font-weight: 600; }
-    .status-triggered { color: var(--pt-neutral); }
+      .status-active {
+        color: var(--pt-up);
+        font-weight: 600;
+      }
+      .status-triggered {
+        color: var(--pt-neutral);
+      }
 
+      /* ── Mobile card list (hidden on desktop) ── */
 
-    /* ── Mobile card list (hidden on desktop) ── */
+      .card-list {
+        display: none;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        flex-direction: column;
+        gap: 0.75rem;
+      }
 
-    .card-list {
-      display: none;
-      list-style: none;
-      margin: 0;
-      padding: 0;
-      flex-direction: column;
-      gap: 0.75rem;
-    }
+      .alert-card {
+        border: 1px solid var(--pt-border);
+        border-radius: 8px;
+        background: var(--pt-bg-surface);
+        padding: 0.75rem;
+        display: flex;
+        flex-direction: column;
+        gap: 0.6rem;
+      }
 
-    .alert-card {
-      border: 1px solid var(--pt-border);
-      border-radius: 8px;
-      background: var(--pt-bg-surface);
-      padding: 0.75rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.6rem;
-    }
+      .card-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
 
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
+      .card-symbol {
+        font-weight: 700;
+        font-size: 1rem;
+        color: var(--pt-text-primary);
+      }
 
-    .card-symbol {
-      font-weight: 700;
-      font-size: 1rem;
-      color: var(--pt-text-primary);
-    }
+      .card-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 0.4rem 0.75rem;
+      }
 
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0.4rem 0.75rem;
-    }
+      .card-field {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
 
-    .card-field {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
+      .field-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--pt-text-muted);
+      }
 
-    .field-label {
-      font-size: 0.7rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.04em;
-      color: var(--pt-text-muted);
-    }
+      .field-value {
+        font-size: 0.875rem;
+        color: var(--pt-text-primary);
+      }
 
-    .field-value {
-      font-size: 0.875rem;
-      color: var(--pt-text-primary);
-    }
+      /* ── Mobile breakpoint ── */
 
-    /* ── Mobile breakpoint ── */
+      @media (max-width: 767px) {
+        .page {
+          padding: 1rem;
+        }
 
-    @media (max-width: 767px) {
-      .page { padding: 1rem; }
+        .alert-table {
+          display: none;
+        }
+        .card-list {
+          display: flex;
+        }
 
-      .alert-table { display: none; }
-      .card-list { display: flex; }
-
-      .form-row { flex-direction: column; align-items: stretch; }
-      .symbol-search { max-width: none; }
-      .price-input { width: 100%; box-sizing: border-box; }
-      .direction-select { width: 100%; }
-      .form-row button[tuiButton] { width: 100%; }
-    }
-  `],
+        .form-row {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .symbol-search {
+          max-width: none;
+        }
+        .price-input {
+          width: 100%;
+          box-sizing: border-box;
+        }
+        .direction-select {
+          width: 100%;
+        }
+        .form-row button[tuiButton] {
+          width: 100%;
+        }
+      }
+    `,
+  ],
 })
 export class AlertsComponent implements OnInit {
   @ViewChild(SymbolSearchInputComponent) private symbolSearch!: SymbolSearchInputComponent;
 
-  loading   = signal(true);
-  alerts    = signal<Alert[]>([]);
-  symbol    = signal('');
-  price     = signal<number | null>(null);
+  loading = signal(true);
+  alerts = signal<Alert[]>([]);
+  symbol = signal('');
+  price = signal<number | null>(null);
   direction = signal<'above' | 'below'>('above');
 
   // computed() creates a reactive node in Angular's signal graph.
   // In zoneless mode (provideZonelessChangeDetection), this is required —
   // a plain getter does not register dependencies and won't trigger re-renders.
-  isFormValid = computed(() =>
-    CreateAlertSchema.safeParse({
-      symbol:          this.symbol(),
-      threshold_price: this.price(),
-      direction:       this.direction(),
-    }).success
+  isFormValid = computed(
+    () =>
+      CreateAlertSchema.safeParse({
+        symbol: this.symbol(),
+        threshold_price: this.price(),
+        direction: this.direction(),
+      }).success,
   );
 
   constructor(
@@ -361,17 +413,22 @@ export class AlertsComponent implements OnInit {
           this.meta.ensureCurrency(alert.symbol);
         }
       },
-      error: e => { this.logger.error('Failed to load alerts', (e as Error).message); this.loading.set(false); },
+      error: e => {
+        this.logger.error('Failed to load alerts', (e as Error).message);
+        this.loading.set(false);
+      },
     });
   }
 
-  selectSymbol(s: string) { this.symbol.set(s); }
+  selectSymbol(s: string) {
+    this.symbol.set(s);
+  }
 
   async createAlert() {
     const result = CreateAlertSchema.safeParse({
-      symbol:          this.symbol(),
+      symbol: this.symbol(),
       threshold_price: this.price(),
-      direction:       this.direction(),
+      direction: this.direction(),
     });
     if (!result.success) return;
     try {

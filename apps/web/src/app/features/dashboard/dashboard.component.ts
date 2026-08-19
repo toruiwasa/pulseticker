@@ -1,12 +1,4 @@
-import {
-  Component,
-  OnDestroy,
-  OnInit,
-  computed,
-  effect,
-  inject,
-  signal,
-} from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, effect, inject, signal } from '@angular/core';
 import { IconComponent } from '../../core/components/svg-icon.component';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
@@ -72,136 +64,149 @@ import { ContextAccordionComponent } from './context-accordion/context-accordion
           <app-chart-header
             [symbol]="activeSymbol()"
             [price]="currentPrice()"
-            [currency]="activeSymbol() ? meta.currencies()[activeSymbol()!] ?? null : null"
+            [currency]="activeSymbol() ? (meta.currencies()[activeSymbol()!] ?? null) : null"
             [activeRange]="range()"
             (rangeChange)="range.set($event)"
           />
-          <app-price-chart
-            class="chart-body"
-            [symbol]="activeSymbol()"
-            [range]="range()"
-          />
-          <app-stats-bar
-            [symbol]="activeSymbol()"
-            [currentPrice]="currentPrice()"
-          />
+          <app-price-chart class="chart-body" [symbol]="activeSymbol()" [range]="range()" />
+          <app-stats-bar [symbol]="activeSymbol()" [currentPrice]="currentPrice()" />
           <app-context-accordion [symbol]="activeSymbol()" />
         </div>
       </div>
     }
   `,
-  styles: [`
-    :host { display: contents; }
+  styles: [
+    `
+      :host {
+        display: contents;
+      }
 
-    .loading-state {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      height: 100%;
-      color: var(--pt-text-muted);
-      font-size: 0.9rem;
-    }
+      .loading-state {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: var(--pt-text-muted);
+        font-size: 0.9rem;
+      }
 
-    .dashboard-layout {
-      display: grid;
-      grid-template-columns: var(--pt-watchlist-w) 1fr;
-      min-height: 100%;
-      align-items: start;
-    }
-
-    .watchlist-aside {
-      border-right: 1px solid var(--pt-border);
-      background: var(--pt-bg-surface);
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      min-height: 100dvh;
-    }
-
-    .chart-area {
-      display: flex;
-      flex-direction: column;
-      background: var(--pt-bg-base);
-      min-width: 0;
-      overflow-x: hidden;
-    }
-
-    .chart-body {
-      height: clamp(240px, 40vh, 380px);
-      flex-shrink: 0;
-    }
-
-    /* Toggle button — hidden on mobile + desktop, shown only on tablet */
-    .watchlist-toggle {
-      display: none;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.35rem 0.75rem;
-      background: var(--pt-bg-elevated);
-      border: 1px solid var(--pt-border);
-      border-radius: 6px;
-      color: var(--pt-text-secondary);
-      font-size: 0.8rem;
-      cursor: pointer;
-      margin: 0.5rem 0.75rem;
-      width: fit-content;
-      transition: color 0.15s;
-    }
-    .watchlist-toggle:hover { color: var(--pt-primary); }
-
-    /* Backdrop element — hidden until open */
-    .backdrop {
-      display: none;
-      position: absolute;
-      inset: 0;
-      background: transparent;
-      pointer-events: none;
-      z-index: 49;
-      transition: background 0.22s;
-    }
-
-    /* Tablet: 768–1199px — slide-in drawer */
-    @media (min-width: 768px) and (max-width: 1199px) {
       .dashboard-layout {
-        grid-template-columns: 1fr;
-        position: relative;
-        overflow: hidden;
+        display: grid;
+        grid-template-columns: var(--pt-watchlist-w) 1fr;
+        min-height: 100%;
+        align-items: start;
       }
 
       .watchlist-aside {
+        border-right: 1px solid var(--pt-border);
+        background: var(--pt-bg-surface);
+        overflow-y: auto;
         display: flex;
+        flex-direction: column;
+        min-height: 100dvh;
+      }
+
+      .chart-area {
+        display: flex;
+        flex-direction: column;
+        background: var(--pt-bg-base);
+        min-width: 0;
+        overflow-x: hidden;
+      }
+
+      .chart-body {
+        height: clamp(240px, 40vh, 380px);
+        flex-shrink: 0;
+      }
+
+      /* Toggle button — hidden on mobile + desktop, shown only on tablet */
+      .watchlist-toggle {
+        display: none;
+        align-items: center;
+        gap: 0.4rem;
+        padding: 0.35rem 0.75rem;
+        background: var(--pt-bg-elevated);
+        border: 1px solid var(--pt-border);
+        border-radius: 6px;
+        color: var(--pt-text-secondary);
+        font-size: 0.8rem;
+        cursor: pointer;
+        margin: 0.5rem 0.75rem;
+        width: fit-content;
+        transition: color 0.15s;
+      }
+      .watchlist-toggle:hover {
+        color: var(--pt-primary);
+      }
+
+      /* Backdrop element — hidden until open */
+      .backdrop {
+        display: none;
         position: absolute;
-        left: 0;
-        top: 0;
-        width: var(--pt-watchlist-w);
-        height: 100%;
-        transform: translateX(-100%);
-        transition: transform 0.22s ease;
-        z-index: 50;
-        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.18);
-        min-height: unset;
+        inset: 0;
+        background: transparent;
+        pointer-events: none;
+        z-index: 49;
+        transition: background 0.22s;
       }
 
-      .watchlist-aside.open { transform: translateX(0); }
+      /* Tablet: 768–1199px — slide-in drawer */
+      @media (min-width: 768px) and (max-width: 1199px) {
+        .dashboard-layout {
+          grid-template-columns: 1fr;
+          position: relative;
+          overflow: hidden;
+        }
 
-      .backdrop { display: block; }
+        .watchlist-aside {
+          display: flex;
+          position: absolute;
+          left: 0;
+          top: 0;
+          width: var(--pt-watchlist-w);
+          height: 100%;
+          transform: translateX(-100%);
+          transition: transform 0.22s ease;
+          z-index: 50;
+          box-shadow: 4px 0 20px rgba(0, 0, 0, 0.18);
+          min-height: unset;
+        }
 
-      .backdrop.open {
-        background: rgba(0, 0, 0, 0.3);
-        pointer-events: auto;
+        .watchlist-aside.open {
+          transform: translateX(0);
+        }
+
+        .backdrop {
+          display: block;
+        }
+
+        .backdrop.open {
+          background: rgba(0, 0, 0, 0.3);
+          pointer-events: auto;
+        }
+
+        .watchlist-toggle {
+          display: flex;
+        }
       }
 
-      .watchlist-toggle { display: flex; }
-    }
-
-    /* Mobile: aside hidden, /watchlist route used */
-    @media (max-width: 767px) {
-      .dashboard-layout { grid-template-columns: 1fr; }
-      .watchlist-aside { display: none; }
-      .watchlist-toggle { display: none; }
-      .backdrop { display: none; }
-    }
-  `],
+      /* Mobile: aside hidden, /watchlist route used */
+      @media (max-width: 767px) {
+        .dashboard-layout {
+          grid-template-columns: 1fr;
+        }
+        .watchlist-aside {
+          display: none;
+        }
+        .watchlist-toggle {
+          display: none;
+        }
+        .backdrop {
+          display: none;
+        }
+      }
+    `,
+  ],
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   protected wl = inject(WatchlistStateService);

@@ -5,12 +5,18 @@ import { ThemeService } from './theme.service';
 
 function makeDarkModeMock() {
   let _dark = false;
-  const setFn  = vi.fn((v: boolean) => { _dark = v; });
-  const resetFn = vi.fn(() => { _dark = false; });
-  const mock = Object.assign(
-    () => _dark,
-    { set: setFn, reset: resetFn, update: vi.fn(), asReadonly: () => () => _dark },
-  );
+  const setFn = vi.fn((v: boolean) => {
+    _dark = v;
+  });
+  const resetFn = vi.fn(() => {
+    _dark = false;
+  });
+  const mock = Object.assign(() => _dark, {
+    set: setFn,
+    reset: resetFn,
+    update: vi.fn(),
+    asReadonly: () => () => _dark,
+  });
   return { mock, setFn, resetFn };
 }
 
@@ -19,10 +25,7 @@ function createService(localStorageValue: string | null = null) {
   const { mock, setFn, resetFn } = makeDarkModeMock();
 
   TestBed.configureTestingModule({
-    providers: [
-      ThemeService,
-      { provide: TUI_DARK_MODE, useValue: mock },
-    ],
+    providers: [ThemeService, { provide: TUI_DARK_MODE, useValue: mock }],
   });
 
   return { service: TestBed.inject(ThemeService), setFn, resetFn };

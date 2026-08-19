@@ -9,6 +9,7 @@ interface NavItem {
   mobileOnly: boolean;
 }
 
+// prettier-ignore
 const NAV_ITEMS: readonly NavItem[] = [
   { path: '/dashboard', label: 'Dashboard', icon: 'chart-bar', mobileOnly: false },
   { path: '/watchlist', label: 'Watchlist', icon: 'list',      mobileOnly: true  },
@@ -36,83 +37,91 @@ const NAV_ITEMS: readonly NavItem[] = [
       }
     </nav>
   `,
-  styles: [`
-    :host {
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-    }
-
-    .sidebar {
-      flex: 1;
-      background: var(--pt-bg-surface);
-      border-right: 1px solid var(--pt-border);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 0.5rem 0;
-      gap: 0.25rem;
-      overflow: hidden;
-    }
-
-    .nav-item {
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 8px;
-      color: var(--pt-text-secondary);
-      text-decoration: none;
-      transition: background 0.15s, color 0.15s;
-    }
-
-    .nav-item:hover {
-      background: var(--pt-bg-elevated);
-      color: var(--pt-primary);
-    }
-
-    .nav-item.active {
-      color: var(--pt-primary);
-      background: color-mix(in srgb, var(--pt-primary) 12%, transparent);
-    }
-
-    .nav-item:focus-visible {
-      outline: 2px solid var(--pt-primary);
-      outline-offset: 2px;
-    }
-
-    /* Watchlist tab only appears in the mobile bottom bar */
-    .mobile-only { display: none; }
-
-    /* Mobile: bottom tab bar */
-    @media (max-width: 767px) {
+  styles: [
+    `
       :host {
-        flex-direction: row;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
       }
 
       .sidebar {
-        flex-direction: row;
-        justify-content: space-around;
-        width: 100%;
-        height: 60px;
-        border-right: none;
-        border-top: 1px solid var(--pt-border);
-        padding: 0;
+        flex: 1;
+        background: var(--pt-bg-surface);
+        border-right: 1px solid var(--pt-border);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0.5rem 0;
+        gap: 0.25rem;
+        overflow: hidden;
       }
 
       .nav-item {
-        flex: 1;
-        height: 100%;
-        border-radius: 0;
-        flex-direction: column;
-        gap: 2px;
-        font-size: 0.7rem;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 8px;
+        color: var(--pt-text-secondary);
+        text-decoration: none;
+        transition:
+          background 0.15s,
+          color 0.15s;
       }
 
-      .mobile-only { display: flex; }
-    }
-  `],
+      .nav-item:hover {
+        background: var(--pt-bg-elevated);
+        color: var(--pt-primary);
+      }
+
+      .nav-item.active {
+        color: var(--pt-primary);
+        background: color-mix(in srgb, var(--pt-primary) 12%, transparent);
+      }
+
+      .nav-item:focus-visible {
+        outline: 2px solid var(--pt-primary);
+        outline-offset: 2px;
+      }
+
+      /* Watchlist tab only appears in the mobile bottom bar */
+      .mobile-only {
+        display: none;
+      }
+
+      /* Mobile: bottom tab bar */
+      @media (max-width: 767px) {
+        :host {
+          flex-direction: row;
+        }
+
+        .sidebar {
+          flex-direction: row;
+          justify-content: space-around;
+          width: 100%;
+          height: 60px;
+          border-right: none;
+          border-top: 1px solid var(--pt-border);
+          padding: 0;
+        }
+
+        .nav-item {
+          flex: 1;
+          height: 100%;
+          border-radius: 0;
+          flex-direction: column;
+          gap: 2px;
+          font-size: 0.7rem;
+        }
+
+        .mobile-only {
+          display: flex;
+        }
+      }
+    `,
+  ],
 })
 export class SidebarComponent {
   protected readonly navItems = NAV_ITEMS;

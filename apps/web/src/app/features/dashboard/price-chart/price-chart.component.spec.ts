@@ -44,12 +44,12 @@ import { ThemeService } from '../../../core/services/theme.service';
 
 // CSS var values expected by the chart component
 const CSS_VARS: Record<string, string> = {
-  '--pt-up':          '#22c55e',
-  '--pt-down':        '#ef4444',
-  '--pt-chart-grid':  '#2a2a3a',
-  '--pt-chart-text':  '#9ca3af',
+  '--pt-up': '#22c55e',
+  '--pt-down': '#ef4444',
+  '--pt-chart-grid': '#2a2a3a',
+  '--pt-chart-text': '#9ca3af',
   '--pt-chart-cross': '#6b7280',
-  '--pt-border':      '#374151',
+  '--pt-border': '#374151',
 };
 
 describe('PriceChartComponent', () => {
@@ -71,11 +71,11 @@ describe('PriceChartComponent', () => {
 
     TestBed.configureTestingModule({
       providers: [
-        { provide: ApiService,    useValue: api    },
+        { provide: ApiService, useValue: api },
         { provide: SocketService, useValue: socket },
         // Stub ThemeService — its isDark signal is read in an effect() for reactivity.
         // Providing a stub prevents TUI_DARK_MODE from calling window.matchMedia in jsdom.
-        { provide: ThemeService,  useValue: { isDark: signal(false) } },
+        { provide: ThemeService, useValue: { isDark: signal(false) } },
       ],
     });
   });
@@ -92,14 +92,18 @@ describe('PriceChartComponent', () => {
   it('creates a chart with autoSize on mount', () => {
     mount(null);
     expect(mocks.createChart).toHaveBeenCalledOnce();
-    expect(mocks.MockChart.last.addSeries).toHaveBeenCalledWith(mocks.LineSeries, { color: '#22c55e' });
+    expect(mocks.MockChart.last.addSeries).toHaveBeenCalledWith(mocks.LineSeries, {
+      color: '#22c55e',
+    });
   });
 
   it('fetches candles and sets history when a symbol is provided', () => {
-    api.getCandles.mockReturnValue(of([
-      { time: 100, value: 10 },
-      { time: 200, value: 12 },
-    ]));
+    api.getCandles.mockReturnValue(
+      of([
+        { time: 100, value: 10 },
+        { time: 200, value: 12 },
+      ]),
+    );
     mount('AAPL');
     expect(api.getCandles).toHaveBeenCalledWith('AAPL', '1D');
     expect(mocks.MockSeries.last.setData).toHaveBeenLastCalledWith([

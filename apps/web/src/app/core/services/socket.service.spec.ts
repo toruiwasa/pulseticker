@@ -74,8 +74,11 @@ describe('SocketService', () => {
     it('emits an AlertPayload when the alert-triggered event fires', () => {
       service.connect('t');
       const payload: AlertPayload = {
-        symbol: 'TSLA', price: 250, threshold: 240,
-        direction: 'above', message: 'TSLA hit 250',
+        symbol: 'TSLA',
+        price: 250,
+        threshold: 240,
+        direction: 'above',
+        message: 'TSLA hit 250',
       };
       const received: AlertPayload[] = [];
       const sub = service.alert$.subscribe(a => received.push(a));

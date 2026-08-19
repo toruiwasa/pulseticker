@@ -33,10 +33,7 @@ export function makeCheckPriceAlertTask(supabase: SupabaseService, eventEmitter:
 
       if (!triggered) return;
 
-      await supabase.client
-        .from('alerts')
-        .update({ is_active: false })
-        .eq('id', payload.alertId);
+      await supabase.client.from('alerts').update({ is_active: false }).eq('id', payload.alertId);
 
       const message = `${alert.symbol} hit ${payload.price} (${alert.direction} ${alert.threshold_price})`;
 
