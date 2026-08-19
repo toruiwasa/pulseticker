@@ -367,6 +367,30 @@ describe('WatchlistService', () => {
       });
     });
 
+    it('re-ensures the subscription of every polled symbol (recovery for cap refusals)', async () => {
+      supabaseClient.from = makeFindAllRouter({
+        profile: { data: { user_id: 'u1' }, error: null },
+        watchlist: {
+          data: [
+            { id: 'a', symbol: 'AAPL', created_at: '' },
+            { id: 'b', symbol: 'MSFT', created_at: '' },
+          ],
+          error: null,
+        },
+      }).from;
+      finnhub.getLastKnownPrices.mockReturnValue([
+        { symbol: 'AAPL', price: 1, ts: 1 },
+        { symbol: 'MSFT', price: 2, ts: 2 },
+      ]);
+
+      await service.getWatchlistPrices('u1');
+
+      // Without this, a symbol the cap refused at create()/warm-up stayed
+      // priceless until restart even after capacity freed.
+      expect(finnhub.ensureSubscribed).toHaveBeenCalledWith('AAPL');
+      expect(finnhub.ensureSubscribed).toHaveBeenCalledWith('MSFT');
+    });
+
     it('passes the watchlist symbols through to getLastKnownPrices', async () => {
       seededWith([
         { id: ID_A, symbol: 'AAPL', created_at: '2026-01-01' },

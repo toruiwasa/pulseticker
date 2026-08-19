@@ -76,8 +76,10 @@ export class PricesGateway implements OnGatewayConnection, OnGatewayDisconnect {
   handleSubscribe(client: Socket, payload: { symbols: string[] }) {
     const state = client.data as ClientState;
     for (const sym of payload.symbols) {
+      // A symbol the cap refused must not join the room: the client would sit
+      // in a room no price is ever broadcast to, believing it subscribed.
+      if (!this.finnhub.subscribe(sym)) continue;
       void client.join(`symbol:${sym}`);
-      this.finnhub.subscribe(sym);
       state.subscribedSymbols?.add(sym);
     }
   }

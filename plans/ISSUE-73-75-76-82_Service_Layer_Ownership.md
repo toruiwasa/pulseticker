@@ -144,6 +144,50 @@ and is reachable only because the noise was scoped, not because the client was t
 
 ---
 
+## Adversarial review round (2026-08-19)
+
+An architecture review of the PR produced three code changes and three recorded
+decisions before merge.
+
+### Fixed
+
+**F1 — refused symbols now self-heal.** `ensureSubscribed` was called only from
+`create()` and warm-up, so a symbol the cap refused stayed priceless until restart
+even after `releasePin` freed capacity — the same failure mode #75 was opened to
+kill, reintroduced past symbol #50. The original objection to subscribing from the
+poll (per-call `subscribe()` leaks ref-counts) does not apply to `ensureSubscribed`,
+which is idempotent; `getWatchlistPrices()` now re-ensures every polled symbol.
+Companion change: `hasCapacityFor` warns once per refused symbol rather than once
+per attempt, cleared on recovery, so the 15 s poll cannot flood the logs.
+
+**F3 — the gateway no longer seats a refused client in an empty room.**
+`handleSubscribe` joined the room and tracked the symbol even when
+`finnhub.subscribe()` refused, leaving the client waiting for broadcasts that could
+never arrive. `subscribe()` now returns whether it took the subscription and the
+gateway skips join/track on refusal.
+
+### Decided and recorded
+
+**The 50-per-user / 50-per-process cap arithmetic is accepted for demo scale**
+(owner decision, 2026-08-19). One maxed-out user can fill the process cap, and two
+users can exceed it. This is a demo application on Finnhub's free tier; a collision
+requires more than 50 distinct symbols across all users, and with F1 refusals now
+recover as capacity frees. Revisit only if the app leaves demo scale — the eviction
+/ multi-key design that a real fix needs is out of scope for #75 and belongs with
+#74's registry split.
+
+**Deviation from #75, deliberate: refusal is not surfaced in the POST /watchlist
+response.** The issue asked to surface refusal to the caller. Doing so means a
+schema change (`WatchlistItem` + web/mobile consumers) for a state the UI already
+renders (price shows as absent) and which is now transient by F1. Log-only +
+self-healing was chosen instead. What it gives up: the client cannot distinguish
+"cold cache" from "cap-refused". Acceptable at demo scale; revisit with the cap
+design above.
+
+**Pins can go stale outside `remove()`** — deleting a user cascades
+`watchlist_items` rows without a `releasePin`, so the pin survives until restart.
+Recorded, not fixed: account deletion has no API surface in this app today.
+
 ## Deploy paths
 
 `apps/web/vercel.json` runs apps/web's `build`, which enumerates workspace packages

@@ -84,6 +84,11 @@ export class WatchlistService {
    */
   async getWatchlistPrices(userId: string): Promise<WatchlistPricesResponse> {
     const rows = (await this.findAll(userId)) as WatchlistRow[];
+    // Idempotent, so safe on every poll. This is the recovery path for a
+    // symbol the cap refused at create() or warm-up: once releasePin frees
+    // capacity, the next poll subscribes it — without this, a refusal lasted
+    // until restart. Refusals here are logged once per symbol upstream.
+    for (const row of rows) this.finnhub.ensureSubscribed(row.symbol);
     const prices = this.finnhub.getLastKnownPrices(rows.map(r => r.symbol));
     const items = rows.map((row, i) => ({
       id: row.id,

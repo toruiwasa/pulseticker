@@ -137,12 +137,13 @@ export class FinnhubService implements OnModuleInit {
    * 0 → 1 transition, so watchlist CRUD and the live-candle cache can both
    * call subscribe(symbol) safely without fighting over the WS state.
    */
-  subscribe(symbol: string) {
+  subscribe(symbol: string): boolean {
     const sym = normalizeSymbol(symbol);
     const prev = this.refCounts.get(sym) ?? 0;
-    if (prev === 0 && !this.hasCapacityFor(sym)) return;
+    if (prev === 0 && !this.hasCapacityFor(sym)) return false;
     this.refCounts.set(sym, prev + 1);
     if (prev === 0 && !this.pinned.has(sym)) this.send('subscribe', sym);
+    return true;
   }
 
   /**
@@ -185,13 +186,27 @@ export class FinnhubService implements OnModuleInit {
     return this.wantedSymbols().length;
   }
 
+  /** Symbols whose refusal has been logged, so the 15 s price poll retrying a
+   *  refused symbol produces one warning, not one per attempt. A symbol is
+   *  cleared on any successful subscription, so a later refusal logs again. */
+  private readonly refusalLogged = new Set<string>();
+
   private hasCapacityFor(sym: string): boolean {
-    if (this.pinned.has(sym) || (this.refCounts.get(sym) ?? 0) > 0) return true;
-    if (this.liveSubscriptionCount() < MAX_LIVE_SUBSCRIPTIONS) return true;
-    this.logger.warnData('Finnhub subscription cap reached — symbol refused', {
-      symbol: sym,
-      cap: MAX_LIVE_SUBSCRIPTIONS,
-    });
+    if (this.pinned.has(sym) || (this.refCounts.get(sym) ?? 0) > 0) {
+      this.refusalLogged.delete(sym);
+      return true;
+    }
+    if (this.liveSubscriptionCount() < MAX_LIVE_SUBSCRIPTIONS) {
+      this.refusalLogged.delete(sym);
+      return true;
+    }
+    if (!this.refusalLogged.has(sym)) {
+      this.refusalLogged.add(sym);
+      this.logger.warnData('Finnhub subscription cap reached — symbol refused', {
+        symbol: sym,
+        cap: MAX_LIVE_SUBSCRIPTIONS,
+      });
+    }
     return false;
   }
 

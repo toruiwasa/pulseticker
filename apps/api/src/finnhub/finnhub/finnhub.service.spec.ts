@@ -471,6 +471,46 @@ describe('FinnhubService', () => {
     });
   });
 
+  describe('cap refusal logging', () => {
+    it('warns once per refused symbol, not once per polling attempt', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      FakeWS.lastInstance.trigger('open');
+      for (let i = 0; i < 50; i++) service.ensureSubscribed(`SYM${i}`);
+      const warnData = jest.spyOn(
+        (service as unknown as { logger: { warnData: (...a: unknown[]) => void } }).logger,
+        'warnData',
+      );
+
+      // The 15 s price poll retries a refused symbol on every tick.
+      service.ensureSubscribed('REFUSED');
+      service.ensureSubscribed('REFUSED');
+      service.ensureSubscribed('REFUSED');
+
+      expect(warnData).toHaveBeenCalledTimes(1);
+    });
+
+    it('warns again if the symbol is refused anew after having recovered', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      FakeWS.lastInstance.trigger('open');
+      for (let i = 0; i < 50; i++) service.ensureSubscribed(`SYM${i}`);
+      const warnData = jest.spyOn(
+        (service as unknown as { logger: { warnData: (...a: unknown[]) => void } }).logger,
+        'warnData',
+      );
+
+      service.ensureSubscribed('REFUSED'); // logged
+      service.releasePin('SYM0'); // capacity frees
+      expect(service.ensureSubscribed('REFUSED')).toBe(true); // recovers, clears the marker
+      service.releasePin('REFUSED');
+      service.ensureSubscribed('AGAIN0'); // cap full again (49 + 1)
+      service.ensureSubscribed('REFUSED'); // a new refusal episode
+
+      expect(warnData).toHaveBeenCalledTimes(2);
+    });
+  });
+
   describe('releasePin()', () => {
     it('unsubscribes upstream when no client wants the symbol', async () => {
       const { service } = await buildService();
