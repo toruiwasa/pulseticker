@@ -1,9 +1,9 @@
-import { Injectable, OnApplicationBootstrap, OnModuleInit } from '@nestjs/common';
+import { Injectable, OnModuleInit } from '@nestjs/common';
 import { SecureLogger } from '../../common/logger/secure-logger.js';
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
+import { normalizeSymbol } from '@pulseticker/watchlist-rules';
 import WebSocket from 'ws';
-import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
 
 // Finnhub free plan: 1 concurrent WS connection per API key.
 // reconnectDelay doubles on each close, up to maxDelay.
@@ -14,8 +14,19 @@ import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
 const STABLE_WINDOW_MS = 60_000;
 const MIN_DELAY_AFTER_429 = 60_000;
 
+/**
+ * Finnhub's free tier allows 50 concurrent symbol subscriptions per API key,
+ * process-wide across every user. Past it, subscriptions silently stop working:
+ * no error, no close, prices simply never arrive. This is why the cap is
+ * enforced here rather than trusted — and why refusal is logged loudly.
+ *
+ * Distinct from MAX_WATCHLIST_SIZE, which is per user. Same value today, but
+ * they answer different questions and must not be collapsed.
+ */
+const MAX_LIVE_SUBSCRIPTIONS = 50;
+
 @Injectable()
-export class FinnhubService implements OnModuleInit, OnApplicationBootstrap {
+export class FinnhubService implements OnModuleInit {
   private readonly logger = new SecureLogger(FinnhubService.name);
   private ws!: WebSocket;
   private readonly refCounts = new Map<string, number>();
@@ -26,10 +37,17 @@ export class FinnhubService implements OnModuleInit, OnApplicationBootstrap {
   private stableTimer: ReturnType<typeof setTimeout> | undefined;
   private reconnecting = false;
 
+  /**
+   * Symbols that stay subscribed regardless of who is connected — every symbol
+   * on someone's watchlist. Held separately from refCounts because they are not
+   * reference counted: pinning twice is the same as pinning once, which is what
+   * makes ensureSubscribed() safe to call on every poll.
+   */
+  private readonly pinned = new Set<string>();
+
   constructor(
     private config: ConfigService,
     private eventEmitter: EventEmitter2,
-    private supabase: SupabaseService,
   ) {}
 
   onModuleInit() {
@@ -54,7 +72,7 @@ export class FinnhubService implements OnModuleInit, OnApplicationBootstrap {
         });
       }, STABLE_WINDOW_MS);
 
-      for (const sym of this.refCounts.keys()) {
+      for (const sym of this.wantedSymbols()) {
         this.ws.send(JSON.stringify({ type: 'subscribe', symbol: sym }));
       }
     });
@@ -113,10 +131,66 @@ export class FinnhubService implements OnModuleInit, OnApplicationBootstrap {
    * call subscribe(symbol) safely without fighting over the WS state.
    */
   subscribe(symbol: string) {
-    const prev = this.refCounts.get(symbol) ?? 0;
-    this.refCounts.set(symbol, prev + 1);
-    if (prev === 0 && this.ws.readyState === WebSocket.OPEN) {
-      this.ws.send(JSON.stringify({ type: 'subscribe', symbol }));
+    const sym = normalizeSymbol(symbol);
+    const prev = this.refCounts.get(sym) ?? 0;
+    if (prev === 0 && !this.hasCapacityFor(sym)) return;
+    this.refCounts.set(sym, prev + 1);
+    if (prev === 0 && !this.pinned.has(sym)) this.send('subscribe', sym);
+  }
+
+  /**
+   * Subscribe a symbol for as long as the process lives, idempotently.
+   *
+   * Watchlist membership is not client-scoped, so it cannot use the ref count:
+   * a symbol added while no browser is connected would be subscribed and then
+   * released on the next disconnect, and calling subscribe() per poll would
+   * leak counts that nothing ever decrements. Returns false when the cap
+   * refused it, so the caller can surface that.
+   */
+  ensureSubscribed(symbol: string): boolean {
+    const sym = normalizeSymbol(symbol);
+    if (this.pinned.has(sym)) return true;
+    if (!this.hasCapacityFor(sym)) return false;
+    const wasLive = (this.refCounts.get(sym) ?? 0) > 0;
+    this.pinned.add(sym);
+    if (!wasLive) this.send('subscribe', sym);
+    return true;
+  }
+
+  /**
+   * Drop a pin. The upstream unsubscribe is sent only if no connected client
+   * still wants the symbol. Callers must confirm no other user tracks it —
+   * pins are process-wide, not per user.
+   */
+  releasePin(symbol: string) {
+    const sym = normalizeSymbol(symbol);
+    if (!this.pinned.delete(sym)) return;
+    if ((this.refCounts.get(sym) ?? 0) === 0) this.send('unsubscribe', sym);
+  }
+
+  /** Every symbol that should be live upstream: pinned, or wanted by a client. */
+  private wantedSymbols(): string[] {
+    return [...new Set([...this.pinned, ...this.refCounts.keys()])];
+  }
+
+  /** Live subscription count, for the cap and for operational logging. */
+  liveSubscriptionCount(): number {
+    return this.wantedSymbols().length;
+  }
+
+  private hasCapacityFor(sym: string): boolean {
+    if (this.pinned.has(sym) || (this.refCounts.get(sym) ?? 0) > 0) return true;
+    if (this.liveSubscriptionCount() < MAX_LIVE_SUBSCRIPTIONS) return true;
+    this.logger.warnData('Finnhub subscription cap reached — symbol refused', {
+      symbol: sym,
+      cap: MAX_LIVE_SUBSCRIPTIONS,
+    });
+    return false;
+  }
+
+  private send(type: 'subscribe' | 'unsubscribe', symbol: string) {
+    if (this.ws.readyState === WebSocket.OPEN) {
+      this.ws.send(JSON.stringify({ type, symbol }));
     }
   }
 
@@ -126,16 +200,16 @@ export class FinnhubService implements OnModuleInit, OnApplicationBootstrap {
    * no-op so callers never need to track whether they ever subscribed.
    */
   unsubscribe(symbol: string) {
-    const prev = this.refCounts.get(symbol) ?? 0;
+    const sym = normalizeSymbol(symbol);
+    const prev = this.refCounts.get(sym) ?? 0;
     if (prev === 0) return;
     const next = prev - 1;
     if (next === 0) {
-      this.refCounts.delete(symbol);
-      if (this.ws.readyState === WebSocket.OPEN) {
-        this.ws.send(JSON.stringify({ type: 'unsubscribe', symbol }));
-      }
+      this.refCounts.delete(sym);
+      // A pinned symbol stays live even with no client connected.
+      if (!this.pinned.has(sym)) this.send('unsubscribe', sym);
     } else {
-      this.refCounts.set(symbol, next);
+      this.refCounts.set(sym, next);
     }
   }
 
@@ -150,27 +224,5 @@ export class FinnhubService implements OnModuleInit, OnApplicationBootstrap {
         ts: cached?.ts ?? null,
       };
     });
-  }
-
-  async onApplicationBootstrap() {
-    const { data, error } = await this.supabase.client.from('watchlist_items').select('symbol');
-
-    if (error) {
-      this.logger.errorData('Warm-up failed to load watchlist symbols', { code: error.code });
-      return;
-    }
-
-    if (!data) {
-      this.logger.warn('Warm-up: watchlist_items returned null — no symbols pre-subscribed');
-      return;
-    }
-
-    const symbols = [
-      ...new Set((data as { symbol: string }[]).map(row => row.symbol.toUpperCase())),
-    ];
-    for (const symbol of symbols) {
-      this.subscribe(symbol);
-    }
-    this.logger.logData('Finnhub warm-up complete', { symbolCount: symbols.length });
   }
 }

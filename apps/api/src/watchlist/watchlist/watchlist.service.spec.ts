@@ -62,11 +62,19 @@ function makeFindAllRouter(opts: {
 describe('WatchlistService', () => {
   let service: WatchlistService;
   let supabaseClient: SupabaseMock;
-  let finnhub: { getLastKnownPrices: jest.Mock };
+  let finnhub: {
+    getLastKnownPrices: jest.Mock;
+    ensureSubscribed: jest.Mock;
+    releasePin: jest.Mock;
+  };
 
   beforeEach(async () => {
     supabaseClient = { from: jest.fn() };
-    finnhub = { getLastKnownPrices: jest.fn() };
+    finnhub = {
+      getLastKnownPrices: jest.fn(),
+      ensureSubscribed: jest.fn().mockReturnValue(true),
+      releasePin: jest.fn(),
+    };
     const moduleRef = await Test.createTestingModule({
       providers: [
         WatchlistService,
@@ -203,6 +211,27 @@ describe('WatchlistService', () => {
       const result = await service.create('u1', 'aapl');
       expect(result).toEqual(item);
       expect(insert).toHaveBeenCalledWith({ user_id: 'u1', symbol: 'AAPL' });
+      // Without the pin a symbol added post-boot is only live while a browser
+      // holds it, so a mobile-only user would read price: null until restart.
+      expect(finnhub.ensureSubscribed).toHaveBeenCalledWith('AAPL');
+    });
+
+    it('still returns the item when the Finnhub cap refuses the subscription', async () => {
+      const item = { id: '1', symbol: 'AAPL', created_at: '2026-01-01' };
+      const countEq = jest.fn().mockResolvedValue({ count: 5, error: null });
+      const countSelect = jest.fn(() => ({ eq: countEq }));
+      const single = jest.fn().mockResolvedValue({ data: item, error: null });
+      const insert = jest.fn(() => ({ select: jest.fn(() => ({ single })) }));
+      let call = 0;
+      supabaseClient.from = jest.fn(() => {
+        call += 1;
+        return call === 1 ? { select: countSelect } : { insert };
+      }) as never;
+      finnhub.ensureSubscribed.mockReturnValue(false);
+
+      // The row is written either way — refusing to persist it would make the
+      // process-wide cap silently truncate an individual user's watchlist.
+      await expect(service.create('u1', 'AAPL')).resolves.toEqual(item);
     });
 
     it('throws when the count query errors', async () => {
@@ -248,22 +277,62 @@ describe('WatchlistService', () => {
   });
 
   describe('remove', () => {
-    it('deletes by user and symbol', async () => {
-      const eqSymbol = jest.fn().mockResolvedValue({ error: null });
+    /** delete(), then the "does anyone else still track this?" count query. */
+    function makeRemoveRouter(opts: {
+      deleteError?: unknown;
+      remaining?: { count: number | null; error: unknown };
+    }) {
+      const eqSymbol = jest.fn().mockResolvedValue({ error: opts.deleteError ?? null });
       const eqUser = jest.fn(() => ({ eq: eqSymbol }));
       const del = jest.fn(() => ({ eq: eqUser }));
-      supabaseClient.from = jest.fn(() => ({ delete: del })) as never;
+
+      const countEq = jest.fn().mockResolvedValue(opts.remaining ?? { count: 0, error: null });
+      const countSelect = jest.fn(() => ({ eq: countEq }));
+
+      let call = 0;
+      const from = jest.fn(() => {
+        call += 1;
+        return call === 1 ? { delete: del } : { select: countSelect };
+      });
+      return { from, eqUser, eqSymbol, countEq };
+    }
+
+    it('deletes by user and symbol', async () => {
+      const r = makeRemoveRouter({});
+      supabaseClient.from = r.from as never;
       await service.remove('u1', 'aapl');
-      expect(eqUser).toHaveBeenCalledWith('user_id', 'u1');
-      expect(eqSymbol).toHaveBeenCalledWith('symbol', 'AAPL');
+      expect(r.eqUser).toHaveBeenCalledWith('user_id', 'u1');
+      expect(r.eqSymbol).toHaveBeenCalledWith('symbol', 'AAPL');
     });
 
-    it('throws when the delete errors', async () => {
-      const eqSymbol = jest.fn().mockResolvedValue({ error: new Error('delete boom') });
-      const eqUser = jest.fn(() => ({ eq: eqSymbol }));
-      const del = jest.fn(() => ({ eq: eqUser }));
-      supabaseClient.from = jest.fn(() => ({ delete: del })) as never;
+    it('releases the Finnhub pin when no watchlist still holds the symbol', async () => {
+      const r = makeRemoveRouter({ remaining: { count: 0, error: null } });
+      supabaseClient.from = r.from as never;
+      await service.remove('u1', 'AAPL');
+      expect(r.countEq).toHaveBeenCalledWith('symbol', 'AAPL');
+      expect(finnhub.releasePin).toHaveBeenCalledWith('AAPL');
+    });
+
+    it('keeps the pin when another user still tracks the symbol', async () => {
+      const r = makeRemoveRouter({ remaining: { count: 3, error: null } });
+      supabaseClient.from = r.from as never;
+      await service.remove('u1', 'AAPL');
+      // Releasing here would silently stop the other user's prices.
+      expect(finnhub.releasePin).not.toHaveBeenCalled();
+    });
+
+    it('retains the pin when the usage check itself errors', async () => {
+      const r = makeRemoveRouter({ remaining: { count: null, error: { code: 'PGRST301' } } });
+      supabaseClient.from = r.from as never;
+      await expect(service.remove('u1', 'AAPL')).resolves.toBeUndefined();
+      expect(finnhub.releasePin).not.toHaveBeenCalled();
+    });
+
+    it('throws when the delete errors, without touching the pin', async () => {
+      const r = makeRemoveRouter({ deleteError: new Error('delete boom') });
+      supabaseClient.from = r.from as never;
       await expect(service.remove('u1', 'AAPL')).rejects.toThrow('delete boom');
+      expect(finnhub.releasePin).not.toHaveBeenCalled();
     });
   });
 

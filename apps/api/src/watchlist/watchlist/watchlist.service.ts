@@ -7,6 +7,7 @@ import {
   needsSeeding,
   normalizeSymbol,
 } from '@pulseticker/watchlist-rules';
+import { SecureLogger } from '../../common/logger/secure-logger.js';
 import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
 import { FinnhubService } from '../../finnhub/finnhub/finnhub.service.js';
 
@@ -26,6 +27,8 @@ interface WatchlistRow {
  */
 @Injectable()
 export class WatchlistService {
+  private readonly logger = new SecureLogger(WatchlistService.name);
+
   constructor(
     private supabase: SupabaseService,
     private finnhub: FinnhubService,
@@ -110,15 +113,43 @@ export class WatchlistService {
       if (error.code === '23505') throw new ConflictException(`${symbol} already in watchlist`);
       throw error;
     }
+
+    // Pin the symbol so it stays on the Finnhub feed with no browser connected.
+    // Without this a symbol added post-boot is subscribed only while a web
+    // client holds it, and mobile — which polls REST and never opens a socket —
+    // would read price: null for it until the next restart.
+    if (!this.finnhub.ensureSubscribed(normalizeSymbol(symbol))) {
+      this.logger.warnData('Symbol added but not subscribed — Finnhub cap reached', {
+        symbol: normalizeSymbol(symbol),
+      });
+    }
+
     return data;
   }
 
   async remove(userId: string, symbol: string) {
+    const sym = normalizeSymbol(symbol);
     const { error } = await this.supabase.client
       .from('watchlist_items')
       .delete()
       .eq('user_id', userId)
-      .eq('symbol', normalizeSymbol(symbol));
+      .eq('symbol', sym);
     if (error) throw error;
+
+    // Pins are process-wide, so the symbol may still be on another user's
+    // watchlist. Releasing without this check would silently stop their prices;
+    // never releasing would let the pin set grow until the cap fills and stay
+    // full until the next restart.
+    const { count, error: countError } = await this.supabase.client
+      .from('watchlist_items')
+      .select('id', { count: 'exact', head: true })
+      .eq('symbol', sym);
+    if (countError) {
+      this.logger.warnData('Could not confirm symbol is unused — pin retained', {
+        code: countError.code,
+      });
+      return;
+    }
+    if ((count ?? 0) === 0) this.finnhub.releasePin(sym);
   }
 }
