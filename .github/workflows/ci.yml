@@ -23,29 +23,18 @@ jobs:
 
     # apps/web/scripts/set-env.ts generates the gitignored
     # src/environments/environment.ts and throws if any of these is missing.
-    # Its output is baked into the browser bundle, so no real value belongs
-    # here — CI only needs the build to compile, never to reach a live service.
-    # Real values live in the Vercel project settings.
-    #
-    # The values below deliberately mirror .env.example, because two web specs
-    # assert against the generated file instead of mocking it:
-    #   - api.service.spec.ts pins API_URL to http://localhost:3000
-    #   - logger.service.spec.ts requires APP_ENV=development (logLevel: debug,
-    #     appEnv: 'development')
-    # Diverging from .env.example therefore turns CI red. Decoupling those two
-    # specs from the generated file is tracked separately; until then these
-    # values are load-bearing, not arbitrary placeholders.
-    #
-    # APP_ENV does not weaken the build check: `ng build` uses the production
-    # configuration regardless of it, and nothing reads environment.production.
-    # APP_ENV must also be listed in turbo.json's build `env` — turbo 2 runs in
-    # strict env mode and drops any variable not declared there.
+    # Every value below is a true placeholder: no spec reads the generated
+    # file any more (they inject the ENVIRONMENT token — #69), so CI only
+    # needs the build to compile, never to reach a live service. Real values
+    # live in the Vercel project settings. APP_ENV must stay one of
+    # development/staging/production, and must be listed in turbo.json's
+    # build `env` — turbo 2 runs in strict env mode.
     env:
-      APP_ENV: development
+      APP_ENV: production
       SUPABASE_URL: https://ci.invalid
       SUPABASE_PUBLISHABLE_KEY: ci-placeholder
-      API_URL: http://localhost:3000
-      WS_URL: http://localhost:3000
+      API_URL: https://ci.invalid
+      WS_URL: https://ci.invalid
 
     steps:
       - uses: actions/checkout@v7

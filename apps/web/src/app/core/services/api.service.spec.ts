@@ -2,10 +2,13 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { ENVIRONMENT } from '../environment.token';
 import { ApiService } from './api.service';
 
-// environment.ts apiUrl is 'http://localhost:3000'
-const BASE = 'http://localhost:3000';
+// A value the build-generated environment.ts can never contain: if the token
+// override silently failed and the real file leaked through, every URL
+// assertion below would fail loudly instead of passing by coincidence.
+const BASE = 'http://mock-api.test';
 
 describe('ApiService', () => {
   let service: ApiService;
@@ -13,7 +16,12 @@ describe('ApiService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      providers: [ApiService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [
+        ApiService,
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        { provide: ENVIRONMENT, useValue: { apiUrl: BASE } },
+      ],
     });
     service = TestBed.inject(ApiService);
     httpMock = TestBed.inject(HttpTestingController);

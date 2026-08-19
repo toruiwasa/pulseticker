@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable } from '@angular/core';
 import { LogLevel, LEVELS, sanitize } from '@pulseticker/logging';
-import { environment } from '../../../environments/environment';
+import { ENVIRONMENT } from '../environment.token';
 
 const COLORS: Record<LogLevel, string> = {
   debug: 'color: #888',
@@ -11,7 +11,8 @@ const COLORS: Record<LogLevel, string> = {
 
 @Injectable({ providedIn: 'root' })
 export class LoggerService {
-  private minLevel = LEVELS[(environment.logLevel as LogLevel) ?? 'warn'];
+  private env = inject(ENVIRONMENT);
+  private minLevel = LEVELS[(this.env.logLevel as LogLevel) ?? 'warn'];
 
   debug(ctx: string, msg: string, data?: Record<string, unknown>) {
     this.log('debug', ctx, msg, data);
@@ -45,7 +46,7 @@ export class LoggerService {
     extraData?: Record<string, unknown>,
   ) {
     const safe: Record<string, unknown> = { errorName: err.name, ...extraData };
-    if (environment.appEnv === 'development') safe['errorMessage'] = err.message;
+    if (this.env.appEnv === 'development') safe['errorMessage'] = err.message;
     this.log(level, ctx, msg, safe);
   }
 
