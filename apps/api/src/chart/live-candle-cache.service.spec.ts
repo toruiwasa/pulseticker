@@ -1,5 +1,5 @@
 import { LiveCandleCacheService } from './live-candle-cache.service.js';
-import { TwelveDataService } from './twelve-data.service.js';
+import { TwelveDataClient } from './twelve-data.client.js';
 import { FinnhubService } from '../finnhub/finnhub/finnhub.service.js';
 import { CandlePoint } from './chart.types.js';
 
@@ -8,12 +8,12 @@ function makeCandles(values: number[]): CandlePoint[] {
 }
 
 describe('LiveCandleCacheService', () => {
-  let twelve: jest.Mocked<TwelveDataService>;
+  let twelve: jest.Mocked<TwelveDataClient>;
   let finnhub: jest.Mocked<FinnhubService>;
   let service: LiveCandleCacheService;
 
   beforeEach(() => {
-    twelve = { getTimeSeries: jest.fn() } as unknown as jest.Mocked<TwelveDataService>;
+    twelve = { getTimeSeries: jest.fn() } as unknown as jest.Mocked<TwelveDataClient>;
     finnhub = {
       subscribe: jest.fn(),
       unsubscribe: jest.fn(),

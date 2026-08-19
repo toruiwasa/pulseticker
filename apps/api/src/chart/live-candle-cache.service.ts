@@ -2,7 +2,7 @@ import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/commo
 import { OnEvent } from '@nestjs/event-emitter';
 import { FinnhubService } from '../finnhub/finnhub/finnhub.service.js';
 import { CandlePoint, ChartRange } from './chart.types.js';
-import { TwelveDataService } from './twelve-data.service.js';
+import { TwelveDataClient } from './twelve-data.client.js';
 
 interface CacheEntry {
   candles: CandlePoint[];
@@ -23,7 +23,7 @@ export class LiveCandleCacheService implements OnModuleInit, OnModuleDestroy {
   private sweepTimer: ReturnType<typeof setInterval> | undefined;
 
   constructor(
-    private twelveData: TwelveDataService,
+    private twelveData: TwelveDataClient,
     private finnhub: FinnhubService,
   ) {}
 

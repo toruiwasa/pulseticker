@@ -1,16 +1,16 @@
 import { ConfigService } from '@nestjs/config';
-import { TwelveDataService } from './twelve-data.service.js';
+import { TwelveDataClient } from './twelve-data.client.js';
 import { DateTime } from 'luxon';
 
-describe('TwelveDataService', () => {
-  let service: TwelveDataService;
+describe('TwelveDataClient', () => {
+  let service: TwelveDataClient;
   const originalFetch = global.fetch;
 
   beforeEach(() => {
     const config = {
       getOrThrow: jest.fn().mockReturnValue('test-key'),
     } as unknown as ConfigService;
-    service = new TwelveDataService(config);
+    service = new TwelveDataClient(config);
   });
 
   afterEach(() => {

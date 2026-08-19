@@ -4,12 +4,12 @@ import { FinnhubModule } from '../finnhub/finnhub.module.js';
 import { ChartController } from './chart.controller.js';
 import { ChartService } from './chart.service.js';
 import { LiveCandleCacheService } from './live-candle-cache.service.js';
-import { TwelveDataService } from './twelve-data.service.js';
+import { TwelveDataClient } from './twelve-data.client.js';
 
 @Module({
   imports: [AuthModule, forwardRef(() => FinnhubModule)],
   controllers: [ChartController],
-  providers: [ChartService, LiveCandleCacheService, TwelveDataService],
+  providers: [ChartService, LiveCandleCacheService, TwelveDataClient],
   exports: [LiveCandleCacheService],
 })
 export class ChartModule {}
