@@ -2,12 +2,12 @@ import { Controller, Get, Sse } from '@nestjs/common';
 import { Observable, concat, from } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { LiveCandleCacheService } from '../chart/live-candle-cache.service.js';
-import { CandlePoint } from '../chart/chart.types.js';
+import type { PricePoint } from '@pulseticker/schemas';
 import { PreviewCacheService, PreviewPrice } from './preview-cache.service.js';
 
 export interface PreviewSnapshot {
   prices: PreviewPrice[];
-  candles: CandlePoint[] | null;
+  candles: PricePoint[] | null;
 }
 
 @Controller('preview')

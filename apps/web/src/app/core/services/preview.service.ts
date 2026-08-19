@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { EMPTY, Observable, fromEvent } from 'rxjs';
 import { map, retry, startWith, switchMap } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { CandlePoint } from './api.service';
+import type { PricePoint } from '@pulseticker/schemas';
 
 export interface PreviewPrice {
   symbol: string;
@@ -15,7 +15,7 @@ export interface PreviewPrice {
 
 export interface PreviewSnapshot {
   prices: PreviewPrice[];
-  candles: CandlePoint[] | null;
+  candles: PricePoint[] | null;
 }
 
 export const PREVIEW_SYMBOLS_INITIAL: PreviewPrice[] = [

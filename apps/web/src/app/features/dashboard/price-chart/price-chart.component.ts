@@ -17,7 +17,8 @@ import {
   Time,
   createChart,
 } from 'lightweight-charts';
-import { ApiService, CandlePoint, ChartRange } from '../../../core/services/api.service';
+import type { PricePoint } from '@pulseticker/schemas';
+import { ApiService, ChartRange } from '../../../core/services/api.service';
 import { SocketService } from '../../../core/services/socket.service';
 import { ThemeService } from '../../../core/services/theme.service';
 
@@ -160,7 +161,7 @@ export class PriceChartComponent implements AfterViewInit, OnDestroy {
       .subscribe(tick => this.onTick(tick.price, tick.ts));
   }
 
-  private applyHistory(candles: CandlePoint[]) {
+  private applyHistory(candles: PricePoint[]) {
     if (!this.series) return;
     if (candles.length > 0) {
       this.series.setData(candles.map(c => ({ time: c.time as Time, value: c.value })));

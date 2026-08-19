@@ -19,7 +19,7 @@ describe('TwelveDataClient', () => {
   });
 
   describe('getTimeSeries — 1D', () => {
-    it('parses Twelve Data 1-min response into sorted CandlePoint[] with ET timestamps', async () => {
+    it('parses Twelve Data 1-min response into sorted PricePoint[] with ET timestamps', async () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({
