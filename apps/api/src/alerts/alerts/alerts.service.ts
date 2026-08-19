@@ -46,7 +46,9 @@ export class AlertsService implements OnModuleInit {
     }
 
     if (!data) {
-      this.logger.warn('Alerts cache query returned null data with no error — starting with empty cache');
+      this.logger.warn(
+        'Alerts cache query returned null data with no error — starting with empty cache',
+      );
       return;
     }
 
@@ -65,7 +67,9 @@ export class AlertsService implements OnModuleInit {
       this.cache.set(key, list);
       totalCount++;
     }
-    this.logger.log(`Alerts cache loaded: ${totalCount} active alerts across ${this.cache.size} symbols`);
+    this.logger.log(
+      `Alerts cache loaded: ${totalCount} active alerts across ${this.cache.size} symbols`,
+    );
   }
 
   private sym(s: string) {
@@ -135,7 +139,7 @@ export class AlertsService implements OnModuleInit {
     for (const [sym, alerts] of this.cache) {
       this.cache.set(
         sym,
-        alerts.filter((a) => a.id !== alertId),
+        alerts.filter(a => a.id !== alertId),
       );
     }
   }
@@ -175,7 +179,7 @@ export class AlertsService implements OnModuleInit {
     for (const [sym, alerts] of this.cache) {
       this.cache.set(
         sym,
-        alerts.filter((a) => a.id !== payload.alertId),
+        alerts.filter(a => a.id !== payload.alertId),
       );
     }
   }

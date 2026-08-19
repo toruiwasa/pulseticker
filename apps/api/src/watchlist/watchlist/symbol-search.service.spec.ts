@@ -102,17 +102,13 @@ describe('SymbolSearchService', () => {
       await service.searchSymbols('JPY');
       mockSearch([]);
       await service.searchSymbols('AUD');
-      const forexCalls = fetchMock.mock.calls.filter(c =>
-        String(c[0]).includes('/forex/symbol'),
-      );
+      const forexCalls = fetchMock.mock.calls.filter(c => String(c[0]).includes('/forex/symbol'));
       expect(forexCalls.length).toBe(1);
     });
 
     it('degrades gracefully when /forex/symbol returns 403 (paid-tier)', async () => {
       fetchMock.mockResolvedValueOnce({ ok: false, status: 403 } as never);
-      mockSearch([
-        { symbol: 'AAPL', description: 'Apple Inc', type: 'Common Stock' },
-      ]);
+      mockSearch([{ symbol: 'AAPL', description: 'Apple Inc', type: 'Common Stock' }]);
       const out = await service.searchSymbols('apple');
       expect(out.map(r => r.symbol)).toEqual(['AAPL']);
     });

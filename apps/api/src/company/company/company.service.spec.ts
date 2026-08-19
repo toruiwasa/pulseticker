@@ -25,8 +25,20 @@ const MOCK_METRIC = {
 };
 
 const MOCK_NEWS = [
-  { headline: 'Apple beats earnings', url: 'https://news.example.com/1', datetime: 1700000000, source: 'Reuters', summary: '' },
-  { headline: 'iPhone sales surge', url: 'https://news.example.com/2', datetime: 1700000001, source: 'Bloomberg', summary: '' },
+  {
+    headline: 'Apple beats earnings',
+    url: 'https://news.example.com/1',
+    datetime: 1700000000,
+    source: 'Reuters',
+    summary: '',
+  },
+  {
+    headline: 'iPhone sales surge',
+    url: 'https://news.example.com/2',
+    datetime: 1700000001,
+    source: 'Bloomberg',
+    summary: '',
+  },
 ];
 
 describe('CompanyService', () => {

@@ -40,7 +40,10 @@ describe('PricesGateway', () => {
     });
 
     it('disconnects when the token is invalid (error returned)', async () => {
-      supabase.client.auth.getUser.mockResolvedValue({ data: { user: null }, error: { message: 'invalid' } });
+      supabase.client.auth.getUser.mockResolvedValue({
+        data: { user: null },
+        error: { message: 'invalid' },
+      });
       const client = makeSocket('bad-token');
       await gateway.handleConnection(client);
       expect(client.disconnect).toHaveBeenCalled();
@@ -115,8 +118,13 @@ describe('PricesGateway', () => {
       const toFn = jest.fn(() => ({ emit: emitFn }));
       (gateway as unknown as { server: unknown }).server = { to: toFn };
       const payload = {
-        alertId: 'a1', userId: 'u1', symbol: 'AAPL',
-        price: 210, threshold: '200', direction: 'above', message: 'AAPL hit 210',
+        alertId: 'a1',
+        userId: 'u1',
+        symbol: 'AAPL',
+        price: 210,
+        threshold: '200',
+        direction: 'above',
+        message: 'AAPL hit 210',
       };
       gateway.handleAlertTriggered(payload);
       expect(toFn).toHaveBeenCalledWith('user:u1');

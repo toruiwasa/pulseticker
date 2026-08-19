@@ -7,8 +7,12 @@ import { PreviewCacheService } from '../preview/preview-cache.service.js';
 import { WorkerRunnerService } from './worker-runner.service.js';
 
 jest.mock('graphile-worker', () => ({ run: jest.fn() }));
-jest.mock('./tasks/check-price-alert', () => ({ makeCheckPriceAlertTask: jest.fn().mockReturnValue(jest.fn()) }));
-jest.mock('../preview/tasks/fetch-preview-prices', () => ({ makeFetchPreviewPricesTask: jest.fn().mockReturnValue(jest.fn()) }));
+jest.mock('./tasks/check-price-alert', () => ({
+  makeCheckPriceAlertTask: jest.fn().mockReturnValue(jest.fn()),
+}));
+jest.mock('../preview/tasks/fetch-preview-prices', () => ({
+  makeFetchPreviewPricesTask: jest.fn().mockReturnValue(jest.fn()),
+}));
 
 const mockRun = run as jest.Mock;
 
@@ -23,10 +27,16 @@ describe('WorkerRunnerService', () => {
     const moduleRef = await Test.createTestingModule({
       providers: [
         WorkerRunnerService,
-        { provide: ConfigService, useValue: { getOrThrow: jest.fn().mockReturnValue('postgres://test') } },
+        {
+          provide: ConfigService,
+          useValue: { getOrThrow: jest.fn().mockReturnValue('postgres://test') },
+        },
         { provide: SupabaseService, useValue: { client: {} } },
         { provide: EventEmitter2, useValue: new EventEmitter2() },
-        { provide: PreviewCacheService, useValue: { getPrices: jest.fn(), setPrices: jest.fn(), prices$: { pipe: jest.fn() } } },
+        {
+          provide: PreviewCacheService,
+          useValue: { getPrices: jest.fn(), setPrices: jest.fn(), prices$: { pipe: jest.fn() } },
+        },
       ],
     }).compile();
 

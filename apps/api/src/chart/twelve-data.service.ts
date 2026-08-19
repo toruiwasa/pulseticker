@@ -62,7 +62,9 @@ export class TwelveDataService {
       }
       return body.values
         .map(v => ({
-          time: DateTime.fromFormat(v.datetime, cfg.format, { zone: 'America/New_York' }).toUnixInteger(),
+          time: DateTime.fromFormat(v.datetime, cfg.format, {
+            zone: 'America/New_York',
+          }).toUnixInteger(),
           value: parseFloat(v.close),
         }))
         .filter(p => Number.isFinite(p.time) && Number.isFinite(p.value))

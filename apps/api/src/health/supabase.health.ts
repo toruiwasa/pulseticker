@@ -9,13 +9,13 @@ export class SupabaseHealthIndicator extends HealthIndicator {
   }
 
   async isHealthy(key = 'supabase'): Promise<HealthIndicatorResult> {
-    const { error } = await this.supabase.client
-      .from('watchlist_items')
-      .select('id')
-      .limit(1);
+    const { error } = await this.supabase.client.from('watchlist_items').select('id').limit(1);
 
     if (error) {
-      throw new HealthCheckError('Supabase ping failed', this.getStatus(key, false, { message: error.message }));
+      throw new HealthCheckError(
+        'Supabase ping failed',
+        this.getStatus(key, false, { message: error.message }),
+      );
     }
 
     return this.getStatus(key, true);

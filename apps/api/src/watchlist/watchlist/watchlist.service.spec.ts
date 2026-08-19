@@ -33,7 +33,9 @@ function makeFindAllRouter(opts: {
   const upsert = jest.fn().mockResolvedValue({ error: opts.upsertError ?? null });
   const profileInsert = jest.fn().mockResolvedValue({ error: opts.profileInsertError ?? null });
 
-  const seededOrder = jest.fn().mockResolvedValue(opts.seededWatchlist ?? { data: [], error: null });
+  const seededOrder = jest
+    .fn()
+    .mockResolvedValue(opts.seededWatchlist ?? { data: [], error: null });
   const seededEq = jest.fn(() => ({ order: seededOrder }));
   const seededSelect = jest.fn(() => ({ eq: seededEq }));
 
@@ -41,7 +43,8 @@ function makeFindAllRouter(opts: {
   const from = jest.fn((table: string) => {
     if (table === 'user_profiles') {
       // First call: select, subsequent: insert
-      if (profileSelect.mock.calls.length === 0) return { select: profileSelect, insert: profileInsert };
+      if (profileSelect.mock.calls.length === 0)
+        return { select: profileSelect, insert: profileInsert };
       return { insert: profileInsert };
     }
     if (table === 'watchlist_items') {

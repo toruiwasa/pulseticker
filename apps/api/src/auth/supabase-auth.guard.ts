@@ -1,9 +1,4 @@
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { createRemoteJWKSet, jwtVerify } from 'jose';
 import type { Request } from 'express';
@@ -16,9 +11,7 @@ export class SupabaseAuthGuard implements CanActivate {
 
   constructor(config: ConfigService) {
     const supabaseUrl = config.getOrThrow<string>('SUPABASE_URL');
-    this.jwks = createRemoteJWKSet(
-      new URL(`${supabaseUrl}/auth/v1/.well-known/jwks.json`),
-    );
+    this.jwks = createRemoteJWKSet(new URL(`${supabaseUrl}/auth/v1/.well-known/jwks.json`));
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

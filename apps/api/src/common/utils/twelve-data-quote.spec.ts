@@ -29,7 +29,9 @@ describe('fetchTwelveDataQuote', () => {
   });
 
   it('throws on non-200 HTTP response', async () => {
-    global.fetch = jest.fn().mockResolvedValue({ ok: false, status: 429, json: jest.fn() }) as unknown as typeof fetch;
+    global.fetch = jest
+      .fn()
+      .mockResolvedValue({ ok: false, status: 429, json: jest.fn() }) as unknown as typeof fetch;
     await expect(fetchTwelveDataQuote('AUD/USD', 'k')).rejects.toThrow(/429/);
   });
 

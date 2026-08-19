@@ -1,4 +1,14 @@
-import { BadRequestException, Body, Controller, Delete, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { ZodError } from 'zod';
 import { CreateAlertSchema, type CreateAlertDto } from '@pulseticker/schemas';
 import { SupabaseAuthGuard } from '../../auth/supabase-auth.guard.js';
@@ -16,10 +26,7 @@ export class AlertsController {
   }
 
   @Post()
-  createAlert(
-    @Req() req: AuthedRequest,
-    @Body() body: unknown,
-  ) {
+  createAlert(@Req() req: AuthedRequest, @Body() body: unknown) {
     let dto: CreateAlertDto;
     try {
       dto = CreateAlertSchema.parse(body);

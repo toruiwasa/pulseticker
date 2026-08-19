@@ -6,7 +6,7 @@ import { CandlePoint } from '../chart/chart.types.js';
 import { PreviewCacheService, PreviewPrice } from './preview-cache.service.js';
 
 export interface PreviewSnapshot {
-  prices:  PreviewPrice[];
+  prices: PreviewPrice[];
   candles: CandlePoint[] | null;
 }
 
@@ -29,16 +29,22 @@ export class PreviewController {
     // embed them so the login chart can seed history without a separate
     // authenticated API call.
     const first$ = from(this.candleCache.getCandles('AAPL', '1D')).pipe(
-      map(candles => ({
-        data: { prices: this.cache.getPrices(), candles } satisfies PreviewSnapshot,
-      }) as MessageEvent),
+      map(
+        candles =>
+          ({
+            data: { prices: this.cache.getPrices(), candles } satisfies PreviewSnapshot,
+          }) as MessageEvent,
+      ),
     );
 
     // Subsequent messages: tick-only, no candle payload
     const ticks$ = this.cache.prices$.pipe(
-      map(prices => ({
-        data: { prices, candles: null } satisfies PreviewSnapshot,
-      }) as MessageEvent),
+      map(
+        prices =>
+          ({
+            data: { prices, candles: null } satisfies PreviewSnapshot,
+          }) as MessageEvent,
+      ),
     );
 
     return concat(first$, ticks$);

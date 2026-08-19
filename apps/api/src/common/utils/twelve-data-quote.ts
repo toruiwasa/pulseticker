@@ -30,9 +30,7 @@ export async function fetchTwelveDataQuote(
   apiKey: string,
 ): Promise<TwelveDataQuote> {
   const url =
-    `${TWELVE_DATA_BASE}/quote` +
-    `?symbol=${encodeURIComponent(symbol)}` +
-    `&apikey=${apiKey}`;
+    `${TWELVE_DATA_BASE}/quote` + `?symbol=${encodeURIComponent(symbol)}` + `&apikey=${apiKey}`;
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Twelve Data quote failed for ${symbol}: ${res.status}`);

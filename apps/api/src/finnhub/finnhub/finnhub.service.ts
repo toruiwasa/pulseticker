@@ -11,7 +11,7 @@ import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
 // The backoff is only reset after the connection has been stable for
 // stableWindowMs — resetting on 'open' alone causes a reconnect storm
 // if the server closes the socket within seconds of accepting it.
-const STABLE_WINDOW_MS    = 60_000;
+const STABLE_WINDOW_MS = 60_000;
 const MIN_DELAY_AFTER_429 = 60_000;
 
 @Injectable()
@@ -49,7 +49,9 @@ export class FinnhubService implements OnModuleInit, OnApplicationBootstrap {
       clearTimeout(this.stableTimer);
       this.stableTimer = setTimeout(() => {
         this.reconnectDelay = 1000;
-        this.logger.logData('Finnhub WS stable — backoff reset', { stableWindowMs: STABLE_WINDOW_MS });
+        this.logger.logData('Finnhub WS stable — backoff reset', {
+          stableWindowMs: STABLE_WINDOW_MS,
+        });
       }, STABLE_WINDOW_MS);
 
       for (const sym of this.refCounts.keys()) {
@@ -57,13 +59,20 @@ export class FinnhubService implements OnModuleInit, OnApplicationBootstrap {
       }
     });
 
-    this.ws.on('message', (data) => {
+    this.ws.on('message', data => {
       try {
-        const msg = JSON.parse(data.toString()) as { type: string; data?: { s: string; p: number; t: number }[] };
+        const msg = JSON.parse(data.toString()) as {
+          type: string;
+          data?: { s: string; p: number; t: number }[];
+        };
         if (msg.type === 'trade' && msg.data) {
           for (const trade of msg.data) {
             this.priceCache.set(trade.s.toUpperCase(), { price: trade.p, ts: trade.t });
-            this.eventEmitter.emit('price.received', { symbol: trade.s, price: trade.p, ts: trade.t });
+            this.eventEmitter.emit('price.received', {
+              symbol: trade.s,
+              price: trade.p,
+              ts: trade.t,
+            });
           }
         }
       } catch {
@@ -84,7 +93,7 @@ export class FinnhubService implements OnModuleInit, OnApplicationBootstrap {
       }, this.reconnectDelay);
     });
 
-    this.ws.on('error', (err) => {
+    this.ws.on('error', err => {
       if (err.message.includes('429')) {
         // 429 is an expected Finnhub rate-limit response — raise the floor and warn only.
         this.reconnectDelay = Math.max(this.reconnectDelay, MIN_DELAY_AFTER_429);
@@ -130,7 +139,9 @@ export class FinnhubService implements OnModuleInit, OnApplicationBootstrap {
     }
   }
 
-  getLastKnownPrices(symbols: string[]): Array<{ symbol: string; price: number | null; ts: number | null }> {
+  getLastKnownPrices(
+    symbols: string[],
+  ): Array<{ symbol: string; price: number | null; ts: number | null }> {
     return symbols.map(sym => {
       const cached = this.priceCache.get(sym.toUpperCase());
       return {
@@ -142,9 +153,7 @@ export class FinnhubService implements OnModuleInit, OnApplicationBootstrap {
   }
 
   async onApplicationBootstrap() {
-    const { data, error } = await this.supabase.client
-      .from('watchlist_items')
-      .select('symbol');
+    const { data, error } = await this.supabase.client.from('watchlist_items').select('symbol');
 
     if (error) {
       this.logger.errorData('Warm-up failed to load watchlist symbols', { code: error.code });
@@ -156,7 +165,9 @@ export class FinnhubService implements OnModuleInit, OnApplicationBootstrap {
       return;
     }
 
-    const symbols = [...new Set((data as { symbol: string }[]).map(row => row.symbol.toUpperCase()))];
+    const symbols = [
+      ...new Set((data as { symbol: string }[]).map(row => row.symbol.toUpperCase())),
+    ];
     for (const symbol of symbols) {
       this.subscribe(symbol);
     }

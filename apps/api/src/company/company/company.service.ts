@@ -39,7 +39,14 @@ export class CompanyService {
 
     const raw = (await res.json()) as FinnhubProfile2;
     if (!raw.name) {
-      const empty: CompanyProfile = { name: '', ticker: symbol, marketCap: 0, logo: '', industry: '', currency: 'USD' };
+      const empty: CompanyProfile = {
+        name: '',
+        ticker: symbol,
+        marketCap: 0,
+        logo: '',
+        industry: '',
+        currency: 'USD',
+      };
       this.profileCache.set(symbol, { data: empty, expiresAt: Date.now() + TTL_MS });
       return empty;
     }
