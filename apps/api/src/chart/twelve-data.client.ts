@@ -29,8 +29,8 @@ const RANGE_CONFIG: Record<ChartRange, RangeConfig> = {
 };
 
 @Injectable()
-export class TwelveDataService {
-  private readonly logger = new SecureLogger(TwelveDataService.name);
+export class TwelveDataClient {
+  private readonly logger = new SecureLogger(TwelveDataClient.name);
   private readonly base = 'https://api.twelvedata.com';
 
   constructor(private config: ConfigService) {}

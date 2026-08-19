@@ -4,7 +4,6 @@ import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import WebSocket from 'ws';
 import { FinnhubService } from './finnhub.service.js';
-import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
 
 const WS_OPEN = 1;
 const WS_CONNECTING = 0;
@@ -40,32 +39,20 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-function makeSupabaseMock(rows: { symbol: string }[] = []) {
-  return {
-    client: {
-      from: jest.fn(() => ({
-        select: jest.fn().mockResolvedValue({ data: rows, error: null }),
-      })),
-    },
-  };
-}
-
-async function buildService(supabaseRows: { symbol: string }[] = []) {
+async function buildService() {
   const config = { getOrThrow: jest.fn().mockReturnValue('test-key') };
   const eventEmitter = { emit: jest.fn() };
-  const supabase = makeSupabaseMock(supabaseRows);
 
   const moduleRef = await Test.createTestingModule({
     providers: [
       FinnhubService,
       { provide: ConfigService, useValue: config },
       { provide: EventEmitter2, useValue: eventEmitter },
-      { provide: SupabaseService, useValue: supabase },
     ],
   }).compile();
 
   const service = moduleRef.get(FinnhubService);
-  return { service, eventEmitter, supabase };
+  return { service, eventEmitter };
 }
 
 describe('FinnhubService', () => {
@@ -249,54 +236,6 @@ describe('FinnhubService', () => {
     });
   });
 
-  describe('onApplicationBootstrap() warm-up', () => {
-    it('subscribes all distinct symbols from watchlist_items', async () => {
-      const { service } = await buildService([{ symbol: 'AAPL' }, { symbol: 'MSFT' }]);
-      service.onModuleInit();
-      const ws = FakeWS.lastInstance;
-      ws.trigger('open');
-
-      await service.onApplicationBootstrap();
-
-      expect(ws.send).toHaveBeenCalledWith(JSON.stringify({ type: 'subscribe', symbol: 'AAPL' }));
-      expect(ws.send).toHaveBeenCalledWith(JSON.stringify({ type: 'subscribe', symbol: 'MSFT' }));
-    });
-
-    it('deduplicates symbols (same symbol multiple rows)', async () => {
-      const { service } = await buildService([{ symbol: 'AAPL' }, { symbol: 'aapl' }]);
-      service.onModuleInit();
-      const ws = FakeWS.lastInstance;
-      ws.trigger('open');
-
-      await service.onApplicationBootstrap();
-
-      const subscribeCalls = (ws.send as jest.Mock).mock.calls.filter(
-        ([msg]: [string]) => JSON.parse(msg).type === 'subscribe',
-      );
-      expect(subscribeCalls).toHaveLength(1);
-    });
-
-    it('does not throw when Supabase returns an error (non-fatal)', async () => {
-      const { service, supabase } = await buildService();
-      supabase.client.from.mockReturnValue({
-        select: jest.fn().mockResolvedValue({ data: null, error: { code: 'PGRST301' } }),
-      });
-      service.onModuleInit();
-
-      await expect(service.onApplicationBootstrap()).resolves.toBeUndefined();
-    });
-
-    it('does not throw when Supabase returns null data with no error (non-fatal)', async () => {
-      const { service, supabase } = await buildService();
-      supabase.client.from.mockReturnValue({
-        select: jest.fn().mockResolvedValue({ data: null, error: null }),
-      });
-      service.onModuleInit();
-
-      await expect(service.onApplicationBootstrap()).resolves.toBeUndefined();
-    });
-  });
-
   describe('close handler — exponential backoff', () => {
     it('reconnects after the initial delay of 1 000 ms', async () => {
       const { service } = await buildService();
@@ -448,6 +387,168 @@ describe('FinnhubService', () => {
 
       ws.readyState = WS_CONNECTING;
       service.unsubscribe('NVDA');
+
+      expect(ws.send).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('ensureSubscribed() — pinned, idempotent, capped', () => {
+    it('subscribes upstream once no matter how many times it is called', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      const ws = FakeWS.lastInstance;
+      ws.trigger('open');
+      (ws.send as jest.Mock).mockClear();
+
+      expect(service.ensureSubscribed('AAPL')).toBe(true);
+      expect(service.ensureSubscribed('AAPL')).toBe(true);
+      expect(service.ensureSubscribed('aapl')).toBe(true);
+
+      expect(ws.send).toHaveBeenCalledTimes(1);
+      expect(service.liveSubscriptionCount()).toBe(1);
+    });
+
+    it('keeps the symbol live after every client disconnects', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      const ws = FakeWS.lastInstance;
+      ws.trigger('open');
+      service.ensureSubscribed('AAPL');
+      service.subscribe('AAPL');
+      (ws.send as jest.Mock).mockClear();
+
+      service.unsubscribe('AAPL');
+
+      // This is the defect the pin exists for: mobile polls REST and never
+      // opens a socket, so a symbol released here would read price: null.
+      expect(ws.send).not.toHaveBeenCalled();
+      expect(service.liveSubscriptionCount()).toBe(1);
+    });
+
+    it('refuses past the 50-symbol cap and reports the refusal', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      FakeWS.lastInstance.trigger('open');
+
+      for (let i = 0; i < 50; i++) service.ensureSubscribed(`SYM${i}`);
+
+      expect(service.liveSubscriptionCount()).toBe(50);
+      expect(service.ensureSubscribed('OVERFLOW')).toBe(false);
+      expect(service.liveSubscriptionCount()).toBe(50);
+    });
+
+    it('still accepts a symbol already subscribed once the cap is reached', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      FakeWS.lastInstance.trigger('open');
+      for (let i = 0; i < 50; i++) service.ensureSubscribed(`SYM${i}`);
+
+      expect(service.ensureSubscribed('SYM0')).toBe(true);
+    });
+
+    it('refuses a client subscribe past the cap without tracking it', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      FakeWS.lastInstance.trigger('open');
+      for (let i = 0; i < 50; i++) service.ensureSubscribed(`SYM${i}`);
+
+      service.subscribe('OVERFLOW');
+
+      expect(service.liveSubscriptionCount()).toBe(50);
+    });
+
+    it('re-subscribes pinned symbols on reconnect', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      FakeWS.lastInstance.trigger('open');
+      service.ensureSubscribed('AAPL');
+
+      service.onModuleInit();
+      const ws2 = FakeWS.lastInstance;
+      ws2.trigger('open');
+
+      expect(ws2.send).toHaveBeenCalledWith(JSON.stringify({ type: 'subscribe', symbol: 'AAPL' }));
+    });
+  });
+
+  describe('cap refusal logging', () => {
+    it('warns once per refused symbol, not once per polling attempt', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      FakeWS.lastInstance.trigger('open');
+      for (let i = 0; i < 50; i++) service.ensureSubscribed(`SYM${i}`);
+      const warnData = jest.spyOn(
+        (service as unknown as { logger: { warnData: (...a: unknown[]) => void } }).logger,
+        'warnData',
+      );
+
+      // The 15 s price poll retries a refused symbol on every tick.
+      service.ensureSubscribed('REFUSED');
+      service.ensureSubscribed('REFUSED');
+      service.ensureSubscribed('REFUSED');
+
+      expect(warnData).toHaveBeenCalledTimes(1);
+    });
+
+    it('warns again if the symbol is refused anew after having recovered', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      FakeWS.lastInstance.trigger('open');
+      for (let i = 0; i < 50; i++) service.ensureSubscribed(`SYM${i}`);
+      const warnData = jest.spyOn(
+        (service as unknown as { logger: { warnData: (...a: unknown[]) => void } }).logger,
+        'warnData',
+      );
+
+      service.ensureSubscribed('REFUSED'); // logged
+      service.releasePin('SYM0'); // capacity frees
+      expect(service.ensureSubscribed('REFUSED')).toBe(true); // recovers, clears the marker
+      service.releasePin('REFUSED');
+      service.ensureSubscribed('AGAIN0'); // cap full again (49 + 1)
+      service.ensureSubscribed('REFUSED'); // a new refusal episode
+
+      expect(warnData).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe('releasePin()', () => {
+    it('unsubscribes upstream when no client wants the symbol', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      const ws = FakeWS.lastInstance;
+      ws.trigger('open');
+      service.ensureSubscribed('AAPL');
+      (ws.send as jest.Mock).mockClear();
+
+      service.releasePin('AAPL');
+
+      expect(ws.send).toHaveBeenCalledWith(JSON.stringify({ type: 'unsubscribe', symbol: 'AAPL' }));
+      expect(service.liveSubscriptionCount()).toBe(0);
+    });
+
+    it('keeps the symbol live when a client still wants it', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      const ws = FakeWS.lastInstance;
+      ws.trigger('open');
+      service.ensureSubscribed('AAPL');
+      service.subscribe('AAPL');
+      (ws.send as jest.Mock).mockClear();
+
+      service.releasePin('AAPL');
+
+      expect(ws.send).not.toHaveBeenCalled();
+      expect(service.liveSubscriptionCount()).toBe(1);
+    });
+
+    it('is a no-op for a symbol that was never pinned', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      const ws = FakeWS.lastInstance;
+      ws.trigger('open');
+      (ws.send as jest.Mock).mockClear();
+
+      service.releasePin('NEVER');
 
       expect(ws.send).not.toHaveBeenCalled();
     });

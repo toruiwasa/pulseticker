@@ -1,10 +1,15 @@
 import { BadRequestException, ConflictException, Injectable } from '@nestjs/common';
 import type { WatchlistPricesResponse } from '@pulseticker/schemas';
+import {
+  canAdd,
+  DEFAULT_SYMBOLS,
+  MAX_WATCHLIST_SIZE,
+  needsSeeding,
+  normalizeSymbol,
+} from '@pulseticker/watchlist-rules';
+import { SecureLogger } from '../../common/logger/secure-logger.js';
 import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
 import { FinnhubService } from '../../finnhub/finnhub/finnhub.service.js';
-
-const DEFAULT_SYMBOLS = ['VOO', 'AAPL', 'MSFT', 'OANDA:AUD_USD', 'OANDA:AUD_JPY'];
-const MAX_WATCHLIST_SIZE = 50;
 
 /** Shape of the columns findAll() selects. SupabaseClient carries no Database
  *  generic here, so its rows arrive as `any` and need naming to stay type-safe. */
@@ -22,6 +27,8 @@ interface WatchlistRow {
  */
 @Injectable()
 export class WatchlistService {
+  private readonly logger = new SecureLogger(WatchlistService.name);
+
   constructor(
     private supabase: SupabaseService,
     private finnhub: FinnhubService,
@@ -42,7 +49,7 @@ export class WatchlistService {
       .order('created_at', { ascending: true });
     if (error) throw error;
 
-    if (profile) return data;
+    if (!needsSeeding({ hasProfile: !!profile })) return data;
 
     const { error: seedError } = await this.supabase.client.from('watchlist_items').upsert(
       DEFAULT_SYMBOLS.map(symbol => ({ user_id: userId, symbol })),
@@ -77,6 +84,11 @@ export class WatchlistService {
    */
   async getWatchlistPrices(userId: string): Promise<WatchlistPricesResponse> {
     const rows = (await this.findAll(userId)) as WatchlistRow[];
+    // Idempotent, so safe on every poll. This is the recovery path for a
+    // symbol the cap refused at create() or warm-up: once releasePin frees
+    // capacity, the next poll subscribes it — without this, a refusal lasted
+    // until restart. Refusals here are logged once per symbol upstream.
+    for (const row of rows) this.finnhub.ensureSubscribed(row.symbol);
     const prices = this.finnhub.getLastKnownPrices(rows.map(r => r.symbol));
     const items = rows.map((row, i) => ({
       id: row.id,
@@ -87,38 +99,62 @@ export class WatchlistService {
     return { cached: items.length === 0 || items.some(i => i.price !== null), items };
   }
 
-  private sym(s: string) {
-    return s.toUpperCase();
-  }
-
   async create(userId: string, symbol: string) {
     const { count, error: countError } = await this.supabase.client
       .from('watchlist_items')
       .select('id', { count: 'exact', head: true })
       .eq('user_id', userId);
     if (countError) throw countError;
-    if ((count ?? 0) >= MAX_WATCHLIST_SIZE) {
+    if (!canAdd({ count: count ?? 0 })) {
       throw new BadRequestException(`Watchlist limit of ${MAX_WATCHLIST_SIZE} symbols reached`);
     }
 
     const { data, error } = await this.supabase.client
       .from('watchlist_items')
-      .insert({ user_id: userId, symbol: this.sym(symbol) })
+      .insert({ user_id: userId, symbol: normalizeSymbol(symbol) })
       .select('id, symbol, created_at')
       .single();
     if (error) {
       if (error.code === '23505') throw new ConflictException(`${symbol} already in watchlist`);
       throw error;
     }
+
+    // Pin the symbol so it stays on the Finnhub feed with no browser connected.
+    // Without this a symbol added post-boot is subscribed only while a web
+    // client holds it, and mobile — which polls REST and never opens a socket —
+    // would read price: null for it until the next restart.
+    if (!this.finnhub.ensureSubscribed(normalizeSymbol(symbol))) {
+      this.logger.warnData('Symbol added but not subscribed — Finnhub cap reached', {
+        symbol: normalizeSymbol(symbol),
+      });
+    }
+
     return data;
   }
 
   async remove(userId: string, symbol: string) {
+    const sym = normalizeSymbol(symbol);
     const { error } = await this.supabase.client
       .from('watchlist_items')
       .delete()
       .eq('user_id', userId)
-      .eq('symbol', this.sym(symbol));
+      .eq('symbol', sym);
     if (error) throw error;
+
+    // Pins are process-wide, so the symbol may still be on another user's
+    // watchlist. Releasing without this check would silently stop their prices;
+    // never releasing would let the pin set grow until the cap fills and stay
+    // full until the next restart.
+    const { count, error: countError } = await this.supabase.client
+      .from('watchlist_items')
+      .select('id', { count: 'exact', head: true })
+      .eq('symbol', sym);
+    if (countError) {
+      this.logger.warnData('Could not confirm symbol is unused — pin retained', {
+        code: countError.code,
+      });
+      return;
+    }
+    if ((count ?? 0) === 0) this.finnhub.releasePin(sym);
   }
 }

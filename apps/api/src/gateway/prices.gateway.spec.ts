@@ -10,7 +10,7 @@ function makeSocket(token?: string): jest.Mocked<Socket> {
     data: {} as Record<string, unknown>,
     disconnect: jest.fn(),
     join: jest.fn(),
-  } as unknown as jest.Mocked<Socket>;
+  };
 }
 
 describe('PricesGateway', () => {
@@ -24,7 +24,10 @@ describe('PricesGateway', () => {
       providers: [
         PricesGateway,
         { provide: SupabaseService, useValue: supabase },
-        { provide: FinnhubService, useValue: { subscribe: jest.fn(), unsubscribe: jest.fn() } },
+        {
+          provide: FinnhubService,
+          useValue: { subscribe: jest.fn().mockReturnValue(true), unsubscribe: jest.fn() },
+        },
       ],
     }).compile();
     gateway = moduleRef.get(PricesGateway);
@@ -81,6 +84,20 @@ describe('PricesGateway', () => {
       expect(finnhub.subscribe).toHaveBeenCalledWith('GOOG');
       expect(client.data.subscribedSymbols as Set<string>).toContain('AAPL');
       expect(client.data.subscribedSymbols as Set<string>).toContain('GOOG');
+    });
+
+    it('does not join the room or track a symbol the cap refused', () => {
+      const client = makeSocket();
+      client.data.subscribedSymbols = new Set<string>();
+      finnhub.subscribe.mockReturnValueOnce(true).mockReturnValueOnce(false);
+
+      gateway.handleSubscribe(client, { symbols: ['AAPL', 'REFUSED'] });
+
+      // Joining the room without an upstream subscription would leave the
+      // client waiting for broadcasts that can never arrive.
+      expect(client.join).toHaveBeenCalledWith('symbol:AAPL');
+      expect(client.join).not.toHaveBeenCalledWith('symbol:REFUSED');
+      expect(client.data.subscribedSymbols as Set<string>).not.toContain('REFUSED');
     });
   });
 

@@ -22,11 +22,11 @@ describe('WatchlistController', () => {
       create: jest.fn(),
       remove: jest.fn(),
       getWatchlistPrices: jest.fn(),
-    } as unknown as jest.Mocked<WatchlistService>;
+    };
     symbols = {
       searchSymbols: jest.fn(),
       getQuote: jest.fn(),
-    } as unknown as jest.Mocked<SymbolSearchService>;
+    };
     controller = new WatchlistController(service, symbols);
   });
 
@@ -99,7 +99,7 @@ describe('WatchlistController', () => {
       service.getWatchlistPrices.mockResolvedValue({
         cached: true,
         items: [{ id: UUID, symbol: 'AAPL', price: 195.23 }],
-      } as never);
+      });
       await expect(controller.prices(authedReq())).rejects.toThrow(ZodError);
     });
   });

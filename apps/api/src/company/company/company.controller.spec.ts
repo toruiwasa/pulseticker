@@ -38,7 +38,7 @@ describe('CompanyController', () => {
       getMetrics: jest.fn().mockResolvedValue(MOCK_METRICS),
       getNews: jest.fn().mockResolvedValue(MOCK_NEWS),
     };
-    controller = new CompanyController(service as unknown as CompanyService);
+    controller = new CompanyController(service);
   });
 
   describe('profile', () => {

@@ -33,14 +33,14 @@ describe('SymbolSearchService', () => {
       fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve(oandaList),
-      } as never);
+      });
     }
 
     function mockSearch(result: { symbol: string; description: string; type: string }[]) {
       fetchMock.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ result }),
-      } as never);
+      });
     }
 
     it('returns FX matches from OANDA cache when query is a currency code', async () => {
@@ -107,7 +107,7 @@ describe('SymbolSearchService', () => {
     });
 
     it('degrades gracefully when /forex/symbol returns 403 (paid-tier)', async () => {
-      fetchMock.mockResolvedValueOnce({ ok: false, status: 403 } as never);
+      fetchMock.mockResolvedValueOnce({ ok: false, status: 403 });
       mockSearch([{ symbol: 'AAPL', description: 'Apple Inc', type: 'Common Stock' }]);
       const out = await service.searchSymbols('apple');
       expect(out.map(r => r.symbol)).toEqual(['AAPL']);
@@ -115,7 +115,7 @@ describe('SymbolSearchService', () => {
 
     it('throws when /search response is not ok', async () => {
       mockForexSymbol();
-      fetchMock.mockResolvedValueOnce({ ok: false, status: 500 } as never);
+      fetchMock.mockResolvedValueOnce({ ok: false, status: 500 });
       await expect(service.searchSymbols('q')).rejects.toThrow('Finnhub search failed: 500');
     });
   });
@@ -125,7 +125,7 @@ describe('SymbolSearchService', () => {
       fetchMock.mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ c: 150.25, pc: 149, t: 1700000000, other: 'ignore' }),
-      } as never);
+      });
 
       const out = await service.getQuote('AAPL');
       expect(out).toEqual({ c: 150.25, pc: 149, t: 1700000000 });
@@ -135,7 +135,7 @@ describe('SymbolSearchService', () => {
     });
 
     it('throws when the response is not ok', async () => {
-      fetchMock.mockResolvedValue({ ok: false, status: 429 } as never);
+      fetchMock.mockResolvedValue({ ok: false, status: 429 });
       await expect(service.getQuote('AAPL')).rejects.toThrow('Finnhub quote failed for AAPL: 429');
     });
   });

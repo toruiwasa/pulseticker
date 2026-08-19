@@ -135,6 +135,18 @@ After every PR (or PR stack) merges to main:
 - NestJS + Angular are intentional learning targets (developer has 6yr TS/Node/React experience but is new to both frameworks)
 - Commit once per completed feature (not per file)
 - **Decompose by provider, inside the feature module that owns the concern**: `apps/api` is feature-module-per-folder (`watchlist/`, `finnhub/`, `chart/`), and splitting a responsibility means adding a provider to the owning module — the unit of decomposition is the provider, not the directory, so the folder layout stays as it is. NestJS keeps its own job: HTTP, DI, module wiring, lifecycle. Put business rules that need none of that in `packages/` as pure functions (see `packages/trading-utils`); that is what makes them testable without mocks.
+- **Provider naming says what kind of thing it is**: `*Service` is NestJS's DI convention and carries no architectural meaning, so it hides the distinction that decides where new code belongs. Use the suffix to name the role:
+
+  | Suffix | Role | Example |
+  |---|---|---|
+  | `*Client` | External API client — fetch, map, return. No domain state. | `TwelveDataClient` |
+  | `*Service` | Domain or application service — owns a rule or an operation | `WatchlistService`, `SymbolSearchService` |
+  | `*Cache` | Stateful store with a lifecycle | `LiveCandleCacheService` → `LiveCandleCache` |
+  | `*Registry` | Owns membership/ref-counting over something external | `SubscriptionRegistry` |
+  | `*Adapter` / `*Guard` / `*Gateway` | unchanged — already role-named | `WsAdapter` |
+
+  Renaming existing classes is not a task of its own; apply the vocabulary when a file is being changed for another reason.
+
 - **Library-first UI**: Always prefer existing library components (Taiga UI, Angular CDK) over custom HTML + CSS implementations. Writing custom UI or logic without justification is NG. Taiga UI components are customizable via CSS custom properties (`--tui-*`) — override tokens in `styles.css` rather than reimplementing from scratch.
 - **Library-source-first debugging (mandatory, not advisory)**: When a library, framework, or infra tool (Dependabot, GitHub Actions, Docker, pnpm) behaves unexpectedly — OR before proposing a fix for a config error in any of these tools — read the official documentation and search the issue tracker for the exact error message **before writing any fix**. This applies to the very first fix attempt, not only after subsequent failures. Empirical trial-and-error without reading the source produces multiple fix commits for the same root cause. Minimum: read the relevant config reference, check the changelog for breaking changes in the version in use, and search GitHub Issues / Discussions for the exact error message.
 

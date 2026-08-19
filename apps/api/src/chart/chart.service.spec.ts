@@ -6,7 +6,7 @@ describe('ChartService', () => {
   let service: ChartService;
 
   beforeEach(() => {
-    cache = { getCandles: jest.fn() } as unknown as jest.Mocked<LiveCandleCacheService>;
+    cache = { getCandles: jest.fn() };
     service = new ChartService(cache);
   });
 

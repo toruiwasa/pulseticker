@@ -1,16 +1,16 @@
 import { ConfigService } from '@nestjs/config';
-import { TwelveDataService } from './twelve-data.service.js';
+import { TwelveDataClient } from './twelve-data.client.js';
 import { DateTime } from 'luxon';
 
-describe('TwelveDataService', () => {
-  let service: TwelveDataService;
+describe('TwelveDataClient', () => {
+  let service: TwelveDataClient;
   const originalFetch = global.fetch;
 
   beforeEach(() => {
     const config = {
       getOrThrow: jest.fn().mockReturnValue('test-key'),
     } as unknown as ConfigService;
-    service = new TwelveDataService(config);
+    service = new TwelveDataClient(config);
   });
 
   afterEach(() => {
@@ -29,7 +29,7 @@ describe('TwelveDataService', () => {
             { datetime: '2026-06-10 09:30:00', close: '185.50' },
           ],
         }),
-      }) as unknown as typeof fetch;
+      });
 
       const result = await service.getTimeSeries('AAPL', '1D');
       const open = DateTime.fromObject(
@@ -54,7 +54,7 @@ describe('TwelveDataService', () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({ status: 'ok', values: [] }),
-      }) as unknown as typeof fetch;
+      });
 
       await service.getTimeSeries('OANDA:AUD_USD', '1D');
 
@@ -71,7 +71,7 @@ describe('TwelveDataService', () => {
           status: 'ok',
           values: [{ datetime: '2026-06-09', close: '184.00' }],
         }),
-      }) as unknown as typeof fetch;
+      });
 
       await service.getTimeSeries('AAPL', '1Y');
 
@@ -87,7 +87,7 @@ describe('TwelveDataService', () => {
         ok: false,
         status: 429,
         json: jest.fn(),
-      }) as unknown as typeof fetch;
+      });
 
       await expect(service.getTimeSeries('AAPL', '1D')).resolves.toEqual([]);
     });
@@ -96,15 +96,13 @@ describe('TwelveDataService', () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({ status: 'error', message: 'symbol not found' }),
-      }) as unknown as typeof fetch;
+      });
 
       await expect(service.getTimeSeries('XYZ', '1D')).resolves.toEqual([]);
     });
 
     it('returns [] when fetch throws', async () => {
-      global.fetch = jest
-        .fn()
-        .mockRejectedValue(new Error('network down')) as unknown as typeof fetch;
+      global.fetch = jest.fn().mockRejectedValue(new Error('network down'));
       await expect(service.getTimeSeries('AAPL', '1D')).resolves.toEqual([]);
     });
   });
