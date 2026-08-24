@@ -85,6 +85,31 @@ describe('FinnhubService', () => {
       expect(ws2.send).toHaveBeenCalledWith(JSON.stringify({ type: 'subscribe', symbol: 'AAPL' }));
     });
 
+    // Regression net for #74: pinned and ref-counted symbols currently share one
+    // `wantedSymbols()` union inside this class. A split into a transport class and
+    // a subscription-registry class must keep both types flowing through whatever
+    // resubscribe-on-reconnect wiring replaces this loop — this pins the combined
+    // behaviour down before that split happens.
+    it('re-subscribes both pinned and ref-counted symbols together after a close/reconnect cycle', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      const ws1 = FakeWS.lastInstance;
+      ws1.trigger('open');
+
+      service.ensureSubscribed('AAPL');
+      service.subscribe('MSFT');
+
+      ws1.trigger('close');
+      jest.advanceTimersByTime(1000);
+
+      const ws2 = FakeWS.lastInstance;
+      ws2.trigger('open');
+
+      expect(ws2.send).toHaveBeenCalledWith(JSON.stringify({ type: 'subscribe', symbol: 'AAPL' }));
+      expect(ws2.send).toHaveBeenCalledWith(JSON.stringify({ type: 'subscribe', symbol: 'MSFT' }));
+      expect(ws2.send).toHaveBeenCalledTimes(2);
+    });
+
     it('does NOT reset reconnectDelay before the 60 s stability window', async () => {
       const { service } = await buildService();
       service.onModuleInit();
@@ -464,6 +489,27 @@ describe('FinnhubService', () => {
       service.ensureSubscribed('AAPL');
 
       service.onModuleInit();
+      const ws2 = FakeWS.lastInstance;
+      ws2.trigger('open');
+
+      expect(ws2.send).toHaveBeenCalledWith(JSON.stringify({ type: 'subscribe', symbol: 'AAPL' }));
+    });
+
+    // The test above re-triggers connect() by calling onModuleInit() a second
+    // time, which never fires a 'close' event on the original socket. Production
+    // reconnects always go through close → setTimeout → connect() — this proves
+    // the pin survives that actual path, not just a fresh connect() call.
+    it('re-subscribes a pinned symbol through a real close/reconnect cycle', async () => {
+      const { service } = await buildService();
+      service.onModuleInit();
+      const ws1 = FakeWS.lastInstance;
+      ws1.trigger('open');
+      service.ensureSubscribed('AAPL');
+      (ws1.send as jest.Mock).mockClear();
+
+      ws1.trigger('close');
+      jest.advanceTimersByTime(1000);
+
       const ws2 = FakeWS.lastInstance;
       ws2.trigger('open');
 
