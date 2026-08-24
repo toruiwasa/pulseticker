@@ -125,7 +125,9 @@ exports: `[SubscriptionRegistry, PriceCacheService]` (Client stays module-privat
 
 ## Sequencing
 
-1. Add the 2 hardening tests to the current `finnhub.service.spec.ts` → green.
+1. ~~Add the 2 hardening tests to the current `finnhub.service.spec.ts` → green.~~
+   **Done.** 35 tests (was 33), full `pnpm --filter api test` green (25 suites,
+   206 tests). Commit `75e45a1`.
 2. Split into `finnhub.client.ts` / `subscription-registry.ts` / `price-cache.service.ts`.
    Redistribute the 39+2 existing tests across three spec files — behavior unchanged,
    location only.
