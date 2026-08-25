@@ -2,12 +2,9 @@
 
 Issue [#74](https://github.com/toruiwasa/pulseticker/issues/74) · Branch `refactor/split-finnhub-service` · PR [#91](https://github.com/toruiwasa/pulseticker/pull/91)
 
-**Status: IMPLEMENTED, PR OPEN, NOT MERGED.** Deploy alone and watch Render logs
-for reconnect storms before merging anything else (per issue body) — do not merge
-without that check, even if CI is green. This is a working document,
-updated as the task progresses, kept so the reasoning survives a context reset before
-the task is done. It will be reconciled into its final form (Decisions / Implementation /
-Tests / Verification, per the `plans/` convention) once the PR is ready.
+**Status: DONE.** Merged to main as `648a869`. Deployed alone; Render logs watched
+per the issue's mandatory gate — see *Post-merge deploy verification* below. No
+regression found; no other PR was merged in the meantime, satisfying "deploy alone."
 
 Risk: **HIGH** — touches production WebSocket reconnect, backoff, and 429 handling.
 Ship as a single PR, deploy alone, watch Render logs for reconnect storms before
@@ -166,6 +163,22 @@ exports: `[SubscriptionRegistry, PriceCacheService]` (Client stays module-privat
 
    **Remaining before merge**: open the PR, deploy alone, watch Render logs
    for reconnect storms before merging anything else (per issue body).
+
+## Post-merge deploy verification
+
+Render logs checked after the deploy from `648a869`:
+
+- `Finnhub WS stable — backoff reset {"stableWindowMs":60000}` — exactly **one**
+  occurrence.
+- No `Finnhub WS closed — reconnecting in...` and no `Finnhub WS error` lines at all.
+
+One connect, zero closes, one stable-reset 60s later — the connection never
+dropped, so there was nothing for the backoff/reconnect machinery to even react
+to. This is stronger evidence than the minimum bar ("no storm") — it's the
+best-case outcome, and directly confirms the `SubscriptionRegistry` →
+`FinnhubClient.onOpen()` wiring didn't destabilize the connection on real boot.
+The "deploy alone, watch logs before merging anything else" gate is satisfied;
+other work can proceed.
 
 ## Still open
 
