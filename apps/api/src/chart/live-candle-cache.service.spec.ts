@@ -1,6 +1,6 @@
 import { LiveCandleCacheService } from './live-candle-cache.service.js';
 import { TwelveDataClient } from './twelve-data.client.js';
-import { FinnhubService } from '../finnhub/finnhub/finnhub.service.js';
+import { SubscriptionRegistry } from '../finnhub/finnhub/subscription-registry.js';
 import type { PricePoint } from '@pulseticker/schemas';
 
 function makeCandles(values: number[]): PricePoint[] {
@@ -9,16 +9,16 @@ function makeCandles(values: number[]): PricePoint[] {
 
 describe('LiveCandleCacheService', () => {
   let twelve: jest.Mocked<TwelveDataClient>;
-  let finnhub: jest.Mocked<FinnhubService>;
+  let subscriptions: jest.Mocked<SubscriptionRegistry>;
   let service: LiveCandleCacheService;
 
   beforeEach(() => {
     twelve = { getTimeSeries: jest.fn() };
-    finnhub = {
+    subscriptions = {
       subscribe: jest.fn(),
       unsubscribe: jest.fn(),
     };
-    service = new LiveCandleCacheService(twelve, finnhub);
+    service = new LiveCandleCacheService(twelve, subscriptions);
     jest.useFakeTimers();
     jest.setSystemTime(new Date('2026-06-12T00:00:00Z'));
   });
@@ -37,20 +37,20 @@ describe('LiveCandleCacheService', () => {
 
       expect(result).toEqual(candles);
       expect(twelve.getTimeSeries).toHaveBeenCalledWith('AAPL', '1D');
-      expect(finnhub.subscribe).toHaveBeenCalledWith('AAPL');
+      expect(subscriptions.subscribe).toHaveBeenCalledWith('AAPL');
     });
 
     it('returns cached entry on hit without re-fetching', async () => {
       twelve.getTimeSeries.mockResolvedValue(makeCandles([100]));
       await service.getCandles('AAPL', '1D');
       twelve.getTimeSeries.mockClear();
-      finnhub.subscribe.mockClear();
+      subscriptions.subscribe.mockClear();
 
       const result = await service.getCandles('AAPL', '1D');
 
       expect(result).toEqual(makeCandles([100]));
       expect(twelve.getTimeSeries).not.toHaveBeenCalled();
-      expect(finnhub.subscribe).not.toHaveBeenCalled();
+      expect(subscriptions.subscribe).not.toHaveBeenCalled();
     });
 
     it('keys cache by (symbol, range) — same symbol different range hits Twelve Data again', async () => {
@@ -61,7 +61,7 @@ describe('LiveCandleCacheService', () => {
       expect(twelve.getTimeSeries).toHaveBeenCalledTimes(2);
       expect(twelve.getTimeSeries).toHaveBeenNthCalledWith(1, 'AAPL', '1D');
       expect(twelve.getTimeSeries).toHaveBeenNthCalledWith(2, 'AAPL', '1Y');
-      expect(finnhub.subscribe).toHaveBeenCalledTimes(2);
+      expect(subscriptions.subscribe).toHaveBeenCalledTimes(2);
     });
 
     it('de-dupes concurrent cache misses for the same (symbol, range)', async () => {
@@ -80,7 +80,7 @@ describe('LiveCandleCacheService', () => {
       const [r1, r2] = await Promise.all([p1, p2]);
       expect(r1).toEqual(r2);
       expect(twelve.getTimeSeries).toHaveBeenCalledTimes(1);
-      expect(finnhub.subscribe).toHaveBeenCalledTimes(1);
+      expect(subscriptions.subscribe).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -127,8 +127,8 @@ describe('LiveCandleCacheService', () => {
       // Trigger one sweep
       jest.advanceTimersByTime(60 * 1000);
 
-      expect(finnhub.unsubscribe).toHaveBeenCalledTimes(2);
-      expect(finnhub.unsubscribe).toHaveBeenCalledWith('AAPL');
+      expect(subscriptions.unsubscribe).toHaveBeenCalledTimes(2);
+      expect(subscriptions.unsubscribe).toHaveBeenCalledWith('AAPL');
 
       // After eviction, next request should miss again
       twelve.getTimeSeries.mockClear();
@@ -145,7 +145,7 @@ describe('LiveCandleCacheService', () => {
       jest.advanceTimersByTime(10 * 60 * 1000); // 10 min
       jest.advanceTimersByTime(60 * 1000); // sweep tick
 
-      expect(finnhub.unsubscribe).not.toHaveBeenCalled();
+      expect(subscriptions.unsubscribe).not.toHaveBeenCalled();
     });
   });
 });

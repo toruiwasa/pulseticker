@@ -1,5 +1,5 @@
 import { Test } from '@nestjs/testing';
-import { FinnhubService } from '../../finnhub/finnhub/finnhub.service.js';
+import { SubscriptionRegistry } from '../../finnhub/finnhub/subscription-registry.js';
 import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
 import { WatchlistWarmupService } from './watchlist-warmup.service.js';
 
@@ -13,7 +13,7 @@ function makeSupabaseMock(result: { data: unknown; error: unknown }) {
 
 async function build(result: { data: unknown; error: unknown }) {
   const supabase = makeSupabaseMock(result);
-  const finnhub = {
+  const subscriptions = {
     ensureSubscribed: jest.fn().mockReturnValue(true),
     liveSubscriptionCount: jest.fn().mockReturnValue(0),
   };
@@ -22,37 +22,37 @@ async function build(result: { data: unknown; error: unknown }) {
     providers: [
       WatchlistWarmupService,
       { provide: SupabaseService, useValue: supabase },
-      { provide: FinnhubService, useValue: finnhub },
+      { provide: SubscriptionRegistry, useValue: subscriptions },
     ],
   }).compile();
 
-  return { service: moduleRef.get(WatchlistWarmupService), supabase, finnhub };
+  return { service: moduleRef.get(WatchlistWarmupService), supabase, subscriptions };
 }
 
 describe('WatchlistWarmupService', () => {
   it('pins every distinct watchlist symbol at bootstrap', async () => {
-    const { service, finnhub } = await build({
+    const { service, subscriptions } = await build({
       data: [{ symbol: 'AAPL' }, { symbol: 'MSFT' }],
       error: null,
     });
 
     await service.onApplicationBootstrap();
 
-    expect(finnhub.ensureSubscribed).toHaveBeenCalledWith('AAPL');
-    expect(finnhub.ensureSubscribed).toHaveBeenCalledWith('MSFT');
-    expect(finnhub.ensureSubscribed).toHaveBeenCalledTimes(2);
+    expect(subscriptions.ensureSubscribed).toHaveBeenCalledWith('AAPL');
+    expect(subscriptions.ensureSubscribed).toHaveBeenCalledWith('MSFT');
+    expect(subscriptions.ensureSubscribed).toHaveBeenCalledTimes(2);
   });
 
   it('deduplicates symbols differing only in case', async () => {
-    const { service, finnhub } = await build({
+    const { service, subscriptions } = await build({
       data: [{ symbol: 'AAPL' }, { symbol: 'aapl' }],
       error: null,
     });
 
     await service.onApplicationBootstrap();
 
-    expect(finnhub.ensureSubscribed).toHaveBeenCalledTimes(1);
-    expect(finnhub.ensureSubscribed).toHaveBeenCalledWith('AAPL');
+    expect(subscriptions.ensureSubscribed).toHaveBeenCalledTimes(1);
+    expect(subscriptions.ensureSubscribed).toHaveBeenCalledWith('AAPL');
   });
 
   it('reads watchlist_items — the query the Finnhub layer no longer makes', async () => {
@@ -64,27 +64,27 @@ describe('WatchlistWarmupService', () => {
   });
 
   it('does not throw when the query errors — a cold cache is a reported state', async () => {
-    const { service, finnhub } = await build({ data: null, error: { code: 'PGRST301' } });
+    const { service, subscriptions } = await build({ data: null, error: { code: 'PGRST301' } });
 
     await expect(service.onApplicationBootstrap()).resolves.toBeUndefined();
-    expect(finnhub.ensureSubscribed).not.toHaveBeenCalled();
+    expect(subscriptions.ensureSubscribed).not.toHaveBeenCalled();
   });
 
   it('does not throw when the query returns null data with no error', async () => {
-    const { service, finnhub } = await build({ data: null, error: null });
+    const { service, subscriptions } = await build({ data: null, error: null });
 
     await expect(service.onApplicationBootstrap()).resolves.toBeUndefined();
-    expect(finnhub.ensureSubscribed).not.toHaveBeenCalled();
+    expect(subscriptions.ensureSubscribed).not.toHaveBeenCalled();
   });
 
   it('completes when the cap refuses some symbols', async () => {
-    const { service, finnhub } = await build({
+    const { service, subscriptions } = await build({
       data: [{ symbol: 'AAPL' }, { symbol: 'MSFT' }],
       error: null,
     });
-    finnhub.ensureSubscribed.mockReturnValueOnce(true).mockReturnValueOnce(false);
+    subscriptions.ensureSubscribed.mockReturnValueOnce(true).mockReturnValueOnce(false);
 
     await expect(service.onApplicationBootstrap()).resolves.toBeUndefined();
-    expect(finnhub.ensureSubscribed).toHaveBeenCalledTimes(2);
+    expect(subscriptions.ensureSubscribed).toHaveBeenCalledTimes(2);
   });
 });

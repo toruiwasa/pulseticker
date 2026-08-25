@@ -1,7 +1,7 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { normalizeSymbol } from '@pulseticker/watchlist-rules';
 import { SecureLogger } from '../../common/logger/secure-logger.js';
-import { FinnhubService } from '../../finnhub/finnhub/finnhub.service.js';
+import { SubscriptionRegistry } from '../../finnhub/finnhub/subscription-registry.js';
 import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
 
 /**
@@ -21,7 +21,7 @@ export class WatchlistWarmupService implements OnApplicationBootstrap {
 
   constructor(
     private supabase: SupabaseService,
-    private finnhub: FinnhubService,
+    private subscriptions: SubscriptionRegistry,
   ) {}
 
   async onApplicationBootstrap() {
@@ -38,12 +38,12 @@ export class WatchlistWarmupService implements OnApplicationBootstrap {
     }
 
     const symbols = [...new Set(data.map(row => normalizeSymbol(row.symbol)))];
-    const refused = symbols.filter(symbol => !this.finnhub.ensureSubscribed(symbol)).length;
+    const refused = symbols.filter(symbol => !this.subscriptions.ensureSubscribed(symbol)).length;
 
     this.logger.logData('Finnhub warm-up complete', {
       symbolCount: symbols.length,
       refused,
-      liveSubscriptions: this.finnhub.liveSubscriptionCount(),
+      liveSubscriptions: this.subscriptions.liveSubscriptionCount(),
     });
   }
 }

@@ -2,7 +2,7 @@ import { Test } from '@nestjs/testing';
 import { Socket } from 'socket.io';
 import { PricesGateway } from './prices.gateway.js';
 import { SupabaseService } from '../supabase/supabase/supabase.service.js';
-import { FinnhubService } from '../finnhub/finnhub/finnhub.service.js';
+import { SubscriptionRegistry } from '../finnhub/finnhub/subscription-registry.js';
 
 function makeSocket(token?: string): jest.Mocked<Socket> {
   return {
@@ -16,7 +16,7 @@ function makeSocket(token?: string): jest.Mocked<Socket> {
 describe('PricesGateway', () => {
   let gateway: PricesGateway;
   let supabase: { client: { auth: { getUser: jest.Mock } } };
-  let finnhub: jest.Mocked<FinnhubService>;
+  let subscriptions: jest.Mocked<SubscriptionRegistry>;
 
   beforeEach(async () => {
     supabase = { client: { auth: { getUser: jest.fn() } } };
@@ -25,13 +25,13 @@ describe('PricesGateway', () => {
         PricesGateway,
         { provide: SupabaseService, useValue: supabase },
         {
-          provide: FinnhubService,
+          provide: SubscriptionRegistry,
           useValue: { subscribe: jest.fn().mockReturnValue(true), unsubscribe: jest.fn() },
         },
       ],
     }).compile();
     gateway = moduleRef.get(PricesGateway);
-    finnhub = moduleRef.get(FinnhubService);
+    subscriptions = moduleRef.get(SubscriptionRegistry);
   });
 
   describe('handleConnection', () => {
@@ -74,14 +74,14 @@ describe('PricesGateway', () => {
   });
 
   describe('handleSubscribe', () => {
-    it('joins each symbol room, forwards to FinnhubService, and tracks symbols', () => {
+    it('joins each symbol room, forwards to SubscriptionRegistry, and tracks symbols', () => {
       const client = makeSocket();
       client.data.subscribedSymbols = new Set<string>();
       gateway.handleSubscribe(client, { symbols: ['AAPL', 'GOOG'] });
       expect(client.join).toHaveBeenCalledWith('symbol:AAPL');
       expect(client.join).toHaveBeenCalledWith('symbol:GOOG');
-      expect(finnhub.subscribe).toHaveBeenCalledWith('AAPL');
-      expect(finnhub.subscribe).toHaveBeenCalledWith('GOOG');
+      expect(subscriptions.subscribe).toHaveBeenCalledWith('AAPL');
+      expect(subscriptions.subscribe).toHaveBeenCalledWith('GOOG');
       expect(client.data.subscribedSymbols as Set<string>).toContain('AAPL');
       expect(client.data.subscribedSymbols as Set<string>).toContain('GOOG');
     });
@@ -89,7 +89,7 @@ describe('PricesGateway', () => {
     it('does not join the room or track a symbol the cap refused', () => {
       const client = makeSocket();
       client.data.subscribedSymbols = new Set<string>();
-      finnhub.subscribe.mockReturnValueOnce(true).mockReturnValueOnce(false);
+      subscriptions.subscribe.mockReturnValueOnce(true).mockReturnValueOnce(false);
 
       gateway.handleSubscribe(client, { symbols: ['AAPL', 'REFUSED'] });
 
@@ -106,15 +106,15 @@ describe('PricesGateway', () => {
       const client = makeSocket();
       client.data.subscribedSymbols = new Set(['AAPL', 'GOOG']);
       gateway.handleDisconnect(client);
-      expect(finnhub.unsubscribe).toHaveBeenCalledWith('AAPL');
-      expect(finnhub.unsubscribe).toHaveBeenCalledWith('GOOG');
-      expect(finnhub.unsubscribe).toHaveBeenCalledTimes(2);
+      expect(subscriptions.unsubscribe).toHaveBeenCalledWith('AAPL');
+      expect(subscriptions.unsubscribe).toHaveBeenCalledWith('GOOG');
+      expect(subscriptions.unsubscribe).toHaveBeenCalledTimes(2);
     });
 
     it('does not throw when subscribedSymbols is undefined', () => {
       const client = makeSocket();
       expect(() => gateway.handleDisconnect(client)).not.toThrow();
-      expect(finnhub.unsubscribe).not.toHaveBeenCalled();
+      expect(subscriptions.unsubscribe).not.toHaveBeenCalled();
     });
   });
 

@@ -1,7 +1,8 @@
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
-import { FinnhubService } from '../../finnhub/finnhub/finnhub.service.js';
+import { PriceCacheService } from '../../finnhub/finnhub/price-cache.service.js';
+import { SubscriptionRegistry } from '../../finnhub/finnhub/subscription-registry.js';
 import { WatchlistService } from './watchlist.service.js';
 
 type SupabaseMock = {
@@ -62,24 +63,29 @@ function makeFindAllRouter(opts: {
 describe('WatchlistService', () => {
   let service: WatchlistService;
   let supabaseClient: SupabaseMock;
-  let finnhub: {
-    getLastKnownPrices: jest.Mock;
+  let subscriptions: {
     ensureSubscribed: jest.Mock;
     releasePin: jest.Mock;
+  };
+  let priceCache: {
+    getLastKnownPrices: jest.Mock;
   };
 
   beforeEach(async () => {
     supabaseClient = { from: jest.fn() };
-    finnhub = {
-      getLastKnownPrices: jest.fn(),
+    subscriptions = {
       ensureSubscribed: jest.fn().mockReturnValue(true),
       releasePin: jest.fn(),
+    };
+    priceCache = {
+      getLastKnownPrices: jest.fn(),
     };
     const moduleRef = await Test.createTestingModule({
       providers: [
         WatchlistService,
         { provide: SupabaseService, useValue: { client: supabaseClient } },
-        { provide: FinnhubService, useValue: finnhub },
+        { provide: SubscriptionRegistry, useValue: subscriptions },
+        { provide: PriceCacheService, useValue: priceCache },
       ],
     }).compile();
     service = moduleRef.get(WatchlistService);
@@ -213,7 +219,7 @@ describe('WatchlistService', () => {
       expect(insert).toHaveBeenCalledWith({ user_id: 'u1', symbol: 'AAPL' });
       // Without the pin a symbol added post-boot is only live while a browser
       // holds it, so a mobile-only user would read price: null until restart.
-      expect(finnhub.ensureSubscribed).toHaveBeenCalledWith('AAPL');
+      expect(subscriptions.ensureSubscribed).toHaveBeenCalledWith('AAPL');
     });
 
     it('still returns the item when the Finnhub cap refuses the subscription', async () => {
@@ -227,7 +233,7 @@ describe('WatchlistService', () => {
         call += 1;
         return call === 1 ? { select: countSelect } : { insert };
       }) as never;
-      finnhub.ensureSubscribed.mockReturnValue(false);
+      subscriptions.ensureSubscribed.mockReturnValue(false);
 
       // The row is written either way — refusing to persist it would make the
       // process-wide cap silently truncate an individual user's watchlist.
@@ -310,7 +316,7 @@ describe('WatchlistService', () => {
       supabaseClient.from = r.from as never;
       await service.remove('u1', 'AAPL');
       expect(r.countEq).toHaveBeenCalledWith('symbol', 'AAPL');
-      expect(finnhub.releasePin).toHaveBeenCalledWith('AAPL');
+      expect(subscriptions.releasePin).toHaveBeenCalledWith('AAPL');
     });
 
     it('keeps the pin when another user still tracks the symbol', async () => {
@@ -318,21 +324,21 @@ describe('WatchlistService', () => {
       supabaseClient.from = r.from as never;
       await service.remove('u1', 'AAPL');
       // Releasing here would silently stop the other user's prices.
-      expect(finnhub.releasePin).not.toHaveBeenCalled();
+      expect(subscriptions.releasePin).not.toHaveBeenCalled();
     });
 
     it('retains the pin when the usage check itself errors', async () => {
       const r = makeRemoveRouter({ remaining: { count: null, error: { code: 'PGRST301' } } });
       supabaseClient.from = r.from as never;
       await expect(service.remove('u1', 'AAPL')).resolves.toBeUndefined();
-      expect(finnhub.releasePin).not.toHaveBeenCalled();
+      expect(subscriptions.releasePin).not.toHaveBeenCalled();
     });
 
     it('throws when the delete errors, without touching the pin', async () => {
       const r = makeRemoveRouter({ deleteError: new Error('delete boom') });
       supabaseClient.from = r.from as never;
       await expect(service.remove('u1', 'AAPL')).rejects.toThrow('delete boom');
-      expect(finnhub.releasePin).not.toHaveBeenCalled();
+      expect(subscriptions.releasePin).not.toHaveBeenCalled();
     });
   });
 
@@ -353,7 +359,7 @@ describe('WatchlistService', () => {
         { id: ID_A, symbol: 'AAPL', created_at: '2026-01-01' },
         { id: ID_B, symbol: 'OANDA:AUD_USD', created_at: '2026-01-02' },
       ]);
-      finnhub.getLastKnownPrices.mockReturnValue([
+      priceCache.getLastKnownPrices.mockReturnValue([
         { symbol: 'AAPL', price: 195.23, ts: 1709123456789 },
         { symbol: 'OANDA:AUD_USD', price: 0.6612, ts: 1709123456790 },
       ]);
@@ -378,7 +384,7 @@ describe('WatchlistService', () => {
           error: null,
         },
       }).from;
-      finnhub.getLastKnownPrices.mockReturnValue([
+      priceCache.getLastKnownPrices.mockReturnValue([
         { symbol: 'AAPL', price: 1, ts: 1 },
         { symbol: 'MSFT', price: 2, ts: 2 },
       ]);
@@ -387,8 +393,8 @@ describe('WatchlistService', () => {
 
       // Without this, a symbol the cap refused at create()/warm-up stayed
       // priceless until restart even after capacity freed.
-      expect(finnhub.ensureSubscribed).toHaveBeenCalledWith('AAPL');
-      expect(finnhub.ensureSubscribed).toHaveBeenCalledWith('MSFT');
+      expect(subscriptions.ensureSubscribed).toHaveBeenCalledWith('AAPL');
+      expect(subscriptions.ensureSubscribed).toHaveBeenCalledWith('MSFT');
     });
 
     it('passes the watchlist symbols through to getLastKnownPrices', async () => {
@@ -396,13 +402,13 @@ describe('WatchlistService', () => {
         { id: ID_A, symbol: 'AAPL', created_at: '2026-01-01' },
         { id: ID_B, symbol: 'MSFT', created_at: '2026-01-02' },
       ]);
-      finnhub.getLastKnownPrices.mockReturnValue([
+      priceCache.getLastKnownPrices.mockReturnValue([
         { symbol: 'AAPL', price: null, ts: null },
         { symbol: 'MSFT', price: null, ts: null },
       ]);
 
       await service.getWatchlistPrices('u1');
-      expect(finnhub.getLastKnownPrices).toHaveBeenCalledWith(['AAPL', 'MSFT']);
+      expect(priceCache.getLastKnownPrices).toHaveBeenCalledWith(['AAPL', 'MSFT']);
     });
 
     it('reports cached: false only when the cache yielded nothing at all', async () => {
@@ -410,7 +416,7 @@ describe('WatchlistService', () => {
         { id: ID_A, symbol: 'AAPL', created_at: '2026-01-01' },
         { id: ID_B, symbol: 'MSFT', created_at: '2026-01-02' },
       ]);
-      finnhub.getLastKnownPrices.mockReturnValue([
+      priceCache.getLastKnownPrices.mockReturnValue([
         { symbol: 'AAPL', price: null, ts: null },
         { symbol: 'MSFT', price: null, ts: null },
       ]);
@@ -423,7 +429,7 @@ describe('WatchlistService', () => {
         { id: ID_A, symbol: 'AAPL', created_at: '2026-01-01' },
         { id: ID_B, symbol: 'MSFT', created_at: '2026-01-02' },
       ]);
-      finnhub.getLastKnownPrices.mockReturnValue([
+      priceCache.getLastKnownPrices.mockReturnValue([
         { symbol: 'AAPL', price: 195.23, ts: 1709123456789 },
         { symbol: 'MSFT', price: null, ts: null },
       ]);
@@ -435,14 +441,14 @@ describe('WatchlistService', () => {
 
     it('returns cached: true for an empty watchlist', async () => {
       seededWith([]);
-      finnhub.getLastKnownPrices.mockReturnValue([]);
+      priceCache.getLastKnownPrices.mockReturnValue([]);
 
       await expect(service.getWatchlistPrices('u1')).resolves.toEqual({ cached: true, items: [] });
     });
 
     it('uses the symbol as the cache normalised it, not the stored casing', async () => {
       seededWith([{ id: ID_A, symbol: 'aapl', created_at: '2026-01-01' }]);
-      finnhub.getLastKnownPrices.mockReturnValue([{ symbol: 'AAPL', price: 1, ts: 2 }]);
+      priceCache.getLastKnownPrices.mockReturnValue([{ symbol: 'AAPL', price: 1, ts: 2 }]);
 
       const out = await service.getWatchlistPrices('u1');
       expect(out.items[0].symbol).toBe('AAPL');
