@@ -1,8 +1,10 @@
 # Issue #74 — Split `FinnhubService` into client / price cache / subscription registry
 
-Issue [#74](https://github.com/toruiwasa/pulseticker/issues/74) · Branch `refactor/split-finnhub-service`
+Issue [#74](https://github.com/toruiwasa/pulseticker/issues/74) · Branch `refactor/split-finnhub-service` · PR [#91](https://github.com/toruiwasa/pulseticker/pull/91)
 
-**Status: DESIGN AGREED, IMPLEMENTATION NOT STARTED.** This is a working document,
+**Status: IMPLEMENTED, PR OPEN, NOT MERGED.** Deploy alone and watch Render logs
+for reconnect storms before merging anything else (per issue body) — do not merge
+without that check, even if CI is green. This is a working document,
 updated as the task progresses, kept so the reasoning survives a context reset before
 the task is done. It will be reconciled into its final form (Decisions / Implementation /
 Tests / Verification, per the `plans/` convention) once the PR is ready.
