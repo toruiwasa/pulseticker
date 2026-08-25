@@ -9,7 +9,8 @@ import {
 } from '@pulseticker/watchlist-rules';
 import { SecureLogger } from '../../common/logger/secure-logger.js';
 import { SupabaseService } from '../../supabase/supabase/supabase.service.js';
-import { FinnhubService } from '../../finnhub/finnhub/finnhub.service.js';
+import { PriceCacheService } from '../../finnhub/finnhub/price-cache.service.js';
+import { SubscriptionRegistry } from '../../finnhub/finnhub/subscription-registry.js';
 
 /** Shape of the columns findAll() selects. SupabaseClient carries no Database
  *  generic here, so its rows arrive as `any` and need naming to stay type-safe. */
@@ -31,7 +32,8 @@ export class WatchlistService {
 
   constructor(
     private supabase: SupabaseService,
-    private finnhub: FinnhubService,
+    private subscriptions: SubscriptionRegistry,
+    private priceCache: PriceCacheService,
   ) {}
 
   async findAll(userId: string) {
@@ -88,8 +90,8 @@ export class WatchlistService {
     // symbol the cap refused at create() or warm-up: once releasePin frees
     // capacity, the next poll subscribes it — without this, a refusal lasted
     // until restart. Refusals here are logged once per symbol upstream.
-    for (const row of rows) this.finnhub.ensureSubscribed(row.symbol);
-    const prices = this.finnhub.getLastKnownPrices(rows.map(r => r.symbol));
+    for (const row of rows) this.subscriptions.ensureSubscribed(row.symbol);
+    const prices = this.priceCache.getLastKnownPrices(rows.map(r => r.symbol));
     const items = rows.map((row, i) => ({
       id: row.id,
       symbol: prices[i].symbol,
@@ -123,7 +125,7 @@ export class WatchlistService {
     // Without this a symbol added post-boot is subscribed only while a web
     // client holds it, and mobile — which polls REST and never opens a socket —
     // would read price: null for it until the next restart.
-    if (!this.finnhub.ensureSubscribed(normalizeSymbol(symbol))) {
+    if (!this.subscriptions.ensureSubscribed(normalizeSymbol(symbol))) {
       this.logger.warnData('Symbol added but not subscribed — Finnhub cap reached', {
         symbol: normalizeSymbol(symbol),
       });
@@ -155,6 +157,6 @@ export class WatchlistService {
       });
       return;
     }
-    if ((count ?? 0) === 0) this.finnhub.releasePin(sym);
+    if ((count ?? 0) === 0) this.subscriptions.releasePin(sym);
   }
 }

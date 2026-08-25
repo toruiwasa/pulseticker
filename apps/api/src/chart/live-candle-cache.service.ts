@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
-import { FinnhubService } from '../finnhub/finnhub/finnhub.service.js';
+import { SubscriptionRegistry } from '../finnhub/finnhub/subscription-registry.js';
 import type { PricePoint } from '@pulseticker/schemas';
 import { ChartRange } from './chart.types.js';
 import { TwelveDataClient } from './twelve-data.client.js';
@@ -25,7 +25,7 @@ export class LiveCandleCacheService implements OnModuleInit, OnModuleDestroy {
 
   constructor(
     private twelveData: TwelveDataClient,
-    private finnhub: FinnhubService,
+    private subscriptions: SubscriptionRegistry,
   ) {}
 
   onModuleInit() {
@@ -90,7 +90,7 @@ export class LiveCandleCacheService implements OnModuleInit, OnModuleDestroy {
     const candles = await this.twelveData.getTimeSeries(symbol, range);
     const bounded = candles.length > MAX_POINTS ? candles.slice(-MAX_POINTS) : candles;
     this.cache.set(key, { candles: bounded, lastAccessed: Date.now() });
-    this.finnhub.subscribe(symbol);
+    this.subscriptions.subscribe(symbol);
     return bounded;
   }
 
@@ -105,7 +105,7 @@ export class LiveCandleCacheService implements OnModuleInit, OnModuleDestroy {
       }
     }
     for (const [symbol, count] of evictionCounts) {
-      for (let i = 0; i < count; i++) this.finnhub.unsubscribe(symbol);
+      for (let i = 0; i < count; i++) this.subscriptions.unsubscribe(symbol);
       this.logger.debug(`Evicted ${symbol} (${count} range${count === 1 ? '' : 's'})`);
     }
   }

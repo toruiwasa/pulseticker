@@ -9,7 +9,7 @@ import {
 import { SecureLogger } from '../common/logger/secure-logger.js';
 import { OnEvent } from '@nestjs/event-emitter';
 import { Server, Socket } from 'socket.io';
-import { FinnhubService } from '../finnhub/finnhub/finnhub.service.js';
+import { SubscriptionRegistry } from '../finnhub/finnhub/subscription-registry.js';
 import { SupabaseService } from '../supabase/supabase/supabase.service.js';
 
 interface AlertTriggeredPayload {
@@ -35,7 +35,7 @@ export class PricesGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   constructor(
     private supabase: SupabaseService,
-    private finnhub: FinnhubService,
+    private subscriptions: SubscriptionRegistry,
   ) {}
 
   async handleConnection(client: Socket) {
@@ -66,7 +66,7 @@ export class PricesGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const syms = (client.data as ClientState).subscribedSymbols;
     if (syms) {
       for (const sym of syms) {
-        this.finnhub.unsubscribe(sym);
+        this.subscriptions.unsubscribe(sym);
       }
     }
     this.logger.log(`Client disconnected: ${client.id}`);
@@ -78,7 +78,7 @@ export class PricesGateway implements OnGatewayConnection, OnGatewayDisconnect {
     for (const sym of payload.symbols) {
       // A symbol the cap refused must not join the room: the client would sit
       // in a room no price is ever broadcast to, believing it subscribed.
-      if (!this.finnhub.subscribe(sym)) continue;
+      if (!this.subscriptions.subscribe(sym)) continue;
       void client.join(`symbol:${sym}`);
       state.subscribedSymbols?.add(sym);
     }

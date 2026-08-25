@@ -128,15 +128,42 @@ exports: `[SubscriptionRegistry, PriceCacheService]` (Client stays module-privat
 1. ~~Add the 2 hardening tests to the current `finnhub.service.spec.ts` → green.~~
    **Done.** 35 tests (was 33), full `pnpm --filter api test` green (25 suites,
    206 tests). Commit `75e45a1`.
-2. Split into `finnhub.client.ts` / `subscription-registry.ts` / `price-cache.service.ts`.
-   Redistribute the 39+2 existing tests across three spec files — behavior unchanged,
-   location only.
-3. Update `finnhub.module.ts` exports.
-4. Update the 4 consumer specs' mocks (`PricesGateway`, `LiveCandleCacheService`,
-   `WatchlistService`, `WatchlistWarmupService`) to the new provider shapes.
-5. Remove `forwardRef(() => FinnhubModule)` in `chart.module.ts`.
-6. `pnpm build` + `pnpm test` full suite, then PR — single PR, deploy alone, watch
-   Render logs for reconnect storms before merging anything else.
+2. ~~Split into `finnhub.client.ts` / `subscription-registry.ts` / `price-cache.service.ts`.~~
+   **Done.** All three files at 100% statements/lines. Branch coverage:
+   `subscription-registry.ts` 97.82%, `price-cache.service.ts` 100%,
+   `finnhub.client.ts` 81.81% (the shortfall is the `RawData` Array/ArrayBuffer
+   decode branches in the message handler — inherited unchanged from the
+   original single-class file, not a regression from the split; out of scope
+   for this refactor to close).
+
+   Test redistribution: the 35 tests in the old `finnhub.service.spec.ts` became
+   `finnhub.client.spec.ts` (17, incl. 3 new tests for the `onOpen`/`send` public
+   API the split introduced), `subscription-registry.spec.ts` (17, incl. 4 new
+   construction/wiring tests + 1 closing a real branch gap found via coverage —
+   `ensureSubscribed()` pinning an already ref-counted symbol without re-sending
+   upstream), `price-cache.service.spec.ts` (4), and a new
+   `finnhub-reconnect.integration.spec.ts` (5) that wires the real `FinnhubClient`
+   + real `SubscriptionRegistry` together with the same `FakeWS` harness — this
+   is what actually proves the composed reconnect-resubscribe contract, since
+   neither unit alone can (client only proves it invokes callbacks; registry
+   only proves it registers one and replays symbols when invoked with a mocked
+   client). Total: 43 tests, all passing.
+
+3. ~~Update `finnhub.module.ts` exports.~~ **Done.** `providers:
+   [FinnhubClient, SubscriptionRegistry, PriceCacheService]`, `exports:
+   [SubscriptionRegistry, PriceCacheService]` — `FinnhubClient` is module-private.
+4. ~~Update the 4 consumer specs' mocks.~~ **Done.** `PricesGateway` and
+   `LiveCandleCacheService` now inject `SubscriptionRegistry` only;
+   `WatchlistWarmupService` the same; `WatchlistService` injects both
+   `SubscriptionRegistry` and `PriceCacheService`.
+5. ~~Remove `forwardRef(() => FinnhubModule)` in `chart.module.ts`.~~ **Done.**
+6. ~~`pnpm build` + `pnpm test` full suite~~ **Done.** `pnpm build`: 6/6.
+   `pnpm test`: api 28 suites / 214 tests, web 18 suites / 164 tests, all green.
+   `pnpm --filter api lint`: 0 errors (14 pre-existing warnings, unrelated
+   files). `pnpm --filter api format:check`: clean.
+
+   **Remaining before merge**: open the PR, deploy alone, watch Render logs
+   for reconnect storms before merging anything else (per issue body).
 
 ## Still open
 
