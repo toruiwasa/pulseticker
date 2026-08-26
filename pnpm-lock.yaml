@@ -223,29 +223,29 @@ importers:
         specifier: ^2.112.3
         version: 2.112.3
       '@taiga-ui/cdk':
-        specifier: 5.19.0
-        version: 5.19.0(1f69651d97f3ac8ee7bd9eead65ef958)
+        specifier: 5.20.0
+        version: 5.20.0(1f69651d97f3ac8ee7bd9eead65ef958)
       '@taiga-ui/core':
-        specifier: 5.19.0
-        version: 5.19.0(de8ff0efb7152f7d6aede90e94593ce3)
+        specifier: 5.20.0
+        version: 5.20.0(241a590801dd9d6f160c69a865ddd2ae)
       '@taiga-ui/event-plugins':
         specifier: ^5.0.0
         version: 5.0.0(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@angular/platform-browser@22.1.2(@angular/animations@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)))(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)))(rxjs@7.8.2)
       '@taiga-ui/i18n':
-        specifier: 5.19.0
-        version: 5.19.0(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@ng-web-apis/common@5.3.0(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@types/dom-speech-recognition@0.0.10)(rxjs@7.8.2))(rxjs@7.8.2)
+        specifier: 5.20.0
+        version: 5.20.0(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@ng-web-apis/common@5.3.0(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@types/dom-speech-recognition@0.0.10)(rxjs@7.8.2))(rxjs@7.8.2)
       '@taiga-ui/icons':
-        specifier: 5.19.0
-        version: 5.19.0
+        specifier: 5.20.0
+        version: 5.20.0
       '@taiga-ui/kit':
-        specifier: 5.19.0
-        version: 5.19.0(b03f1744f00101fbbe4a7ad5ba36af29)
+        specifier: 5.20.0
+        version: 5.20.0(213d3577939ccc487945da5cc6647b24)
       '@taiga-ui/polymorpheus':
         specifier: ^5.0.1
         version: 5.0.1(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@angular/platform-browser@22.1.2(@angular/animations@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)))(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)))
       '@taiga-ui/styles':
-        specifier: 5.19.0
-        version: 5.19.0(@taiga-ui/design-tokens@0.303.0)
+        specifier: 5.20.0
+        version: 5.20.0(@taiga-ui/design-tokens@0.303.0)
       lightweight-charts:
         specifier: ^5.2.1
         version: 5.2.1
@@ -398,6 +398,7 @@ packages:
   '@angular/animations@22.1.2':
     resolution: {integrity: sha512-SHvopFG8I92isKE6lgoWVVmmt6fSGKt76bfrBuJ9qvrKWYqWmWUh87Z5J3XRPUM8zdzuEkXjcTbn+GTGOGRiaA==}
     engines: {node: ^22.22.3 || ^24.15.0 || >=26.0.0}
+    deprecated: '@angular/animations is deprecated. Use `animate.enter` and `animate.leave` instead. For more information see: https://v22.angular.dev/guide/animations.'
     peerDependencies:
       '@angular/core': 22.1.2
 
@@ -2518,8 +2519,8 @@ packages:
       '@opentelemetry/api':
         optional: true
 
-  '@taiga-ui/cdk@5.19.0':
-    resolution: {integrity: sha512-GaSVxC+pRoWZuHYG5eUtWHBQWAAwu6Zgb91SsqWRJUIuzTW/ADSuxQvRUgOFUbrZRWK36ffLcB2iVt14OkISpA==}
+  '@taiga-ui/cdk@5.20.0':
+    resolution: {integrity: sha512-HYq5j039pCL9xsLkQaUa8gyPvElGo39144Pj+yP/789JxzAhd4SWs61FIgnRxW3B6/W7bACQc4fIzRLnH9rTlw==}
     peerDependencies:
       '@angular/cdk': '>=19.0.0'
       '@angular/common': '>=19.0.0'
@@ -2535,8 +2536,8 @@ packages:
       '@taiga-ui/polymorpheus': ^5.0.1
       rxjs: '>=7.0.0'
 
-  '@taiga-ui/core@5.19.0':
-    resolution: {integrity: sha512-l03lqQjASdxnCKa12st7AUeD/pPOCp1vnarQ/1uQ7CbvSBvHc1mITiElQ9gS0jFh6tDH92YLltd2k5Ka4JeBsw==}
+  '@taiga-ui/core@5.20.0':
+    resolution: {integrity: sha512-HunBkbEgZjpP5JKSmqzNoVA2W8sf6gRmBT7Vz6YMYI++ZpKr1aDd6nIhG+My7rDMJDdF0f3Rlb4pDiDaGza+pw==}
     peerDependencies:
       '@angular/common': '>=19.0.0'
       '@angular/core': '>=19.0.0'
@@ -2547,11 +2548,11 @@ packages:
       '@ng-web-apis/intersection-observer': ^5.3.0
       '@ng-web-apis/mutation-observer': ^5.3.0
       '@ng-web-apis/platform': ^5.3.0
-      '@taiga-ui/cdk': 5.19.0
+      '@taiga-ui/cdk': 5.20.0
       '@taiga-ui/event-plugins': ^5.0.0
-      '@taiga-ui/i18n': 5.19.0
+      '@taiga-ui/i18n': 5.20.0
       '@taiga-ui/polymorpheus': ^5.0.1
-      '@taiga-ui/styles': 5.19.0
+      '@taiga-ui/styles': 5.20.0
       rxjs: '>=7.0.0'
 
   '@taiga-ui/design-tokens@0.303.0':
@@ -2567,18 +2568,18 @@ packages:
   '@taiga-ui/font-watcher@0.6.0':
     resolution: {integrity: sha512-TqDKkzFJhTLEcvlEQkQoUnD+kVZaCh0MRq2I1AFY8/XKTuVa+/P+Il/m2uC4xVg3v04X17160gcTLRaQMUV0Uw==}
 
-  '@taiga-ui/i18n@5.19.0':
-    resolution: {integrity: sha512-pLKlzqg1dGbhA/1Cbn+FkdeEsxYD5ViXr4mIBcgeJQZFo4BeP3vpAmjY/2q2tJ4eON+71e7mMGMWI0PyxSqPGg==}
+  '@taiga-ui/i18n@5.20.0':
+    resolution: {integrity: sha512-3FBfD+ScdVwNy3oOaE5+WRniMGqPpdN5mbN3bMYuI+15KQ7tVGreE8zNxndfivqYYzj7lS2UhOj6BadJnE7tkw==}
     peerDependencies:
       '@angular/core': '>=19.0.0'
       '@ng-web-apis/common': ^5.3.0
       rxjs: '>=7.0.0'
 
-  '@taiga-ui/icons@5.19.0':
-    resolution: {integrity: sha512-Q96zFwD6ebPAj10IQuOFjh3xL3yIrF/cfhWn8qNC1iVrZOwJxl02Rc6rHPHaCswjkVkRo5ZU5pwbyt+6gOrm9g==}
+  '@taiga-ui/icons@5.20.0':
+    resolution: {integrity: sha512-SzCy41oHVkuYb1BW0krFQIfVAYir0V/dnjzPqkdkAXabtqj9PL4wpyCR9dS9M3TuG34f4JQCT9biUKPpdThGVg==}
 
-  '@taiga-ui/kit@5.19.0':
-    resolution: {integrity: sha512-QmHOwn20gWN3j8SLTtjJSmZAqmSAIOOU4rcE95pJsfzm9sVHucTwK+mKYt6Oqe1PV+OR1eK3D9vLLVByAWt4yQ==}
+  '@taiga-ui/kit@5.20.0':
+    resolution: {integrity: sha512-3k4yp7ScjJnZJFb159ytdHtcJVcJ1f1VXJj4jpfKM7Pg1XnH8KxvzhPCGRNQzsUpf9wID+qXD/BqKYJuGv6XKw==}
     peerDependencies:
       '@angular/common': '>=19.0.0'
       '@angular/core': '>=19.0.0'
@@ -2593,11 +2594,11 @@ packages:
       '@ng-web-apis/mutation-observer': ^5.3.0
       '@ng-web-apis/platform': ^5.3.0
       '@ng-web-apis/resize-observer': ^5.3.0
-      '@taiga-ui/cdk': 5.19.0
-      '@taiga-ui/core': 5.19.0
-      '@taiga-ui/i18n': 5.19.0
+      '@taiga-ui/cdk': 5.20.0
+      '@taiga-ui/core': 5.20.0
+      '@taiga-ui/i18n': 5.20.0
       '@taiga-ui/polymorpheus': ^5.0.1
-      '@taiga-ui/styles': 5.19.0
+      '@taiga-ui/styles': 5.20.0
       rxjs: '>=7.0.0'
 
   '@taiga-ui/polymorpheus@5.0.1':
@@ -2606,10 +2607,10 @@ packages:
       '@angular/core': '>=19.0.0'
       '@angular/platform-browser': '>=19.0.0'
 
-  '@taiga-ui/styles@5.19.0':
-    resolution: {integrity: sha512-vF2GCzKCHGjRmAu+9kxxfb/SDIlPpbt+wuR5rEdg71ffisR53GNM72akP+iP6EAa66oYt3GEZHEtUxuMmGHPhw==}
+  '@taiga-ui/styles@5.20.0':
+    resolution: {integrity: sha512-3bBDYBGn3vqaU3ZSkyInIuCHEs06dXEunPNwp4phujhyeQLY8LH2/Ll4bn1Asvj7w0qnQrv2NKs0jQn4lwZ3yg==}
     peerDependencies:
-      '@taiga-ui/design-tokens': ~0.315.0
+      '@taiga-ui/design-tokens': ~0.316.0
 
   '@tokenizer/inflate@0.4.1':
     resolution: {integrity: sha512-2mAv+8pkG6GIZiF1kNg1jAjh27IDxEPKwdGul3snfztFerfPGI1LjDezZp3i7BElXompqEtPmoPx6c2wgtWsOA==}
@@ -8259,7 +8260,7 @@ snapshots:
       '@supabase/realtime-js': 2.112.3
       '@supabase/storage-js': 2.112.3
 
-  '@taiga-ui/cdk@5.19.0(1f69651d97f3ac8ee7bd9eead65ef958)':
+  '@taiga-ui/cdk@5.20.0(1f69651d97f3ac8ee7bd9eead65ef958)':
     dependencies:
       '@angular/cdk': 22.1.2(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@angular/platform-browser@22.1.2(@angular/animations@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)))(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)))(rxjs@7.8.2)
       '@angular/common': 22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2)
@@ -8285,7 +8286,7 @@ snapshots:
       - '@types/semver'
       - chokidar
 
-  '@taiga-ui/core@5.19.0(de8ff0efb7152f7d6aede90e94593ce3)':
+  '@taiga-ui/core@5.20.0(241a590801dd9d6f160c69a865ddd2ae)':
     dependencies:
       '@angular/common': 22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2)
       '@angular/core': 22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)
@@ -8296,11 +8297,11 @@ snapshots:
       '@ng-web-apis/intersection-observer': 5.3.0(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@ng-web-apis/common@5.3.0(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@types/dom-speech-recognition@0.0.10)(rxjs@7.8.2))
       '@ng-web-apis/mutation-observer': 5.3.0(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@ng-web-apis/common@5.3.0(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@types/dom-speech-recognition@0.0.10)(rxjs@7.8.2))
       '@ng-web-apis/platform': 5.3.0
-      '@taiga-ui/cdk': 5.19.0(1f69651d97f3ac8ee7bd9eead65ef958)
+      '@taiga-ui/cdk': 5.20.0(1f69651d97f3ac8ee7bd9eead65ef958)
       '@taiga-ui/event-plugins': 5.0.0(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@angular/platform-browser@22.1.2(@angular/animations@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)))(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)))(rxjs@7.8.2)
-      '@taiga-ui/i18n': 5.19.0(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@ng-web-apis/common@5.3.0(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@types/dom-speech-recognition@0.0.10)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@taiga-ui/i18n': 5.20.0(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@ng-web-apis/common@5.3.0(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@types/dom-speech-recognition@0.0.10)(rxjs@7.8.2))(rxjs@7.8.2)
       '@taiga-ui/polymorpheus': 5.0.1(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@angular/platform-browser@22.1.2(@angular/animations@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)))(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)))
-      '@taiga-ui/styles': 5.19.0(@taiga-ui/design-tokens@0.303.0)
+      '@taiga-ui/styles': 5.20.0(@taiga-ui/design-tokens@0.303.0)
       rxjs: 7.8.2
       tslib: 2.8.1
 
@@ -8317,18 +8318,18 @@ snapshots:
 
   '@taiga-ui/font-watcher@0.6.0': {}
 
-  '@taiga-ui/i18n@5.19.0(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@ng-web-apis/common@5.3.0(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@types/dom-speech-recognition@0.0.10)(rxjs@7.8.2))(rxjs@7.8.2)':
+  '@taiga-ui/i18n@5.20.0(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@ng-web-apis/common@5.3.0(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@types/dom-speech-recognition@0.0.10)(rxjs@7.8.2))(rxjs@7.8.2)':
     dependencies:
       '@angular/core': 22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)
       '@ng-web-apis/common': 5.3.0(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@types/dom-speech-recognition@0.0.10)(rxjs@7.8.2)
       rxjs: 7.8.2
       tslib: 2.8.1
 
-  '@taiga-ui/icons@5.19.0':
+  '@taiga-ui/icons@5.20.0':
     dependencies:
       tslib: 2.8.1
 
-  '@taiga-ui/kit@5.19.0(b03f1744f00101fbbe4a7ad5ba36af29)':
+  '@taiga-ui/kit@5.20.0(213d3577939ccc487945da5cc6647b24)':
     dependencies:
       '@angular/common': 22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2)
       '@angular/core': 22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)
@@ -8343,11 +8344,11 @@ snapshots:
       '@ng-web-apis/mutation-observer': 5.3.0(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@ng-web-apis/common@5.3.0(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@types/dom-speech-recognition@0.0.10)(rxjs@7.8.2))
       '@ng-web-apis/platform': 5.3.0
       '@ng-web-apis/resize-observer': 5.3.0(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@ng-web-apis/common@5.3.0(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@types/dom-speech-recognition@0.0.10)(rxjs@7.8.2))
-      '@taiga-ui/cdk': 5.19.0(1f69651d97f3ac8ee7bd9eead65ef958)
-      '@taiga-ui/core': 5.19.0(de8ff0efb7152f7d6aede90e94593ce3)
-      '@taiga-ui/i18n': 5.19.0(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@ng-web-apis/common@5.3.0(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@types/dom-speech-recognition@0.0.10)(rxjs@7.8.2))(rxjs@7.8.2)
+      '@taiga-ui/cdk': 5.20.0(1f69651d97f3ac8ee7bd9eead65ef958)
+      '@taiga-ui/core': 5.20.0(241a590801dd9d6f160c69a865ddd2ae)
+      '@taiga-ui/i18n': 5.20.0(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@ng-web-apis/common@5.3.0(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@types/dom-speech-recognition@0.0.10)(rxjs@7.8.2))(rxjs@7.8.2)
       '@taiga-ui/polymorpheus': 5.0.1(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(@angular/platform-browser@22.1.2(@angular/animations@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)))(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)))
-      '@taiga-ui/styles': 5.19.0(@taiga-ui/design-tokens@0.303.0)
+      '@taiga-ui/styles': 5.20.0(@taiga-ui/design-tokens@0.303.0)
       rxjs: 7.8.2
       tslib: 2.8.1
 
@@ -8357,7 +8358,7 @@ snapshots:
       '@angular/platform-browser': 22.1.2(@angular/animations@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)))(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))
       tslib: 2.8.1
 
-  '@taiga-ui/styles@5.19.0(@taiga-ui/design-tokens@0.303.0)':
+  '@taiga-ui/styles@5.20.0(@taiga-ui/design-tokens@0.303.0)':
     dependencies:
       '@taiga-ui/design-tokens': 0.303.0
 
