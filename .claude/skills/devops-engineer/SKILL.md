@@ -256,7 +256,7 @@ commit-message:
 
 3. **Group PRs are all-or-nothing.** One un-adoptable dependency blocks every other bump in the group. That is why the `ignore` guard matters more than the individual PR.
 
-**`ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`** — pnpm 11 refuses any package published in the last 24 hours. A Dependabot PR picking up a just-published version fails to install until it ages out. This is a supply-chain control, **not** a build break: wait for the window and rebase. Never relax `minimumReleaseAge` to force a merge.
+**`ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`** — this repo sets `minimumReleaseAge: 10080` (minutes = 7 days) in `pnpm-workspace.yaml`, stricter than pnpm's 1-day default, so pnpm refuses any package published in the last 7 days. A Dependabot PR picking up a fresh version fails to install until it ages out. This is a supply-chain control, **not** a build break: wait for the window and rebase. Never relax `minimumReleaseAge` to force a merge.
 
 ---
 

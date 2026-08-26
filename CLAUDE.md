@@ -64,7 +64,7 @@ Before merging any Dependabot PR or group PR:
    node -p "require('@angular/compiler-cli/package.json').peerDependencies.typescript"
    ```
    After the guard merges to `main` (Dependabot reads its config from the default branch only), comment `@dependabot recreate` on the blocked PR to have it rebuilt without the offending dependency.
-6. **`ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` is a security control, not a build break.** pnpm 11 refuses to install any package published within the last 24 hours. A Dependabot PR that picks up a just-published version will fail to install until it ages out. **Wait for the window to pass and rebase — never relax `minimumReleaseAge` to force a merge.** It is the repo's primary defence against a compromised fresh npm release.
+6. **`ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION` is a security control, not a build break.** This repo sets `minimumReleaseAge: 10080` (minutes = 7 days) in `pnpm-workspace.yaml`, so pnpm refuses to install any package version published within the last 7 days — deliberately stricter than pnpm's own 1-day default. A Dependabot PR that picks up a fresh version will fail to install until it ages out. **Wait for the window to pass and rebase — never relax `minimumReleaseAge` to force a merge.** It is the repo's primary defence against a compromised fresh npm release. Setting the key explicitly also enables `minimumReleaseAgeStrict`, so a too-young version fails the install rather than being silently auto-added to `minimumReleaseAgeExclude`.
 
 ### Deployment configuration changes (mandatory gate before any change)
 
