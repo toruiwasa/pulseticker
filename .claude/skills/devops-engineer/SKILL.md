@@ -39,7 +39,6 @@ Current deployment stack — always reason from this baseline:
 - NestJS build on Render must build shared packages first. `apps/api/package.json`'s `build` script is just `nest build`. Render's build command must run from the **repository root** using the root `build:api` script: `pnpm install && pnpm build:api`. Do NOT set Render's root directory to `apps/api` — the shared packages will not build and `nest build` will fail on missing imports.
 - **TypeScript `incremental: true` + `deleteOutDir: true` footgun**: `nest-cli.json` sets `deleteOutDir: true`, which clears `dist/` before each build. If `tsconfig.build.json` (or the tsconfig it extends) has `"incremental": true`, TypeScript may see no changed inputs after the first run and exit without emitting, leaving `dist/` empty. Fix: always set `"incremental": false` in `tsconfig.build.json` (the build-specific config). The base `tsconfig.json` may keep `incremental: true` for IDE performance — only override it for the production build.
 - **Turbo `dependsOn` vs app build script duplication**: Turbo's `"dependsOn": ["^build"]` already guarantees shared packages (`schemas`, `logging`) build before any app. If an app's own `package.json` build script also re-runs those shared packages, TypeScript incremental on the second run sees no changes and exits without emitting — then `deleteOutDir` has already cleared `dist/`. Never duplicate shared-package builds inside an app's build script; rely on Turbo's dependency graph instead. For running builds outside Turbo (e.g., Render), use the root `build:api` script.
-- **Vercel `minimumReleaseAge` policy**: Vercel's supply-chain guardrails enforce a ~24h minimum release age on packages in `pnpm-lock.yaml`. If a Dependabot PR bumps a package published less than 24h ago, Vercel will fail with `ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`. This is not a configuration error — it is a platform-level policy. The only fix is to wait until the 24h window passes and then trigger a re-deploy (e.g., via `@dependabot rebase` to regenerate the lockfile after the age check passes).
 
 ---
 
@@ -256,7 +255,7 @@ commit-message:
 
 3. **Group PRs are all-or-nothing.** One un-adoptable dependency blocks every other bump in the group. That is why the `ignore` guard matters more than the individual PR.
 
-**`ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`** — pnpm 11 refuses any package published in the last 24 hours. A Dependabot PR picking up a just-published version fails to install until it ages out. This is a supply-chain control, **not** a build break: wait for the window and rebase. Never relax `minimumReleaseAge` to force a merge.
+**`ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION`** — this repo sets `minimumReleaseAge: 10080` (minutes = 7 days) in `pnpm-workspace.yaml`, stricter than pnpm's 1-day default, so pnpm refuses any package published in the last 7 days. A Dependabot PR picking up a fresh version fails to install until it ages out. This is a supply-chain control, **not** a build break: wait for the window and rebase. Never relax `minimumReleaseAge` to force a merge.
 
 ---
 

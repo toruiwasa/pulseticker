@@ -8,3 +8,10 @@ allowBuilds:
   '@parcel/watcher': true
   esbuild: true
   lmdb: true
+
+# Supply-chain guard: refuse any package version published less than 7 days ago.
+# Value is in MINUTES (pnpm default is 1440 = 1 day). 10080 = 7 * 24 * 60.
+# Setting this key explicitly also turns on `minimumReleaseAgeStrict` (pnpm defaults
+# it to true whenever minimumReleaseAge is explicitly set), so a too-young version
+# fails the install instead of being auto-added to `minimumReleaseAgeExclude`.
+minimumReleaseAge: 10080
