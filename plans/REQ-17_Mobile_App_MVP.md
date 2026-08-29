@@ -2,8 +2,26 @@
 
 ## What we're building
 
-Cross-platform mobile companion app for pulseticker using Expo SDK 53 + React Native.
+Cross-platform mobile companion app for pulseticker using Expo SDK 57 + React Native 0.86.2.
 Read-only in Phase 1: sign in with Google, view watchlist prices, view alert status.
+
+> **Correction — 2026-08-29 (Task 7 / #10, PR for `feat/mobile-scaffold`).**
+> This document originally specified **Expo SDK 53** and **Expo Router v4**.
+>
+> *Original assumption*: SDK 53 was current when the stack table was written, and the
+> table was never revisited — by 2026-08-29 SDK 57 was `latest` and SDK 53 was four
+> generations (~16 months) old. The table was also internally inconsistent: Expo
+> Router v4 belongs to SDK 52, while SDK 53 ships Router v5.
+>
+> *Why it was wrong*: the repo had moved to TypeScript 6.0.3, Zod 4 and Node 24 —
+> all newer than SDK 53's toolchain — and, more importantly, the SDK version decides
+> the shape of the Task 7 Metro config, which was this requirement's single HIGH-risk
+> item (see the amended *Metro bundler* section below).
+>
+> *What the correction gives up*: the `metro.config.js` snippet below was rewritten,
+> the `newArchEnabled: true` flag was dropped (removed from `@expo/config-types@57`;
+> the New Architecture is unconditional in SDK 57), and Expo Router moves v4 → 57.x.
+> Nothing in the UX spec, the staleness thresholds or the backend contract changes.
 
 ---
 
@@ -11,7 +29,7 @@ Read-only in Phase 1: sign in with Google, view watchlist prices, view alert sta
 
 | Concern | Choice | Reason |
 |---|---|---|
-| Navigation | Expo Router v4 (file-based, typed routes) | Idiomatic Expo, deep-link support built-in |
+| Navigation | Expo Router 57.x (file-based, typed routes) | Idiomatic Expo, deep-link support built-in. *(Corrected 2026-08-29 from "v4", which is the SDK 52 router.)* |
 | Server state | TanStack Query v5 (REST polling 15s) | Simpler than WebSocket on mobile; battery-friendly |
 | Auth state | Zustand v5 (in-memory only) | Minimal global state; Supabase owns persistence |
 | Token storage | expo-secure-store | NEVER AsyncStorage — secure enclave backed |
@@ -100,24 +118,67 @@ Convergence: Task 12 waits for both Task 5 (backend) and Task 11 (mobile auth).
 
 ## Architecture review key constraints
 
-### Metro bundler (Task 7 — HIGH risk)
-pnpm uses symlinks; Metro does not follow them by default.
-Required `metro.config.js`:
+### Metro bundler (Task 7 — risk retired 2026-08-29)
+
+**Corrected 2026-08-29.** This section originally prescribed `watchFolders`,
+`resolver.nodeModulesPaths` and `resolver.unstable_enableSymlinks = true` on the
+premise that "pnpm uses symlinks; Metro does not follow them by default". That was
+true for SDK 52 and earlier. Expo's monorepo guide now states the opposite: with
+`expo/metro-config` you do **not** configure monorepos manually, and it lists
+`watchFolders`, `resolver.nodeModulesPath`, `resolver.extraNodeModules` and
+`resolver.disableHierarchicalLookup` as fields to **delete** when moving off
+pre-SDK-52 config. Keeping them would have been an active regression risk, not a
+safety net. See <https://docs.expo.dev/guides/monorepos/>.
+
+The shipped `apps/mobile/metro.config.js` is therefore:
+
 ```javascript
 const { getDefaultConfig } = require('expo/metro-config');
-const path = require('path');
-const projectRoot = __dirname;
-const workspaceRoot = path.resolve(projectRoot, '../..');
-const config = getDefaultConfig(projectRoot);
-config.watchFolders = [workspaceRoot];
-config.resolver.nodeModulesPaths = [
-  path.resolve(projectRoot, 'node_modules'),
-  path.resolve(workspaceRoot, 'node_modules'),
-];
-config.resolver.unstable_enableSymlinks = true;
-module.exports = config;
+module.exports = getDefaultConfig(__dirname);
 ```
-**Task 7 is not done until `import { WatchlistPricesResponseSchema } from '@pulseticker/schemas'` resolves in Metro without error.**
+
+What actually does the work is `unstable_enablePackageExports`, which defaults to
+enabled in this SDK. `@pulseticker/schemas` and `@pulseticker/logging` are ESM-only
+(`"type": "module"`, only `import`/`types` export conditions, no CommonJS fallback),
+so package-exports resolution is the only path that reaches them.
+
+If pnpm's isolated `node_modules` ever breaks native module resolution, the
+documented escape hatch is `nodeLinker: hoisted` in `pnpm-workspace.yaml` — **not**
+reintroducing the manual resolver fields. Expo has supported isolated dependencies
+since SDK 54.
+
+**Done-when (met).** `import { WatchlistPricesResponseSchema } from '@pulseticker/schemas'`
+resolves in Metro. Verified by `expo export --platform ios --source-maps` and asserting
+the module appears in the bundle's sourcemap `sources`, rather than by eyeballing a dev
+server: 7 workspace modules in a 1193-module graph, including
+`/packages/schemas/dist/watchlist-prices.schema.js` and `/packages/logging/dist/index.js`,
+plus 79 transitively-resolved `zod` modules.
+
+### Jest vs Metro are two different resolvers (learned in Task 7)
+
+Metro resolving the workspace packages does **not** imply Jest can. jest-expo@57 is
+built against Jest 29, which runs CommonJS and cannot resolve an ESM-only `exports`
+map. `apps/mobile/jest.config.js` therefore carries a `moduleNameMapper` pointing
+`@pulseticker/*` at each package's built `dist/index.js`, which requires
+`packages/*/dist` to exist before mobile tests run (`pnpm install` builds it via each
+package's `prepare`; turbo's `dependsOn: ["^build"]` covers CI in Task 8 / #11).
+
+Two version constraints fall out of jest-expo@57 being a Jest 29 package, and both
+are recorded in `plans/DEBUG_mobile_scaffold_jest_metro_resolution.md`:
+
+- `apps/mobile` pins `jest@^29` and `@types/jest@^29`, while `apps/api` stays on Jest 30.
+- Hosting both majors made pnpm hoist Jest 29 into the virtual store, which silently
+  broke **all 28 `apps/api` suites**. `apps/api` now declares
+  `jest-environment-node@^30.4.1` explicitly so it resolves its own major.
+
+### Dependency floors are set by `minimumReleaseAge`, not by `latest`
+
+`pnpm-workspace.yaml` sets `minimumReleaseAge: 10080` (7 days), so `apps/mobile`
+cannot take a version published inside that window; `pnpm install` fails with
+`ERR_PNPM_NO_MATURE_MATCHING_VERSION` when a range has no mature match. This is why
+several pins sit one patch behind `latest` (e.g. `expo@57.0.15`, `jest-expo@^57.0.4`).
+Raise them by widening the range once the window passes — never by relaxing
+`minimumReleaseAge`.
 
 ### Tasks 1+2+3 deployment order
 Tasks 1, 2, 3 are independent branches but Task 1 MUST deploy to Render before Task 4 begins.

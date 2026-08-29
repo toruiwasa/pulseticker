@@ -1,0 +1,22 @@
+{
+  "expo": {
+    "name": "pulseticker",
+    "slug": "pulseticker",
+    "version": "0.0.1",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "pulseticker",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.toruiwasa.pulseticker"
+    },
+    "android": {
+      "package": "com.toruiwasa.pulseticker",
+      "edgeToEdgeEnabled": true
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

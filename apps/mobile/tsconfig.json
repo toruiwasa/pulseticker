@@ -1,0 +1,20 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    // expo/tsconfig.base does not set `types`, and TS does not pick up
+    // @types/jest automatically under pnpm's isolated node_modules layout.
+    // Listed explicitly so `describe`/`it`/`expect` resolve in specs.
+    "types": ["jest"],
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ]
+}
