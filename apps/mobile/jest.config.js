@@ -2,10 +2,14 @@
 module.exports = {
   preset: 'jest-expo',
 
-  // Metro resolves @pulseticker/* via package exports; jest-resolve under
-  // jest 29 runs CommonJS and these packages publish an ESM-only exports map
-  // ("type": "module", only "import"/"types" conditions, no CJS fallback), so
-  // the bare specifier fails to resolve here even though the app bundles fine.
+  // jest-resolve under jest 29 runs CommonJS, and these packages publish an
+  // ESM-only exports map ("type": "module", only "import"/"types" conditions).
+  // Under Node's CJS semantics an "exports" map is authoritative, so the
+  // `main: "./dist/index.js"` both packages also declare is ignored rather than
+  // used as a fallback: require.resolve('@pulseticker/schemas') fails with
+  // ERR_PACKAGE_PATH_NOT_EXPORTED. Metro is laxer and does fall back to `main`,
+  // which is why the app bundles fine and only Jest needs this mapper — see
+  // metro.config.js.
   //
   // Map to TypeScript source, not dist/: turbo's `test` task declares no
   // dependsOn, so nothing rebuilds dist/ before a test run and mapping there
