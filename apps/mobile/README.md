@@ -55,20 +55,36 @@ gitignored, so the default output would show up as untracked files.
 
 ## Verifying the guarantees, not just the green tick
 
-Three pieces of this config exist to catch specific mistakes. A passing suite does not
-show they work — breaking them does. Each probe should fail; revert with
-`git checkout --` afterwards.
+**Optional.** Nothing here is part of normal development or CI — the commands under
+[Checks](#checks) are. These three probes exist because a passing suite cannot show
+that a guard works; only breaking the guard can. Reach for them when changing
+`jest.config.js` or the tsconfigs, or when you want to confirm the guards yourself
+rather than take this file's word for it.
 
-| What it guards | Probe | Expected |
-|---|---|---|
-| Tests run against package **source**, not a stale `dist/` | delete `'access_token'` from `REDACTED_KEYS` in `packages/logging/src/index.ts` | `test` fails |
-| Jest globals stay out of app source | append `expect(1).toBe(1);` to `app/index.tsx` | `typecheck` fails with `TS2304` |
-| An empty test run is not silently green | `mv app/__tests__ /tmp/` | `test` exits non-zero |
+Each probe deliberately breaks something, runs one check that must **fail**, and puts
+the file back. Run each block whole, from the repo root — the restore is separated by
+`;` so it happens even when the check fails. They were verified in this form on
+macOS (`sed -i ''` is BSD sed).
 
-Move the tests *out of the project* for the third probe. Renaming them in place
-(`app/__tests__.off`) does not work: Jest's `**/?(*.)+(spec\|test).[jt]s?(x)` pattern
-still matches `index.test.tsx` inside the renamed directory, so the suite runs and
-passes — which looks like the probe failing when it is the probe that is wrong.
+```bash
+# 1. Tests run against package source, not a stale dist/.  Expect: FAIL
+sed -i '' "s/'access_token',//" packages/logging/src/index.ts
+pnpm --filter @pulseticker/mobile test ; git checkout -- packages/logging/src/index.ts
+
+# 2. Jest globals stay out of app source.  Expect: FAIL with TS2304
+echo 'expect(1).toBe(1);' >> apps/mobile/app/index.tsx
+pnpm --filter @pulseticker/mobile typecheck ; git checkout -- apps/mobile/app/index.tsx
+
+# 3. An empty test run is not silently green.  Expect: FAIL with "0 matches"
+mv apps/mobile/app/__tests__ "$TMPDIR/"
+pnpm --filter @pulseticker/mobile test ; mv "$TMPDIR/__tests__" apps/mobile/app/
+```
+
+`git status` should be clean afterwards. Probe 3 must move the tests *out of the
+project*: renaming them in place (`app/__tests__.off`) does not work, because Jest's
+`**/?(*.)+(spec\|test).[jt]s?(x)` pattern still matches `index.test.tsx` inside the
+renamed directory, so the suite runs and passes — which reads as the probe failing
+when it is the probe that is wrong.
 
 ## How resolution works here
 
