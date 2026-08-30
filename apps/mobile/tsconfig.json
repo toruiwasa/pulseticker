@@ -3,18 +3,22 @@
   "compilerOptions": {
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    // expo/tsconfig.base does not set `types`, and TS does not pick up
-    // @types/jest automatically under pnpm's isolated node_modules layout.
-    // Listed explicitly so `describe`/`it`/`expect` resolve in specs.
-    "types": ["jest"],
-    "paths": {
-      "@/*": ["./src/*"]
-    }
+    // Application source only — no test globals.
+    //
+    // expo/tsconfig.base does not set `types`, and leaving it unset makes TS
+    // pull in every @types package it can see, @types/jest included. That is
+    // what an earlier revision's `"types": ["jest"]` made explicit, and either
+    // way `expect(1).toBe(1)` at module scope inside a screen typechecks
+    // cleanly and then throws ReferenceError on device, because Metro bundles
+    // no Jest environment. `[]` keeps the globals out; test files get them from
+    // tsconfig.spec.json. Same split as apps/web (tsconfig.app/spec).
+    "types": []
   },
   "include": [
     "**/*.ts",
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-  ]
+  ],
+  "exclude": ["**/__tests__/**"]
 }

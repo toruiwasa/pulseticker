@@ -6,36 +6,36 @@ module.exports = {
   // jest 29 runs CommonJS and these packages publish an ESM-only exports map
   // ("type": "module", only "import"/"types" conditions, no CJS fallback), so
   // the bare specifier fails to resolve here even though the app bundles fine.
-  // Map both to their built ESM entry: it lives outside node_modules, so the
-  // default transformIgnorePatterns lets babel-preset-expo down-level it.
   //
-  // This requires packages/*/dist to exist. `pnpm install` builds it via each
-  // package's `prepare` script, and turbo's `dependsOn: ["^build"]` covers CI
-  // (wired up in Task 8 / #11).
+  // Map to TypeScript source, not dist/: turbo's `test` task declares no
+  // dependsOn, so nothing rebuilds dist/ before a test run and mapping there
+  // would silently validate whatever was last compiled. apps/api maps the same
+  // packages to src/index.ts for the same reason. src/ lives outside
+  // node_modules, so the default transformIgnorePatterns lets babel-preset-expo
+  // strip the types.
   moduleNameMapper: {
-    '^@pulseticker/([^/]+)$': '<rootDir>/../../packages/$1/dist/index.js',
+    '^@pulseticker/([^/]+)$': '<rootDir>/../../packages/$1/src/index.ts',
+    // Those sources are NodeNext ESM: relative imports carry a .js extension
+    // that exists only in dist/. Strip it so they resolve against src/.
+    // Same mapper, same position, as apps/api's jest config.
+    '^(\\.{1,2}/.*)\\.js$': '$1',
   },
 
-  collectCoverageFrom: [
-    'app/**/*.{ts,tsx}',
-    'src/**/*.{ts,tsx}',
-    '!**/*.d.ts',
-    // Scaffold placeholders (Task 7 / #10). Both exist only to prove the
-    // bundler and the Jest resolver reach the workspace packages, and both are
-    // deleted by Task 10 (#13) when the real route tree lands. Their remaining
-    // uncovered lines are the unreachable "FAILED" fallbacks of the smoke
-    // check itself, so holding them to the 90% bar would only buy contrived
-    // tests. Delete these two lines along with the files.
-    '!app/_layout.tsx',
-    '!app/index.tsx',
-  ],
-  // Matches the 90-95% per-changed-file target in CLAUDE.md > Testing.
-  coverageThreshold: {
-    global: {
-      branches: 90,
-      functions: 90,
-      lines: 90,
-      statements: 90,
-    },
-  },
+  collectCoverageFrom: ['app/**/*.{ts,tsx}', '!**/*.d.ts'],
+
+  // No coverageThreshold yet — deliberately, and this is not an oversight to
+  // fill in with a copied block.
+  //
+  // The scaffold's only source files are the two Task 7 placeholders that Task
+  // 10 (#13) deletes, and their uncovered branches are the unreachable "FAILED"
+  // fallbacks of the smoke check itself. An earlier revision excluded both and
+  // set a 90% `global` threshold; that gate was vacuous — it collected zero
+  // files and `test:cov` still exited 0 on "All files 0/0/0/0", so it read as
+  // enforcement while enforcing nothing. Reporting real numbers on the files
+  // that exist is worth more than a bar nothing is measured against.
+  //
+  // CLAUDE.md > Testing sets a *per-changed-file* 90-95% target; a `global`
+  // key cannot express that (a large well-covered file carries a small bad
+  // one). The gate lands with the real route tree in Task 10 (#13), which
+  // tracks it.
 };

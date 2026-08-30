@@ -7,10 +7,10 @@
     "start": "expo start --dev-client",
     "android": "expo run:android",
     "ios": "expo run:ios",
-    "test": "jest --passWithNoTests",
-    "test:cov": "jest --coverage --passWithNoTests",
+    "test": "jest",
+    "test:cov": "jest --coverage",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.spec.json"
   },
   "dependencies": {
     "@pulseticker/logging": "workspace:*",

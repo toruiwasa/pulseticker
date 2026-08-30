@@ -50,8 +50,18 @@ error fires only when a range has **no** mature match — not merely when its ne
 member is too young. Every failure above was a range like `^57.0.5` whose only member
 was published inside the window.
 
-**Fix**: widen each range downward to include a mature version (`^57.0.4`, `^57.0.1`,
-`^10.9.0`). `minimumReleaseAge` was not touched, per CLAUDE.md.
+**Fix**: widen each range downward to include a mature version (`^57.0.4`, `^57.0.1`).
+`minimumReleaseAge` was not touched, per CLAUDE.md.
+
+**Correction (2026-08-30, PR #94 review)**: this section originally recorded the eslint
+fix as widening to `^10.9.0`. That never shipped — `apps/mobile/package.json` pins
+`eslint ^9.39.5`, and the 9.x line is a *separate, deliberate* decision, not a maturity
+workaround: `eslint-plugin-react@7.37.5` declares peer `eslint <=^9.7` and crashes on
+ESLint 10 with `contextOrFilename.getFilename is not a function`. What the wrong version
+number gave up was the reason: a maintainer following the "widen the range once the
+window passes" rule below would have bumped mobile to ESLint 10 and hit that crash with
+nothing in the repo explaining why 9.x was chosen. **Lift the 9.x pin only when
+eslint-plugin-react ships ESLint 10 support**, not when the release-age window passes.
 
 **Rule**: this constraint sets the dependency floor for any *new* package added to this
 repo. Check publish dates before writing pins:
