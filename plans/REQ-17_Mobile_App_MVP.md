@@ -137,10 +137,20 @@ const { getDefaultConfig } = require('expo/metro-config');
 module.exports = getDefaultConfig(__dirname);
 ```
 
-What actually does the work is `unstable_enablePackageExports`, which defaults to
-enabled in this SDK. `@pulseticker/schemas` and `@pulseticker/logging` are ESM-only
-(`"type": "module"`, only `import`/`types` export conditions, no CommonJS fallback),
-so package-exports resolution is the only path that reaches them.
+What does the work is `unstable_enablePackageExports`, which defaults to enabled in
+this SDK. `@pulseticker/schemas` and `@pulseticker/logging` are ESM-only
+(`"type": "module"`, only `import`/`types` export conditions).
+
+**Correction (2026-08-31, PR #94 review).** This paragraph originally added "no
+CommonJS fallback, so package-exports resolution is the only path that reaches them".
+That is wrong, and it was the stated justification for the config. Both packages also
+declare `main: "./dist/index.js"`, and Metro falls back to that legacy field when a
+specifier cannot be resolved through `exports` — verified by pointing
+`packages/schemas`' exports at a nonexistent `./dist/NOPE.js` and watching
+`expo export` still bundle cleanly. Package exports are the *primary* path here, not
+the only one. What the error gave up: it made an `exports`-map regression look fatal
+to the bundle, which is the premise #96 was filed on and has since been corrected
+there.
 
 If pnpm's isolated `node_modules` ever breaks native module resolution, the
 documented escape hatch is `nodeLinker: hoisted` in `pnpm-workspace.yaml` — **not**
@@ -157,11 +167,24 @@ plus 79 transitively-resolved `zod` modules.
 ### Jest vs Metro are two different resolvers (learned in Task 7)
 
 Metro resolving the workspace packages does **not** imply Jest can. jest-expo@57 is
-built against Jest 29, which runs CommonJS and cannot resolve an ESM-only `exports`
-map. `apps/mobile/jest.config.js` therefore carries a `moduleNameMapper` pointing
-`@pulseticker/*` at each package's built `dist/index.js`, which requires
-`packages/*/dist` to exist before mobile tests run (`pnpm install` builds it via each
-package's `prepare`; turbo's `dependsOn: ["^build"]` covers CI in Task 8 / #11).
+built against Jest 29, which runs CommonJS. Under Node's CJS semantics an `exports`
+map is authoritative and `main` is ignored outright, so `require.resolve()` on these
+packages fails with `ERR_PACKAGE_PATH_NOT_EXPORTED` — Metro's fallback to `main` has
+no equivalent here. `apps/mobile/jest.config.js` therefore carries a
+`moduleNameMapper` pointing `@pulseticker/*` at each package's `src/index.ts`, plus
+the `.js`-extension stripper those NodeNext sources need. That is the same mapping
+`apps/api` uses.
+
+**Correction (2026-08-31, PR #94 review).** The mapper originally pointed at each
+package's built `dist/index.js`, justified here as safe because "`pnpm install` builds
+it via each package's `prepare`; turbo's `dependsOn: ["^build"]` covers CI". The turbo
+half was false — `turbo.json`'s `test` task declares no `dependsOn` at all (only `dev`
+and `build` do), so nothing rebuilt `dist/` before a test run and the suite validated
+whatever was last compiled. Demonstrated by deleting `access_token` from
+`packages/logging`'s `REDACTED_KEYS`: `apps/api` (mapped to `src/`) failed correctly
+while the mobile suite stayed green against a stale `dist/`. Mapping to source removes
+the build-ordering dependency entirely rather than relying on a task graph to enforce
+it.
 
 Two version constraints fall out of jest-expo@57 being a Jest 29 package, and both
 are recorded in `plans/DEBUG_mobile_scaffold_jest_metro_resolution.md`:

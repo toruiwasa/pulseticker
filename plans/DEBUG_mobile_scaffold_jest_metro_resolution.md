@@ -169,9 +169,13 @@ the ones you did not.
 2. **`minimumReleaseAge` sets the floor for new dependencies**, and its error means
    "no mature match in range", not "newest is too young".
 3. **Metro and Jest are different resolvers.** Metro handles the ESM-only
-   `@pulseticker/*` packages through package exports; Jest 29 needs an explicit
-   `moduleNameMapper` to `dist/index.js`. Proving one says nothing about the other —
+   `@pulseticker/*` packages through package exports, and falls back to `main` when
+   that fails; Jest 29 runs CJS, where an `exports` map is authoritative and `main` is
+   ignored (`ERR_PACKAGE_PATH_NOT_EXPORTED`), so it needs an explicit
+   `moduleNameMapper` to `src/index.ts`. Proving one says nothing about the other —
    which is exactly why `app/__tests__/index.test.tsx` exists alongside the Metro check.
+   (Corrected 2026-08-31 in the PR #94 review: the mapper pointed at `dist/index.js`
+   until then, and this line said Metro had no `main` to fall back to.)
 4. **Read the installed `.d.ts` before assuming an API shape** (failure 4 was one
    `grep` away from the start).
 5. **Verify a regression against a real baseline before diagnosing it** (failure 5).

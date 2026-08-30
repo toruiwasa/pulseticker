@@ -52,6 +52,7 @@ flowchart LR
 | Layer | Tech |
 |---|---|
 | Frontend | Angular 22 (standalone components, zoneless, signals) + Taiga UI 5.10 + lightweight-charts |
+| Mobile | Expo SDK 57 + React Native 0.86 + Expo Router — scaffold only, see [apps/mobile](./apps/mobile/README.md) |
 | Backend | NestJS 11 (Graphile Worker, Socket.io, terminus) |
 | Auth | Supabase GitHub OAuth (PKCE, ES256 JWT verified via JWKS) |
 | Database | Supabase Postgres with row-level security |
@@ -95,6 +96,9 @@ flowchart LR
 pnpm --filter api test:cov     # 150 tests / 22 suites — watchlist, alerts, gateway, queue, chart, preview
 pnpm --filter web test:cov     # 158 tests / 18 suites — components, services, pipes, guards
 ```
+
+`pnpm test` runs every workspace, mobile included. Mobile setup, checks and known
+gaps are documented in [apps/mobile/README.md](./apps/mobile/README.md).
 
 ## Deployment
 
