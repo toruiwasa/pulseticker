@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    // Jest globals live here and nowhere else — see tsconfig.json > types.
+    "types": ["jest"]
+  },
+  // `exclude` is inherited through `extends`, and the parent excludes exactly
+  // the files this project is for. Clear it.
+  "exclude": [],
+  "include": [
+    "**/__tests__/**/*.ts",
+    "**/__tests__/**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+  ]
+}
