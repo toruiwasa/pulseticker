@@ -222,6 +222,8 @@ With multiple users subscribing to different tickers, the union can exceed 50 an
 
 **Rule for `GET /watchlist/prices`**: The endpoint reads from `FinnhubService.getLastKnownPrices()` only — NO Finnhub REST fallback on cache miss. Cache miss returns `price: null`. This must be explicit in Task 5 (Issue #8) scope.
 
+**Response ordering**: Items come back in `watchlist_items.created_at` ascending order — `WatchlistService` applies `.order('created_at', { ascending: true })` on both read paths. The mobile app renders that order as-is; no client-side reordering in Phase 1.
+
 ---
 
 ### packages/logging — mobile safety
@@ -279,13 +281,22 @@ export const queryClient = new QueryClient({
 On app open: MMKV cache hydrates immediately → background refetch updates → stale banners reflect age.
 Skeleton (state 1) only shows on first-ever launch (empty MMKV) or after `buster` is bumped.
 
+**`refetchInterval` is deliberately NOT in these defaults** — each hook sets it:
+
+- `useWatchlistPrices` **must** pass `refetchInterval: 15_000`. The `staleTime: 14_000` above is written against that number.
+- `useAlerts` sets none; pull-to-refresh plus refetch-on-focus is enough for alerts.
+
+Omitting it in `useWatchlistPrices` stops price polling silently — the screen keeps
+rendering the last cached prices with no error and no stale banner until the age
+thresholds catch up.
+
 ---
 
 ## UX states that must all be implemented (Task 12)
 
 Watchlist screen has 8 distinct states:
 1. Skeleton loading — only on first-ever launch (empty MMKV cache) or after `buster` bumped. Subsequent opens render cached data immediately.
-2. Cold-start banner (first fetch, > 10s) — "Connecting to server… This may take a moment."
+2. Cold-start banner — "Connecting to server… This may take a moment." Condition: `items` is empty (no MMKV cache) AND the first API response has not returned AND more than 10s have elapsed since the query started. With a warm cache the app goes from state 1 straight to 3/5/6/7, so this state never appears on later launches.
 3. Live prices (warm cache, age < 60s) — success state
 4. Cold cache (`cached: false`, null prices) — "Prices loading…" banner, em dashes for prices
 5. Stale warning (60s–5min) — "Updated N min ago" amber banner
@@ -463,13 +474,90 @@ Export both from `packages/schemas/src/index.ts` alongside the existing `CreateA
 
 ---
 
+## Env var validation (Task 9) — `src/lib/config.ts`
+
+`EXPO_PUBLIC_*` values are inlined at build time, so a missing one is not a runtime
+outage that retries — it is baked into the binary. Fail loudly at import, before any
+consumer reads a `undefined` URL and reports it as a network error. `config.ts` must be
+imported before anything that reads env vars (`supabase.ts`, `queryClient.ts`).
+
+```typescript
+// src/lib/config.ts
+import Constants from 'expo-constants';
+
+const raw = {
+  supabaseUrl: Constants.expoConfig?.extra?.supabaseUrl as string | undefined,
+  supabasePublishableKey: Constants.expoConfig?.extra?.supabasePublishableKey as string | undefined,
+  apiUrl: Constants.expoConfig?.extra?.apiUrl as string | undefined,
+  appEnv: (Constants.expoConfig?.extra?.appEnv as string | undefined) ?? 'development',
+};
+
+const missing = Object.entries(raw)
+  .filter(([k, v]) => k !== 'appEnv' && !v)
+  .map(([k]) => k);
+
+if (missing.length > 0) {
+  throw new Error(`[pulseticker] Missing required env vars: ${missing.join(', ')}`);
+}
+
+export const Config = raw as typeof raw & {
+  supabaseUrl: string;
+  supabasePublishableKey: string;
+  apiUrl: string;
+};
+```
+
+This is the guard that turns issue #95 (EAS cloud builds carry no source for three of
+these) from a silent `undefined` endpoint into a startup error naming the variable.
+
+---
+
+## MobileLogger (Task 9) — `src/lib/logger.ts`
+
+```typescript
+// src/lib/logger.ts
+import { sanitize } from '@pulseticker/logging';
+import { Config } from './config';
+
+type LogData = Record<string, unknown>;
+
+const isProd = Config.appEnv === 'production';
+
+export class MobileLogger {
+  static debug(tag: string, msg: string, data?: LogData) {
+    if (!isProd) console.debug(`[${tag}]`, msg, data ? sanitize(data) : '');
+  }
+  static info(tag: string, msg: string, data?: LogData) {
+    if (!isProd) console.info(`[${tag}]`, msg, data ? sanitize(data) : '');
+  }
+  static warn(tag: string, msg: string, data?: LogData) {
+    console.warn(`[${tag}]`, msg, data ? sanitize(data) : '');
+  }
+  static error(tag: string, msg: string, data?: LogData) {
+    console.error(`[${tag}]`, msg, data ? sanitize(data) : '');
+  }
+}
+```
+
+The `data` parameter is `Record<string, unknown>` on purpose, matching the rule in
+CLAUDE.md > Logging Strategy: `Session`, `User` and `Error` cannot be passed whole, so
+the compiler catches the mistake instead of `sanitize()` having to catch it at runtime.
+
+`no-console` is an error everywhere; only `logger.ts` is exempted, via `overrides` in
+`apps/mobile/eslint.config.js`.
+
+Safe to log: `{ hasSession: boolean }`, event names, `error.name`, navigation targets.
+Never log: `access_token`, `email`, `phone`, raw `Error` objects, the OAuth `?code=` param.
+
+---
+
 ## expo-secure-store adapter + Supabase client (Task 9)
 
 ```typescript
 // src/lib/supabase.ts
 import * as SecureStore from 'expo-secure-store';
 import { createClient } from '@supabase/supabase-js';
-import Constants from 'expo-constants';
+import { Config } from './config';   // validates env vars at import time
 
 const secureStoreAdapter = {
   getItem: (key: string) => SecureStore.getItemAsync(key),
@@ -478,8 +566,8 @@ const secureStoreAdapter = {
 };
 
 export const supabase = createClient(
-  Constants.expoConfig!.extra!.supabaseUrl as string,
-  Constants.expoConfig!.extra!.supabasePublishableKey as string,
+  Config.supabaseUrl,
+  Config.supabasePublishableKey,
   {
     auth: {
       storage: secureStoreAdapter,
@@ -573,6 +661,61 @@ export default function RootLayout() {
     </PersistQueryClientProvider>
   );
 }
+```
+
+---
+
+## Root layout auth guard (Task 10)
+
+`app/_layout.tsx` is the single auth routing point, covering both the initial
+navigation and mid-session expiry. It extends the `onAuthStateChange` subscription
+above with a redirect:
+
+```tsx
+useEffect(() => {
+  const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    setSession(session);
+    if (session === null) {
+      router.replace('/(auth)/sign-in');   // initial unauth AND mid-session expiry
+    }
+  });
+  return () => subscription.unsubscribe();
+}, []);
+```
+
+When Supabase's `autoRefreshToken` fails permanently — the network is down long enough
+that the refresh token cannot be exchanged — it emits `SIGNED_OUT`. Without this guard
+the user sits on a polling screen collecting 401s instead of being sent to sign-in.
+
+**ErrorBoundary** — wrap `<Stack />` in a root-level React class `ErrorBoundary`. On
+error, render `Something went wrong. Restart the app.` and call `MobileLogger.error`.
+The standard React class pattern; no external library.
+
+---
+
+## Sign-out flow (Task 10)
+
+Button in the header right of the `(tabs)/_layout.tsx` tab bar, labelled "Sign out".
+
+```typescript
+// (tabs)/_layout.tsx
+async function handleSignOut() {
+  queryClient.clear();              // 1. drop the MMKV cache
+  await supabase.auth.signOut();    // 2. invalidate the session server-side
+  clearSession();                   // 3. reset the Zustand store synchronously
+  // onAuthStateChange fires SIGNED_OUT → setSession(null) → the guard above redirects
+}
+```
+
+**The order is the point.** `queryClient.clear()` runs first because the MMKV cache
+outlives the session: on a shared device, signing out without clearing it means the
+next user's app hydrates from disk and renders the previous user's watchlist before any
+request is made.
+
+Loading state: the button shows an `ActivityIndicator` during steps 1–2.
+Error state: if `signOut()` throws, log with `MobileLogger.error` and show inline
+"Sign-out failed. Try again." — but clear the local session regardless, so a server-side
+failure cannot strand a signed-in UI on the device.
 
 ---
 
@@ -620,7 +763,7 @@ export default function RootLayout() {
 
 **What it shows:** The user's configured price alert conditions with pending/triggered status. Read-only in Phase 1 — alert creation stays on the web app.
 
-**Data source:** `GET /alerts` (existing NestJS endpoint used by the web app) or Supabase direct query. Use `AlertReadSchema` from Task 3 to parse the response.
+**Data source:** `GET /alerts` — the existing NestJS endpoint the web app uses, on `AlertsController` behind `SupabaseAuthGuard`. It returns the authenticated user's alerts ordered by `created_at` descending. Parse with `AlertReadSchema` from Task 3. **Not** a direct Supabase query: the NestJS endpoint is the single source, so the status mapping lives in one place.
 
 **States:**
 1. Loading — `SkeletonRow` × 3
@@ -646,7 +789,18 @@ export default function RootLayout() {
 
 ---
 
-## Test boundaries per mobile task
+## Test boundaries per task
+
+### Backend tasks
+
+| Task | Boundary | What to test | What to mock |
+|---|---|---|---|
+| Task 1 (AlertsService) | `AlertsService.onModuleInit` | Cache load failure logs and re-throws rather than swallowing; `@OnEvent('price.received')` runs `checkAlerts` for the matching symbol | `SupabaseService` (return `{ data: null, error }`), `QueueService` |
+| Task 2 (PricesGateway) | `PricesGateway.handleDisconnect` | Disconnect calls `unsubscribe(symbol)` for every symbol the socket held; CORS origin comes from `ConfigService`, not `process.env` | `FinnhubService`, `ConfigService` |
+| Task 4 (FinnhubService cache) | `FinnhubService.getLastKnownPrices` | Returns a populated map after a WS trade message; empty map before any message; subscription count logged on warm-up | `EventEmitter2` |
+| Task 5 (`GET /watchlist/prices`) | HTTP controller | 200 with `cached: true` when prices are cached; `price: null` for a symbol not in cache; `cached: false` when the cache is empty; 401 without a token | `FinnhubService.getLastKnownPrices`, `WatchlistService.getWatchlist`, `SupabaseAuthGuard` |
+
+### Mobile tasks
 
 | Task | Boundary | What to test | What to mock |
 |---|---|---|---|
@@ -654,8 +808,9 @@ export default function RootLayout() {
 | Task 7 (scaffold) | Metro smoke test | `import { WatchlistPricesResponseSchema } from '@pulseticker/schemas'` resolves in Metro | — |
 | Task 9 — auth store | `useAuthStore` | `setSession` stores value; `clearSession` resets to null; initial state is null | — |
 | Task 9 — supabase | `supabase.ts` | Client instantiated with `detectSessionInUrl: false`; storage is the SecureStore adapter | `expo-secure-store`, `expo-constants` |
-| Task 10 (routing) | Root `_layout.tsx` | No session → renders `(auth)` group; session present → renders `(tabs)` group | `useAuthStore` |
+| Task 10 (routing) | Root `_layout.tsx` | No session → `router.replace('/(auth)/sign-in')`; session present → renders `(tabs)`; a `SIGNED_OUT` event mid-session redirects to sign-in | `useAuthStore`, `supabase.auth.onAuthStateChange` |
 | Task 10 (routing) | `PersistQueryClientProvider` hydration | Cached data renders on open; stale banner shown when cache age > 60s | mock `react-native-mmkv` with pre-populated cache |
+| Task 10 (sign-out) | `handleSignOut` in `(tabs)/_layout.tsx` | `queryClient.clear()` runs **before** `signOut()`; `clearSession()` runs after; a throwing `signOut()` still clears the local session | `supabase.auth.signOut`, `queryClient` |
 | Task 11 (sign-in) | `sign-in.tsx` | Button press → loading state rendered; OAuth error → error message rendered; success → `setSession` called | `expo-auth-session`, `supabase.auth.exchangeCodeForSession` |
 | Task 12 (watchlist) | `useWatchlistPrices` | `fetchedAt` set on successful response; `cached: false` maps to `price: null` items correctly | `fetch` |
 | Task 12 (watchlist) | `StatusBanner` | `age < 60s` → renders nothing; `60s–5min` → amber text; `> 5min` → red text + Retry; offline → red "No internet" | — |
@@ -663,3 +818,33 @@ export default function RootLayout() {
 
 Test runner: Jest + `@testing-library/react-native`. Never use `react-test-renderer` directly.
 Coverage target: 90–95% per changed file (`pnpm --filter mobile test:cov`).
+
+---
+
+## Known limitations (accepted for Phase 1)
+
+| Item | Behaviour | Why accepted |
+|---|---|---|
+| Market-closed stale banners | Amber/red staleness banners appear after hours, when no price updates are expected anyway | Fixing it needs a market-hours calendar on the client; out of Phase 1 scope |
+| Pull-to-refresh on watchlist | Not implemented — 15s polling covers it | Deferred to Phase 2 |
+| Alert trigger timestamp | "Triggered" is shown without the time it fired | Requires an `alert_history` join; the data is in the DB for later (see the Task 3 correction note above) |
+| Tab bar icons | Not specified here | Implementation detail for Task 10 |
+
+---
+
+> **Provenance — 2026-08-31 (Issue #102).** Everything from "Response ordering" through
+> this table was recovered from commit `3d3d24b` (2026-06-26), which had been stranded
+> on an unmerged local branch and was nearly deleted during the PR #94 post-merge
+> cleanup. Two items in that commit were **not** taken:
+>
+> - Its `AlertReadSchema` rewrite. The `is_active` half already reached `main` through
+>   the better-traced 2026-08-18 correction above.
+> - `threshold_price: z.coerce.number()`, justified there as "Supabase returns
+>   NUMERIC(12,4) as a JSON string". The shipped
+>   `packages/schemas/src/alert-read.schema.ts` deliberately uses `z.number()` and
+>   documents why: PostgREST serialises numeric as a JSON number, and coercing would
+>   silently absorb a future `::text` cast instead of failing on it.
+>
+> Claims restated here were re-checked against the code rather than copied: the
+> `created_at ASC` ordering against `WatchlistService`, and the `GET /alerts` guard and
+> ordering against `AlertsController`.
