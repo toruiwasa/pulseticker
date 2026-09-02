@@ -61,9 +61,56 @@ jobs:
       - name: Test
         run: pnpm test
 
-      # Reports only — the `lint` script no longer carries --fix (#80), so this
-      # cannot rewrite the checkout. Fails on errors; the remaining
-      # no-floating-promises findings in specs are warnings and do not gate.
-      # apps/web has no eslint configuration, so there is nothing to run there.
+  # Static analysis runs as its own job so it is parallel with build + test
+  # rather than queued behind it (#11). It re-pays checkout + install (~25s),
+  # which is free on a public repo and still lowers wall-clock, because the
+  # ~30s of lint + typecheck now overlaps the ~60s of build + test instead of
+  # following it.
+  #
+  # The split axis is "does it compile and pass tests" vs "does it satisfy
+  # static analysis" — deliberately NOT "mobile vs everything else", which is
+  # how #11 was originally filed. `lint` and `typecheck` are repo-wide turbo
+  # tasks that any package may implement, so a per-app job would have to be
+  # renegotiated when apps/web gains an eslint config, and would collide with
+  # the bundle-integrity job #96 proposes. See plans/REQ-17_Task8_CI_Mobile.md.
+  lint-typecheck:
+    name: lint + typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    # No `env:` block, unlike build-test: nothing here runs `ng build`, so
+    # apps/web/scripts/set-env.ts is never invoked. turbo's `^build` pulls in
+    # only the packages/* builds (plain `tsc`), which read no environment.
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/setup@v2
+        with:
+          runtime: node@24
+          cache: true
+          install: false
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # `turbo lint` — api (eslint) and apps/mobile (`expo lint`). Reports only:
+      # the `lint` script no longer carries --fix (#80), so this cannot rewrite
+      # the checkout. Fails on errors; the 14 remaining no-floating-promises
+      # findings in api specs are warnings and do not gate. apps/web has no
+      # eslint configuration, so turbo skips it.
+      #
+      # Both turbo tasks declare `dependsOn: ["^build"]` because api's eslint
+      # config is type-aware (`projectService: true` + recommendedTypeChecked)
+      # and mobile's tsconfig resolves @pulseticker/* through `exports.types`
+      # — both need packages/*/dist/*.d.ts to exist.
       - name: Lint
-        run: pnpm --filter api lint
+        run: pnpm lint
+
+      # `turbo typecheck` — currently apps/mobile only, and it is the reason
+      # this job exists. api and web are type-checked by `nest build` / `ng
+      # build` inside the Build step of build-test; apps/mobile has no build
+      # script, and jest-expo strips types via babel without checking them, so
+      # before this step no compiler had ever seen mobile's source in CI.
+      - name: Typecheck
+        run: pnpm typecheck
