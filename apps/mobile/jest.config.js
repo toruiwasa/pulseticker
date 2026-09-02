@@ -25,7 +25,7 @@ module.exports = {
     '^(\\.{1,2}/.*)\\.js$': '$1',
   },
 
-  collectCoverageFrom: ['app/**/*.{ts,tsx}', '!**/*.d.ts'],
+  collectCoverageFrom: ['app/**/*.{ts,tsx}', 'src/**/*.{ts,tsx}', '!**/*.d.ts'],
 
   // No coverageThreshold yet — deliberately, and this is not an oversight to
   // fill in with a copied block.

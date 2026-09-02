@@ -241,6 +241,29 @@ Task 11 acceptance criterion ("force-close + reopen shows watchlist") must be ve
 
 ## TanStack Query config + MMKV persister (Task 9)
 
+> **Correction — 2026-09-03 (Task 9 / #12, PR for `feat/mobile-core-infra`).**
+> The snippet below is kept as written; three things in it no longer match the
+> libraries it names, and the implementation follows this note where they differ.
+>
+> 1. **`react-native-mmkv` v4 replaced the v3 instance API.** `new MMKV({ id })`
+>    is now `createMMKV({ id })`, and `delete(key)` is now `remove(key)`. The v3
+>    calls do not exist on the v4 instance, so the adapter below would throw on
+>    the first cache eviction rather than at construction.
+> 2. **`createSyncStoragePersister` carries an `@deprecated` tag** in
+>    `@tanstack/query-sync-storage-persister@5.102`, pointing at
+>    `createAsyncStoragePersister` in `@tanstack/query-async-storage-persister`.
+>    The async persister is used instead. MMKV's synchronous methods satisfy its
+>    `AsyncStorage` interface unchanged (every field is `MaybePromise`), and
+>    `PersistQueryClientProvider` restores asynchronously with either persister,
+>    so the hydration behaviour described below is unaffected.
+> 3. **Issue #12's body says `gcTime: 300_000`.** That predates this section and
+>    is wrong for a persisted cache: a query evicted after 5 minutes is never
+>    written to MMKV, which would make the skeleton state appear on every launch
+>    rather than only the first. `gcTime` is 24h, matching the persister's
+>    `maxAge`, as written below. Issue #12 also names `src/lib/query-client.ts`
+>    and `src/store/auth.ts`; the folder structure in this document is
+>    authoritative (`queryClient.ts`, `authStore.ts`).
+
 ```typescript
 // src/lib/queryClient.ts
 import { MMKV } from 'react-native-mmkv';
@@ -363,7 +386,23 @@ apps/mobile/
 
 ---
 
-## app.config.js spec (Task 7)
+## app.config.js spec (Task 7 — delivered in Task 9)
+
+> **Correction — 2026-09-03 (Task 9 / #12, PR for `feat/mobile-core-infra`).**
+> Task 7 shipped a static `app.json` and no `app.config.js`, so nothing lifted
+> the `EXPO_PUBLIC_*` variables into `extra` and the file below did not exist.
+> Task 9 adds it, because `src/lib/config.ts` is the first code to read those
+> values. It is written as `({ config }) => ({ ...config, extra: {...} })`:
+> @expo/config passes the static `app.json` in as `config` and warns about an
+> unused static config if a dynamic one ignores it, so app.json stays the home
+> of everything that is not environment-derived.
+>
+> `userInterfaceStyle` is also changed from `"automatic"` to `"light"` here.
+> `src/constants/colors.ts` ships a light palette only — REQ-17 Phase 1
+> specifies no dark palette, and a second one would be invented rather than
+> designed — so "automatic" would pair a dark system chrome with light screens.
+> Dark mode is tracked separately.
+
 
 ```javascript
 export default {
@@ -475,6 +514,24 @@ Export both from `packages/schemas/src/index.ts` alongside the existing `CreateA
 ---
 
 ## Env var validation (Task 9) — `src/lib/config.ts`
+
+> **Correction — 2026-09-03 (Task 9 / #12, PR for `feat/mobile-core-infra`).**
+> Two details of the snippet below changed on implementation.
+>
+> - **`appEnv` is not defaulted to `'development'`.** CLAUDE.md > Logging
+>   Strategy fixes the undefined environment at the *quietest* level, so a build
+>   that simply forgot the variable must not ship with debug logging on. An
+>   absent or unrecognised value is treated as `production`; `app.config.js`
+>   passes it through undefined rather than defaulting it.
+> - **The variable is `EXPO_PUBLIC_APP_ENV`, not `APP_ENV`.** `eas.json` and
+>   `.env.example`, both merged in Task 7 (#10) and referenced by issue #95,
+>   already settled on that name for all three build profiles.
+>
+> `Constants.expoConfig.extra` is kept as the read path rather than reading
+> `process.env.EXPO_PUBLIC_*` directly: babel-preset-expo's `inline-env-vars`
+> plugin only runs when Metro passes `inlineEnvironmentVariables` (production
+> bundles), so a direct read behaves differently in a production bundle than
+> under jest-expo. The manifest is the same code path everywhere.
 
 `EXPO_PUBLIC_*` values are inlined at build time, so a missing one is not a runtime
 outage that retries — it is baked into the binary. Fail loudly at import, before any
