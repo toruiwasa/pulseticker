@@ -82,7 +82,8 @@ is that it not be vacuous.
 "typecheck": "pnpm run typegen && tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.spec.json"
 ```
 
-`turbo.json` and `.github/workflows/ci.yml` are unchanged.
+`turbo.json` is unchanged; `.github/workflows/ci.yml` changes only in a comment
+(see *Found in adversarial review*).
 
 **Why not a CI step.** #11 Decision 2 established that `pnpm typecheck` *is* the gate, so
 "passes locally, passes in CI" holds without anyone remembering a filter. A generation
@@ -196,11 +197,42 @@ Probe files were deleted after measurement; probes 4 and 5 are now permanent, in
 
 ---
 
+## Found in adversarial review (2026-09-02, second commit)
+
+Reviewing the first commit for holes found one, introduced by Decision 3 itself:
+
+**Moving the tests out of `app/` moved them out of `expo lint`'s reach.** The wrapper
+lints only `src` / `app` / `components` (`DEFAULT_INPUTS` in `@expo/cli`'s
+`lint/lintAsync.js`; defaults are filtered by existence, explicit arguments are not).
+Verified by injection: a `no-var` error in `__tests__/index.test.tsx` passed
+`expo lint` at exit 0 and failed a direct `eslint` run at exit 1 — while the same error
+in `app/index.tsx` failed both. Before the move the test file was linted in CI; after
+it, silently not.
+
+**Fix: `"lint": "eslint ."`.** Lints everything the flat config does not ignore, so no
+directory list to keep in sync — the same failure shape #11's Decision 2 rejected for
+CI job filters. Measured: clean pass on the current tree (config files included), exit 1
+on the injected error, exit 0 with the generated files absent (CI's lint-before-typecheck
+order stays safe), and `eslint` is not type-aware so it needs no `dist/` — although the
+turbo `lint` task keeps `^build` for api's sake.
+
+**Rejected: `expo lint app __tests__`.** Explicit inputs skip the existence filter, so
+the list breaks when a named directory is missing and goes stale when a new one appears —
+it re-creates the hole one rename later.
+
+Also verified in review, no change needed: `test:cov` finds the moved tests and now
+reports only `app/` source files (the test file no longer inflates its own coverage);
+nested `pnpm run typegen` works under turbo in CI (run 33631587289 shows
+`Generating: tsconfig.json`).
+
+---
+
 ## Files changed
 
 | File | Change |
 |---|---|
-| `apps/mobile/package.json` | `typegen` script; `typecheck` runs it first |
+| `apps/mobile/package.json` | `typegen` script; `typecheck` runs it first; `lint` → `eslint .` |
 | `apps/mobile/app/__tests__/` → `apps/mobile/__tests__/` | moved out of the router directory; import path and a comment explaining why |
-| `apps/mobile/README.md` | generated-declarations section; tests-outside-`app/` rule; probe 3 path; probes 4 and 5 |
+| `apps/mobile/README.md` | generated-declarations section; tests-outside-`app/` rule; `eslint .` rationale; probe 3 path; probes 4 and 5 |
+| `.github/workflows/ci.yml` | comment only — the Lint step's description no longer names `expo lint` |
 | `plans/REQ-17_Task8_CI_Mobile.md` | dated correction — the `expo export` hypothesis in *Spun out* is disproven |

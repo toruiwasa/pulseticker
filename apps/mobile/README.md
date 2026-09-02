@@ -71,7 +71,15 @@ Run it standalone when your editor reports an unknown route right after you add 
 pnpm --filter @pulseticker/mobile typegen
 ```
 
-`expo lint` does not need these files, which is why CI can run lint before typecheck.
+Linting does not need these files, which is why CI can run lint before typecheck.
+
+The `lint` script runs `eslint .` directly rather than `expo lint`. The wrapper's default
+targets are only `src` / `app` / `components` (`DEFAULT_INPUTS` in `@expo/cli`'s
+`lint/lintAsync.js`), so `__tests__/` at the package root — and any other future
+top-level directory — would be silently unlinted. `eslint .` lints everything the flat
+config does not ignore, so the target list never needs remembering. Verified by
+injection: a `no-var` error in `__tests__/index.test.tsx` passes `expo lint` at exit 0
+and fails `eslint .` at exit 1.
 
 Two things the script does deliberately:
 

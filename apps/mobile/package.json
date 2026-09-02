@@ -9,7 +9,7 @@
     "ios": "expo run:ios",
     "test": "jest",
     "test:cov": "jest --coverage",
-    "lint": "expo lint",
+    "lint": "eslint .",
     "typegen": "EXPO_NO_TYPESCRIPT_SETUP=1 expo customize tsconfig.json",
     "typecheck": "pnpm run typegen && tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.spec.json"
   },

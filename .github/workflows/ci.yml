@@ -94,7 +94,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      # `turbo lint` — api (eslint) and apps/mobile (`expo lint`). Reports only:
+      # `turbo lint` — api and apps/mobile, both plain eslint. Reports only:
       # the `lint` script no longer carries --fix (#80), so this cannot rewrite
       # the checkout. Fails on errors; the 14 remaining no-floating-promises
       # findings in api specs are warnings and do not gate. apps/web has no
