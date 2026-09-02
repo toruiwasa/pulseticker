@@ -1,8 +1,15 @@
 import { render, screen } from '@testing-library/react-native';
-import SmokeScreen from '../index';
+import SmokeScreen from '../app/index';
 
 /**
  * Jest-side counterpart to the Metro smoke test (Task 7 / #10).
+ *
+ * Lives outside `app/` on purpose. Expo Router treats every file under the
+ * router directory as a route — its require.context regex (expo-router/_ctx.*)
+ * excludes only `+api` / `+html` / `+middleware`, and getRoutesCore's ignore
+ * list adds nothing for tests — so `app/__tests__/index.test.tsx` compiled to a
+ * real `/__tests__/index.test` route and pulled @testing-library/react-native
+ * into the app bundle. #105 moved it here; `typedRoutes` made it visible.
  *
  * Metro proves the workspace packages resolve for the app bundle; this proves
  * they also resolve under jest-resolve, which is a separate resolver with
