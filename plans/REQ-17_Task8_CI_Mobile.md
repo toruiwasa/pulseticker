@@ -118,6 +118,32 @@ the critical path. On a public repo the duplicated runner minutes cost nothing, 
 **Rejected: separate `lint` and `typecheck` jobs.** Each would pay 25s of setup to run 6–25s
 of work.
 
+#### Correction (2026-09-02) — the predicted wall-clock win is inside runner noise
+
+The first CI run on this branch,
+[33591378507](https://github.com/toruiwasa/pulseticker/actions/runs/33591378507), measured
+**80s** total against the 72s baseline — the opposite direction from the ~63s predicted above.
+Both jobs did start within 1s of each other and the whole of `lint + typecheck` (51s) overlapped
+`build + test` (80s), so the structural claim holds. What the estimate missed is variance in the
+steps the change does not touch:
+
+| Step | baseline (33370966784) | this branch (33591378507) |
+|---|---:|---:|
+| Set up job | 0s | 2s |
+| checkout | 1s | 1s |
+| `pnpm/setup@v2` | 11s | 15s |
+| install | 13s | 15s |
+| Build | 16s | 17s |
+| Test | 22s | 23s |
+| Lint | 6s | *(moved out)* |
+| **build-test total** | **72s** | **77s** |
+
+Setup and install alone ran 6s slower, which swamps the 6s that `Lint` vacated. Holding the
+runner constant the arithmetic still works out to ~66s, but **that number has not been observed
+and should not be quoted as a result.** The honest statement is: the split does not cost
+wall-clock, and it buys an independent red check for static analysis. The speedup was the weaker
+half of the argument for it and is withdrawn.
+
 ### 3. The new job carries no `env:` block
 
 `build-test` needs `APP_ENV` / `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY` / `API_URL` /
