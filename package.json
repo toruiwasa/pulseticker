@@ -10,6 +10,8 @@
     "build:api": "pnpm --filter @pulseticker/schemas --filter @pulseticker/logging --filter @pulseticker/watchlist-rules build && pnpm --filter api build",
     "build:web": "pnpm --filter web build",
     "test": "turbo test",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
     "test:api": "pnpm --filter api test",
     "test:web": "pnpm --filter web test",
     "test:cov:api": "pnpm --filter api test:cov",
