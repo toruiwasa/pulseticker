@@ -213,6 +213,15 @@ and static-asset imports get their types — that one bites #12, which reads tho
 Not fixed here: the fix needs the correct type-generation mechanism to be established, and it
 may ride on the `expo export` step #96 proposes. Filed as its own Issue.
 
+#### Correction (2026-09-02) — `expo export` does not generate these files
+
+Written while implementing #105. The `expo export` hypothesis above was a guess and is wrong.
+`startTypeScriptServices` — the only entry point that writes `.expo/types/router.d.ts` and
+`expo-env.d.ts` — has exactly two callers in `@expo/cli` 57.0.17: `DevServerManager`
+(`expo start`) and `customize/typescript.js` (`expo customize tsconfig.json`). The export
+command is not one of them, so #105 is independent of #96 rather than sequenced behind it.
+Resolved in `plans/ISSUE-105_Mobile_Generated_Types.md`.
+
 ---
 
 ## Files changed
