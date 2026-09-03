@@ -27,6 +27,12 @@ module.exports = {
 
   collectCoverageFrom: ['app/**/*.{ts,tsx}', 'src/**/*.{ts,tsx}', '!**/*.d.ts'],
 
+  // __tests__/helpers holds shared fixtures, not suites. Jest's default
+  // testMatch treats every .ts under __tests__ as a test file and would fail
+  // them for containing no tests. Setting this key replaces the default list
+  // rather than extending it, so node_modules has to be restated.
+  testPathIgnorePatterns: ['/node_modules/', '<rootDir>/__tests__/helpers/'],
+
   // No coverageThreshold yet — deliberately, and this is not an oversight to
   // fill in with a copied block.
   //

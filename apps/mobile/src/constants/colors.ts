@@ -9,7 +9,11 @@
  * Light only, deliberately: REQ-17 Phase 1 specifies no dark palette, and a
  * second unspecified palette would be invented, not designed. app.json's
  * `userInterfaceStyle` is pinned to "light" to match — see the PR for #12.
- * Dark mode is tracked separately.
+ * That pin takes effect on iOS only: Expo's app config reference states it
+ * "Requires `expo-system-ui` be installed in your project to work on Android",
+ * and that package is not a dependency here. Nothing reads useColorScheme yet,
+ * so no screen is affected; adding the package needs a device build, which is
+ * blocked on #95. Dark mode is tracked separately.
  */
 export const colors = {
   // Brand / interactive — Google sign-in button, tab bar active tint

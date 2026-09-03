@@ -11,6 +11,12 @@ import { create } from 'zustand';
  *
  * The session carries `access_token`. Pass it around, never log it — not even
  * a field of it.
+ *
+ * `clearSession` is the single teardown path: `setSession(null)` delegates to
+ * it rather than duplicating the write. onAuthStateChange emits null on
+ * SIGNED_OUT and screens call clearSession directly, so both reach the same
+ * place — sign-out cleanup added here (resetting the query cache, wiping
+ * MMKV) cannot be skipped by one caller and not the other.
  */
 interface AuthState {
   session: Session | null;
@@ -18,8 +24,14 @@ interface AuthState {
   clearSession: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   session: null,
-  setSession: (session) => set({ session }),
+  setSession: (session) => {
+    if (session === null) {
+      get().clearSession();
+      return;
+    }
+    set({ session });
+  },
   clearSession: () => set({ session: null }),
 }));

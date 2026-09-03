@@ -231,6 +231,23 @@ With multiple users subscribing to different tickers, the union can exceed 50 an
 `SecureLogger` (NestJS-specific) lives in `apps/api/src/common/logger/` — NOT in the package.
 Safe to import `@pulseticker/logging` in the mobile app.
 
+> **Correction — 2026-09-03 (Task 9 / #12, review of PR #110).**
+> `sanitize()` redacted only top-level keys, so the guarantee was
+> depth-dependent: `{ access_token }` was redacted and
+> `{ context: { access_token } }` was logged verbatim. Task 9 is what made this
+> load-bearing — it routes every mobile log through one gateway whose doc
+> comment sells `sanitize()` as the second defensive layer — so the fix lands
+> in the shared package and applies to `apps/web` and `apps/api` too. It now
+> recurses through plain objects and arrays, guards cycles with a `WeakSet`,
+> and returns `'[CIRCULAR]'` on a repeat visit.
+>
+> What it still does not do: walk a class instance. An `Error`, a `Date` or a
+> Supabase `Session` is passed through untouched, because walking an arbitrary
+> prototype serialises a `Date` to `{}` and can fire getters with side effects.
+> That case stays the type constraint's job — `LogData` rejects those at the
+> call site — and this is a limitation to know about, not one to rely on
+> `sanitize()` for.
+
 ### Development Build is the baseline
 
 EAS Development Build is used throughout — Expo Go is not used.
@@ -571,6 +588,30 @@ these) from a silent `undefined` endpoint into a startup error naming the variab
 
 ## MobileLogger (Task 9) — `src/lib/logger.ts`
 
+> **Correction — 2026-09-03 (Task 9 / #12, review of PR #110).**
+> The snippet below is kept as written. Three things in it were wrong, and the
+> implementation follows this note where they differ.
+>
+> 1. **The level gate is `LEVELS`, not a boolean per method.** As written,
+>    `isProd` gates `debug` and `info` identically, so staging emits `debug` —
+>    contradicting CLAUDE.md > Logging Strategy §5, which puts staging at
+>    `info`. The implementation maps `appEnv` to a minimum `LogLevel` and
+>    compares through the `LEVELS` table `@pulseticker/logging` already exports,
+>    which is what `apps/web`'s `LoggerService` does for the same gate. What
+>    this gives up: one indirection between reading a method and knowing
+>    whether it fires. What it buys: the env-to-level policy exists once, as
+>    data, in both clients.
+> 2. **`warnWithCause` / `errorWithCause` were missing.** CLAUDE.md > Logging
+>    Strategy §6 requires them for Supabase-auth and JWT errors, whose
+>    `message` can carry a token fragment, and `LogData` deliberately rejects a
+>    raw `Error` — so without them Task 10's auth paths had no compliant way to
+>    log a cause at all. Added, mirroring `apps/web` and `apps/api`:
+>    `errorName` always, `errorMessage` only in development, and the stack only
+>    for `errorWithCause` in development.
+> 3. **`data ? sanitize(data) : ''` logs a stray empty string.** The
+>    implementation spreads a tuple instead, so a call with no data passes no
+>    third argument.
+
 ```typescript
 // src/lib/logger.ts
 import { sanitize } from '@pulseticker/logging';
@@ -609,6 +650,34 @@ Never log: `access_token`, `email`, `phone`, raw `Error` objects, the OAuth `?co
 ---
 
 ## expo-secure-store adapter + Supabase client (Task 9)
+
+> **Correction — 2026-09-03 (Task 9 / #12, review of PR #110).**
+> The snippet below is kept as written; two omissions in it are corrected in
+> the implementation.
+>
+> 1. **The adapter swallows nothing, but reports nothing either.** Each of the
+>    three methods passes the `SecureStore` promise straight through, so a
+>    rejection surfaces as an unhandled rejection inside auth-js: the session
+>    is not persisted and the user is signed out on the next cold launch, with
+>    nothing logged to say why. A Supabase session runs 2.5-4KB and the
+>    platform is documented as free to refuse a value that large. The
+>    implementation wraps all three in a `guard()` that logs through
+>    `errorWithCause` and rethrows (CLAUDE.md > Logging Strategy §3).
+>    Rejected alternative: Supabase's `LargeSecureStore` (AES key in
+>    SecureStore, ciphertext in AsyncStorage). It removes the size ceiling but
+>    puts the encrypted session in unencrypted storage and adds a crypto
+>    dependency, and the old 2048-byte limit was removed in expo-secure-store
+>    SDK 55 — so the ceiling may no longer exist on the installed 57.0.2. Not
+>    worth adopting blind; making the failure loud is enough to find out.
+> 2. **`autoRefreshToken: true` is not self-sufficient on React Native.**
+>    auth-js drives the refresh from a 30s `setInterval`, and React Native
+>    suspends JS timers while backgrounded, so an app resumed after the access
+>    token expired issues its next request with a stale JWT. auth-js's own
+>    docstring instructs RN apps to drive `startAutoRefresh` / `stopAutoRefresh`
+>    from an `AppState` listener; the implementation adds that listener beside
+>    the client. It is registered at module scope rather than in the root
+>    layout so it cannot be forgotten by a screen — the same reasoning the
+>    focus/online listeners in Task 9 already use.
 
 ```typescript
 // src/lib/supabase.ts
@@ -668,6 +737,17 @@ Both listeners must be registered once at app startup, not inside a component.
 ---
 
 ## Zustand auth store (Task 9)
+
+> **Correction — 2026-09-03 (Task 9 / #12, review of PR #110).**
+> `clearSession` and `setSession(null)` below are byte-for-byte the same write,
+> and the store documents both as live: `onAuthStateChange` emits null on
+> SIGNED_OUT while screens call `clearSession`. Sign-out cleanup added later —
+> resetting the query cache, wiping MMKV — would run for one caller and not the
+> other. The implementation makes `clearSession` the single teardown path and
+> has `setSession(null)` delegate to it. Rejected alternative: deleting
+> `clearSession` and letting every caller use `setSession(null)`. The
+> three-method surface was deliberated in #12, and a named teardown method is
+> the more obvious place to hang cleanup on.
 
 ```typescript
 // src/store/authStore.ts

@@ -8,6 +8,8 @@
  */
 import type { AppStateStatus } from 'react-native';
 
+import { mockConfig } from './helpers/mockConfig';
+
 type MmkvStore = Map<string, string>;
 
 const mockStore: MmkvStore = new Map();
@@ -28,14 +30,7 @@ jest.mock('@react-native-community/netinfo', () => ({
   __esModule: true,
   default: { addEventListener: mockNetInfoAddEventListener },
 }));
-jest.mock('../src/lib/config', () => ({
-  Config: {
-    supabaseUrl: 'https://project.supabase.co',
-    supabasePublishableKey: 'sb_publishable_test',
-    apiUrl: 'https://api.example.com',
-    appEnv: 'development',
-  },
-}));
+jest.mock('../src/lib/config', () => ({ Config: mockConfig() }));
 
 /* eslint-disable @typescript-eslint/no-require-imports */
 const { AppState } = require('react-native') as typeof import('react-native');

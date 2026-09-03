@@ -3,6 +3,8 @@
  * Config's three URL/key fields are non-empty strings, so this is the only
  * place that can catch a build shipped without them (issue #95).
  */
+import { mockConfig } from './helpers/mockConfig';
+
 type Extra = Record<string, unknown> | undefined;
 
 function loadConfig(extra: Extra) {
@@ -18,12 +20,9 @@ function loadConfig(extra: Extra) {
   return loaded!;
 }
 
-const COMPLETE = {
-  supabaseUrl: 'https://project.supabase.co',
-  supabasePublishableKey: 'sb_publishable_test',
-  apiUrl: 'https://api.example.com',
-  appEnv: 'development',
-};
+// The same fixture the consumers mock Config with — here it stands in for the
+// manifest `extra` those values are read out of, so the two cannot drift.
+const COMPLETE: Record<string, unknown> = mockConfig();
 
 afterEach(() => {
   jest.resetModules();
