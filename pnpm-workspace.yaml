@@ -15,3 +15,30 @@ allowBuilds:
 # it to true whenever minimumReleaseAge is explicitly set), so a too-young version
 # fails the install instead of being auto-added to `minimumReleaseAgeExclude`.
 minimumReleaseAge: 10080
+
+# Pin the two native modules Expo SDK 57 bundles, across the whole tree.
+#
+# expo/bundledNativeModules.json fixes react-native-worklets at 0.10.1 and
+# react-native-reanimated at 4.5.1, but both reach us only transitively —
+# expo-router declares reanimated as a bare `*` peer and nothing pins worklets —
+# so pnpm resolved them to the newest satisfying versions, 0.12.1 and 4.6.0.
+#
+# expo-modules-core is written against the <=0.10 worklets API: its
+# WorkletsAdapter calls `WorkletRuntime::executeSync`, which 0.12 removed. The
+# iOS build then fails to compile ExpoWorkletsBridgeProvider.mm. Its peer range
+# (`^0.7.4 || ^0.8.0 || ^0.9.0 || ^0.10.0`) states the constraint correctly, but
+# the peer is optional, so pnpm installs the mismatch without erroring.
+#
+# `overrides`, not a dependency entry: apps/mobile declaring them is not enough,
+# because expo-modules-autolinking resolves native modules out of the store and
+# other consumers (@expo/ui, expo-router) still bound the 0.12.x copy.
+#
+# Nothing in CI catches this — jest, tsc and eslint never compile Objective-C++,
+# so the first signal is a failed native build (#117). The CI gap is #118.
+#
+# Lift both pins together, and only when expo/bundledNativeModules.json for the
+# SDK in use names the newer versions. Pinning below what pnpm would pick means
+# an SDK bump that is not matched here silently holds the tree back.
+overrides:
+  react-native-worklets: 0.10.1
+  react-native-reanimated: 4.5.1
