@@ -29,9 +29,12 @@ minimumReleaseAge: 10080
 # (`^0.7.4 || ^0.8.0 || ^0.9.0 || ^0.10.0`) states the constraint correctly, but
 # the peer is optional, so pnpm installs the mismatch without erroring.
 #
-# `overrides`, not a dependency entry: apps/mobile declaring them is not enough,
-# because expo-modules-autolinking resolves native modules out of the store and
-# other consumers (@expo/ui, expo-router) still bound the 0.12.x copy.
+# `overrides`, not a dependency entry: apps/mobile declaring them is not enough.
+# Neither package ships an expo-module.config.json, so neither is autolinked by
+# expo-modules-autolinking — React Native's own autolinking links them. What
+# decides the build is which worklets copy expo-modules-core is peer-resolved
+# against, and the @expo/ui / expo-router graph bound it to the 0.12.x one.
+# Only a workspace-wide override removes that copy from the graph.
 #
 # Nothing in CI catches this — jest, tsc and eslint never compile Objective-C++,
 # so the first signal is a failed native build (#117). The CI gap is #118.
