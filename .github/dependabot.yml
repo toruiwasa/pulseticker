@@ -67,6 +67,109 @@ updates:
         update-types:
           - "version-update:semver-major"
 
+      # ── Expo SDK-governed packages ───────────────────────────────────────
+      # expo/bundledNativeModules.json, shipped inside the installed `expo`
+      # package, fixes the version of each package below for the SDK in use.
+      # Dependabot has no knowledge of that matrix, so it proposes whatever npm
+      # published last: PR #123 offered react-native 0.87.1 against an SDK 57
+      # tree that expects 0.86.x, and reanimated 4.6.0 / worklets 0.12.1 against
+      # the pins added in #119. The 0.12.x worklets bump is the exact break that
+      # made the iOS build fail to compile in #117.
+      #
+      # These versions move when the SDK moves — `expo install --fix` as part of
+      # an SDK upgrade — never on an unrelated upstream release. `expo` itself is
+      # deliberately NOT listed: its bump is the signal that the others may move,
+      # and it must keep arriving.
+      #
+      # Two of them (react-native-worklets, react-native-reanimated) are also
+      # pinned by `overrides` in pnpm-workspace.yaml. For those a Dependabot bump
+      # is worse than merely unwanted: pnpm rewrites the specifier back to the
+      # override, `pnpm install --frozen-lockfile` still passes, and the PR goes
+      # green while leaving apps/mobile/package.json declaring a version that is
+      # neither installed nor linked.
+      #
+      # `update-types` is spelled out rather than left bare on purpose: naming
+      # the version-update types scopes each rule to version updates only, so
+      # Dependabot SECURITY updates for these packages still arrive. A bare
+      # `dependency-name` rule would suppress those too.
+      #
+      # Lift an entry only when the SDK it is tied to no longer governs the
+      # package. The list is derived, not curated — regenerate it with:
+      #   node -e "const b=require('expo/bundledNativeModules.json'),\
+      #     p=require('./apps/mobile/package.json');\
+      #     console.log(Object.keys({...p.dependencies,...p.devDependencies})\
+      #       .filter(k=>b[k]).sort().join('\n'))"
+      - dependency-name: "@react-native-community/netinfo"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      - dependency-name: "eslint-config-expo"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      - dependency-name: "expo-constants"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      - dependency-name: "expo-linking"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      - dependency-name: "expo-router"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      - dependency-name: "expo-secure-store"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      - dependency-name: "expo-status-bar"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      - dependency-name: "jest-expo"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      - dependency-name: "react"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      - dependency-name: "react-native"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      - dependency-name: "react-native-reanimated"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      - dependency-name: "react-native-safe-area-context"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      - dependency-name: "react-native-screens"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+      - dependency-name: "react-native-worklets"
+        update-types:
+          - "version-update:semver-major"
+          - "version-update:semver-minor"
+          - "version-update:semver-patch"
+
   # ── GitHub Actions ────────────────────────────────────────────────────────
   # No workflows exist today — the Render keepalive cron was retired in favour of
   # an external uptime monitor — so this ecosystem opens no PRs. Retained so the
