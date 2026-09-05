@@ -55,8 +55,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/watchlist-rules
       '@supabase/supabase-js':
-        specifier: ^2.112.3
-        version: 2.112.3
+        specifier: ^2.112.4
+        version: 2.112.4
       class-transformer:
         specifier: ^0.5.1
         version: 0.5.1
@@ -67,8 +67,8 @@ importers:
         specifier: ^0.17.3
         version: 0.17.3(supports-color@5.5.0)(typescript@6.0.3)
       jose:
-        specifier: ^6.2.8
-        version: 6.2.9
+        specifier: ^6.2.10
+        version: 6.2.10
       luxon:
         specifier: ^3.7.2
         version: 3.7.2
@@ -182,17 +182,17 @@ importers:
         specifier: 12.0.1
         version: 12.0.1(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)
       '@supabase/supabase-js':
-        specifier: ^2.112.3
-        version: 2.112.3
+        specifier: ^2.112.4
+        version: 2.112.4
       '@tanstack/query-async-storage-persister':
-        specifier: ^5.102.6
-        version: 5.102.6
+        specifier: ^5.102.8
+        version: 5.102.8
       '@tanstack/react-query':
-        specifier: ^5.102.6
-        version: 5.102.6(react@19.2.3)
+        specifier: ^5.102.8
+        version: 5.102.8(react@19.2.3)
       '@tanstack/react-query-persist-client':
-        specifier: ^5.102.6
-        version: 5.102.6(@tanstack/react-query@5.102.6(react@19.2.3))(react@19.2.3)
+        specifier: ^5.102.8
+        version: 5.102.8(@tanstack/react-query@5.102.8(react@19.2.3))(react@19.2.3)
       expo:
         specifier: 57.0.15
         version: 57.0.15(@babel/core@8.0.1)(@expo/dom-webview@57.0.1)(@expo/metro-runtime@57.0.12)(expo-router@57.0.15)(react-native-worklets@0.10.1(@babel/core@8.0.1)(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)(supports-color@5.5.0)(typescript@6.0.3)
@@ -219,10 +219,10 @@ importers:
         version: 0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0)
       react-native-mmkv:
         specifier: ^4.3.2
-        version: 4.3.2(react-native-nitro-modules@0.37.0(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)
+        version: 4.3.2(react-native-nitro-modules@0.37.1(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)
       react-native-nitro-modules:
-        specifier: 0.37.0
-        version: 0.37.0(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)
+        specifier: 0.37.1
+        version: 0.37.1(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)
       react-native-reanimated:
         specifier: 4.5.1
         version: 4.5.1(react-native-worklets@0.10.1(@babel/core@8.0.1)(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)
@@ -321,8 +321,8 @@ importers:
         specifier: workspace:*
         version: link:../../packages/watchlist-rules
       '@supabase/supabase-js':
-        specifier: ^2.112.3
-        version: 2.112.3
+        specifier: ^2.112.4
+        version: 2.112.4
       '@taiga-ui/cdk':
         specifier: 5.19.0
         version: 5.19.0(1f69651d97f3ac8ee7bd9eead65ef958)
@@ -3484,31 +3484,31 @@ packages:
   '@standard-schema/spec@1.1.0':
     resolution: {integrity: sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==}
 
-  '@supabase/auth-js@2.112.3':
-    resolution: {integrity: sha512-NA0rsgAlWZPvbhw8aUdmgfpHVgUAcd8zK5ov43l++o1bLIPXZhRiAlRobhwF5AatQuovpqxsMH50F4oyyV4XZw==}
+  '@supabase/auth-js@2.112.4':
+    resolution: {integrity: sha512-z8DesgwLzKM5PiT0yNmJU8VJyh1zAhYi+20Z7drdJQLXg/wWW4yGt/un+He5ERYUo94Vz66t5aeyr1DIDemI5A==}
     engines: {node: '>=22.0.0'}
 
-  '@supabase/functions-js@2.112.3':
-    resolution: {integrity: sha512-gfv481mTOVWtZIJgXupxZpni2V2UWPf6jeF/jOK7HdMHdH+mt6sU0sHHwf0POsPip8ltlulu9OUHgwVzl5ddRw==}
+  '@supabase/functions-js@2.112.4':
+    resolution: {integrity: sha512-DQ0aVH8wSQAccVqNoEkec62qCu2QRNyoGN53RqsVZ1k6F1zq4/v8scrlR6LNT2RJmT97apiTmORijPVhErCS2g==}
     engines: {node: '>=22.0.0'}
 
   '@supabase/phoenix@0.4.5':
     resolution: {integrity: sha512-aAn9H9ovVyeApKy11OWOrrOGq8DV68yWeH4ud2lN9fzn4aO8Zb5GLL9m1pUg9nLqIcT+ZDfAcsZe0E/nqdv2lw==}
 
-  '@supabase/postgrest-js@2.112.3':
-    resolution: {integrity: sha512-+Mf6uCpzr00bqxwX8hTK2X2L9eAL/1vuOjdEjx6upz9ulb0RmQT16XeU/JkMUlVHw/B46ZnPa2busY4Kd9YCzw==}
+  '@supabase/postgrest-js@2.112.4':
+    resolution: {integrity: sha512-uaubtPSeg2TR4wrtfQoQWgkTAe+a0qWX2KhmwvTfNl5mGN9+U7owiJt6abk3o/V6O899PSRD1yzxs5RlF4xTug==}
     engines: {node: '>=22.0.0'}
 
-  '@supabase/realtime-js@2.112.3':
-    resolution: {integrity: sha512-E6wljXWs7DUOloyIB69i3YFInWE6IyCvgTAbQ0KYxOHv26FdA1KzEXTuzxrYEdf70t406Z9BRwUlGyclGF2FXA==}
+  '@supabase/realtime-js@2.112.4':
+    resolution: {integrity: sha512-vZ+j079SKrM0Xiq7MJCvQKLDpaH2kfKfLY68xuQE1sqsCsMmx1CyrDBJHsxZ3cX01VOs5SI9igmoZAF3BmdZxw==}
     engines: {node: '>=22.0.0'}
 
-  '@supabase/storage-js@2.112.3':
-    resolution: {integrity: sha512-oSK61tzlUvg+BWPqpKQCu9qqonsO26btaoAR9D6Gest2aj7xUqToj9rKyaoYOJczkhg9BjqA1REbYy9tPI4bDA==}
+  '@supabase/storage-js@2.112.4':
+    resolution: {integrity: sha512-lQ0JemuTlMIXVKgSci1qez8yPnM5hyDngeAfEBjZS2Om4D+Cus0EE5BE6glFobrxdyii1OF4UzWfF0zcQgDq5A==}
     engines: {node: '>=22.0.0'}
 
-  '@supabase/supabase-js@2.112.3':
-    resolution: {integrity: sha512-Jv1bxVQmEJNkjvPEhFaKjPzsh+Ozyew6lWGD+SoYcsclDEP1z7yEvKvfUQfzy0DkxRIQnZNxmmWtAzw5XLTQoA==}
+  '@supabase/supabase-js@2.112.4':
+    resolution: {integrity: sha512-UiCX1udlFY1fQQrO7Z3GU7obQsju0w5Vk9mOOwalfo/+Gy+tahWVenSSuu5E/GTy/q//HxvGv2IrCdW66/61kw==}
     engines: {node: '>=22.0.0'}
     peerDependencies:
       '@opentelemetry/api': '>=1.0.0'
@@ -3609,23 +3609,23 @@ packages:
     peerDependencies:
       '@taiga-ui/design-tokens': ~0.315.0
 
-  '@tanstack/query-async-storage-persister@5.102.6':
-    resolution: {integrity: sha512-8Lfd2N1AoWW2Iu4mfHwKTUSR/08YvDxEC07yJZmDohwo8f3mDmaIee2+hSX20DKVZtjn8eFBSOAbLm0d5snEPw==}
+  '@tanstack/query-async-storage-persister@5.102.8':
+    resolution: {integrity: sha512-9smqFJWyhRo+0l3NqaGFo6CQVr+3jpKOVZBQXI/LL+GoTIGhhxq1wTZegeI63dy0oResZx/EyazGzDjW8harbg==}
 
-  '@tanstack/query-core@5.102.6':
-    resolution: {integrity: sha512-jp+GucyQ+fel2ILb8ZLQeqMaAqZL/Bzaj+dKOQiPk4vPdf2rQPEV7heUyEVIhatpY42j4AFHav4DzBa1oTIp/A==}
+  '@tanstack/query-core@5.102.8':
+    resolution: {integrity: sha512-ZNjkJ33CqvPNec/6lZBnHqLc3EVGPZ9ySLhYahU9TcuRFdmwXewuj0c4hwSWcGHqEUwcSrKeZ+oGcvPBqXcQcg==}
 
-  '@tanstack/query-persist-client-core@5.102.6':
-    resolution: {integrity: sha512-F9YKO76vFSBZfUVZxZjr/4xIUjnnYKO+pHfbhkrsIp1je5A1/L/UhIUb4A3VmLGnLJYxJWJmADSx2TAVZVRYsA==}
+  '@tanstack/query-persist-client-core@5.102.8':
+    resolution: {integrity: sha512-t3v4/D6ejo/BrPzM5gm/AT3c4CWPCxFa+0cIjAeHAeanGPG6rCjFS1hZnPZH/rf55qe3qYYgx5U6iBZMY1PQjA==}
 
-  '@tanstack/react-query-persist-client@5.102.6':
-    resolution: {integrity: sha512-l1prWH9kMq8cprv9qvrEPKxKHBvKG4XAM8lknoaBA1tqOx3H2BTPn1jIQNSDr0sfFbkFaYqDl/G1GxPUYxQtAQ==}
+  '@tanstack/react-query-persist-client@5.102.8':
+    resolution: {integrity: sha512-WOZReC+m9klekPtG7eeZ3txJeMA9lg2R0RytSG3yXcZgJItQAVIyoobJdbdIQtlpgcU2tSzsOEBtJacs2vlCOA==}
     peerDependencies:
-      '@tanstack/react-query': ^5.102.6
+      '@tanstack/react-query': ^5.102.8
       react: ^18 || ^19
 
-  '@tanstack/react-query@5.102.6':
-    resolution: {integrity: sha512-ANz4KZ8z80D85fiz5IAHjpb8XBPLrjOb/0natlD9Ascyy/3p96V86Zw8UbOfA0HDLcvK/A4gNd95r723y5UT2w==}
+  '@tanstack/react-query@5.102.8':
+    resolution: {integrity: sha512-TYBea4OuXWD7MhaSHq069TWbFe7rcwWN6kzT7JF0OKi1K6c1gTv2IzD6A6ExJsCMozdkqBWeuIUZmu4KQg0O5A==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -6559,8 +6559,8 @@ packages:
   jimp-compact@0.16.1:
     resolution: {integrity: sha512-dZ6Ra7u1G8c4Letq/B5EzAxj4tLFHL+cGtdpR+PVm4yzPDj+lCk+AbivWt1eOM+ikzkowtyV7qSqX6qr3t71Ww==}
 
-  jose@6.2.9:
-    resolution: {integrity: sha512-XrchZOFZUl/T3vTwRe8XK+cJrGtMF4th1ARnDfwbBXFKThGhlsxEE4Zu03AD/bjJSt/9jT/mxrOCkJWOg77aPA==}
+  jose@6.2.10:
+    resolution: {integrity: sha512-iiW7J9qRFlGxvCOIBDBDxFePQSn7ZMAnrYGhrrOo6siO/MIqwfyilLR27pkfDgUk+raLuzADS8A3S/KLBisc0g==}
 
   js-tokens@10.0.0:
     resolution: {integrity: sha512-lM/UBzQmfJRo9ABXbPWemivdCW8V2G8FHaHdypQaIy523snUjog0W71ayWXTjiR+ixeMyVHN2XcpnTd/liPg/Q==}
@@ -7618,8 +7618,8 @@ packages:
       react-native: '*'
       react-native-nitro-modules: '*'
 
-  react-native-nitro-modules@0.37.0:
-    resolution: {integrity: sha512-ULS2CBZcdwGw5d4Y35EV/tbCOsNsQOnQ9LC9CehMhDNm5c90lwF/LxRamzKuFpjI547G7teTQgD0peqYSGnP9g==}
+  react-native-nitro-modules@0.37.1:
+    resolution: {integrity: sha512-KpW6EQVQ/bfegpCGxN9Be+ndvsfj56t4IESEvCASu9gWpJa/NDfHpIeIwCOvZQ3eXmLEj6YD4wCLqcC1FJPr2w==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -11443,7 +11443,7 @@ snapshots:
       express: 5.2.1(supports-color@5.5.0)
       express-rate-limit: 8.6.2(express@5.2.1)(supports-color@5.5.0)
       hono: 4.13.2
-      jose: 6.2.9
+      jose: 6.2.10
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
       raw-body: 3.0.2
@@ -12443,37 +12443,37 @@ snapshots:
 
   '@standard-schema/spec@1.1.0': {}
 
-  '@supabase/auth-js@2.112.3':
+  '@supabase/auth-js@2.112.4':
     dependencies:
       tslib: 2.8.1
 
-  '@supabase/functions-js@2.112.3':
+  '@supabase/functions-js@2.112.4':
     dependencies:
       tslib: 2.8.1
 
   '@supabase/phoenix@0.4.5': {}
 
-  '@supabase/postgrest-js@2.112.3':
+  '@supabase/postgrest-js@2.112.4':
     dependencies:
       tslib: 2.8.1
 
-  '@supabase/realtime-js@2.112.3':
+  '@supabase/realtime-js@2.112.4':
     dependencies:
       '@supabase/phoenix': 0.4.5
       tslib: 2.8.1
 
-  '@supabase/storage-js@2.112.3':
+  '@supabase/storage-js@2.112.4':
     dependencies:
       iceberg-js: 0.8.1
       tslib: 2.8.1
 
-  '@supabase/supabase-js@2.112.3':
+  '@supabase/supabase-js@2.112.4':
     dependencies:
-      '@supabase/auth-js': 2.112.3
-      '@supabase/functions-js': 2.112.3
-      '@supabase/postgrest-js': 2.112.3
-      '@supabase/realtime-js': 2.112.3
-      '@supabase/storage-js': 2.112.3
+      '@supabase/auth-js': 2.112.4
+      '@supabase/functions-js': 2.112.4
+      '@supabase/postgrest-js': 2.112.4
+      '@supabase/realtime-js': 2.112.4
+      '@supabase/storage-js': 2.112.4
 
   '@taiga-ui/cdk@5.19.0(1f69651d97f3ac8ee7bd9eead65ef958)':
     dependencies:
@@ -12577,26 +12577,26 @@ snapshots:
     dependencies:
       '@taiga-ui/design-tokens': 0.303.0
 
-  '@tanstack/query-async-storage-persister@5.102.6':
+  '@tanstack/query-async-storage-persister@5.102.8':
     dependencies:
-      '@tanstack/query-core': 5.102.6
-      '@tanstack/query-persist-client-core': 5.102.6
+      '@tanstack/query-core': 5.102.8
+      '@tanstack/query-persist-client-core': 5.102.8
 
-  '@tanstack/query-core@5.102.6': {}
+  '@tanstack/query-core@5.102.8': {}
 
-  '@tanstack/query-persist-client-core@5.102.6':
+  '@tanstack/query-persist-client-core@5.102.8':
     dependencies:
-      '@tanstack/query-core': 5.102.6
+      '@tanstack/query-core': 5.102.8
 
-  '@tanstack/react-query-persist-client@5.102.6(@tanstack/react-query@5.102.6(react@19.2.3))(react@19.2.3)':
+  '@tanstack/react-query-persist-client@5.102.8(@tanstack/react-query@5.102.8(react@19.2.3))(react@19.2.3)':
     dependencies:
-      '@tanstack/query-persist-client-core': 5.102.6
-      '@tanstack/react-query': 5.102.6(react@19.2.3)
+      '@tanstack/query-persist-client-core': 5.102.8
+      '@tanstack/react-query': 5.102.8(react@19.2.3)
       react: 19.2.3
 
-  '@tanstack/react-query@5.102.6(react@19.2.3)':
+  '@tanstack/react-query@5.102.8(react@19.2.3)':
     dependencies:
-      '@tanstack/query-core': 5.102.6
+      '@tanstack/query-core': 5.102.8
       react: 19.2.3
 
   '@testing-library/react-native@14.0.1(jest@29.7.0(@types/node@26.2.0)(ts-node@10.9.2(@types/node@26.2.0)(typescript@6.0.3)))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)(test-renderer@1.2.0(@types/react@19.2.18)(react@19.2.3))':
@@ -16508,7 +16508,7 @@ snapshots:
 
   jimp-compact@0.16.1: {}
 
-  jose@6.2.9: {}
+  jose@6.2.10: {}
 
   js-tokens@10.0.0: {}
 
@@ -17704,13 +17704,13 @@ snapshots:
       react: 19.2.3
       react-native: 0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0)
 
-  react-native-mmkv@4.3.2(react-native-nitro-modules@0.37.0(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3):
+  react-native-mmkv@4.3.2(react-native-nitro-modules@0.37.1(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3):
     dependencies:
       react: 19.2.3
       react-native: 0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0)
-      react-native-nitro-modules: 0.37.0(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)
+      react-native-nitro-modules: 0.37.1(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)
 
-  react-native-nitro-modules@0.37.0(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3):
+  react-native-nitro-modules@0.37.1(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3):
     dependencies:
       react: 19.2.3
       react-native: 0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0)
