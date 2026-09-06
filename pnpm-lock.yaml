@@ -67,8 +67,8 @@ importers:
         specifier: ^0.17.3
         version: 0.17.3(supports-color@5.5.0)(typescript@6.0.3)
       jose:
-        specifier: ^6.2.8
-        version: 6.2.9
+        specifier: ^6.2.10
+        version: 6.2.10
       luxon:
         specifier: ^3.7.2
         version: 3.7.2
@@ -85,8 +85,8 @@ importers:
         specifier: ^8.21.3
         version: 8.21.3
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.5.4
+        version: 4.5.4
     devDependencies:
       '@eslint/eslintrc':
         specifier: ^3.3.6
@@ -185,14 +185,14 @@ importers:
         specifier: ^2.112.3
         version: 2.112.3
       '@tanstack/query-async-storage-persister':
-        specifier: ^5.102.6
-        version: 5.102.6
+        specifier: ^5.102.8
+        version: 5.102.8
       '@tanstack/react-query':
-        specifier: ^5.102.6
-        version: 5.102.6(react@19.2.3)
+        specifier: ^5.102.8
+        version: 5.102.8(react@19.2.3)
       '@tanstack/react-query-persist-client':
-        specifier: ^5.102.6
-        version: 5.102.6(@tanstack/react-query@5.102.6(react@19.2.3))(react@19.2.3)
+        specifier: ^5.102.8
+        version: 5.102.8(@tanstack/react-query@5.102.8(react@19.2.3))(react@19.2.3)
       expo:
         specifier: 57.0.15
         version: 57.0.15(@babel/core@8.0.1)(@expo/dom-webview@57.0.1)(@expo/metro-runtime@57.0.12)(expo-router@57.0.15)(react-native-worklets@0.10.1(@babel/core@8.0.1)(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)(supports-color@5.5.0)(typescript@6.0.3)
@@ -219,10 +219,10 @@ importers:
         version: 0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0)
       react-native-mmkv:
         specifier: ^4.3.2
-        version: 4.3.2(react-native-nitro-modules@0.37.0(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)
+        version: 4.3.2(react-native-nitro-modules@0.37.1(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)
       react-native-nitro-modules:
-        specifier: 0.37.0
-        version: 0.37.0(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)
+        specifier: 0.37.1
+        version: 0.37.1(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)
       react-native-reanimated:
         specifier: 4.5.1
         version: 4.5.1(react-native-worklets@0.10.1(@babel/core@8.0.1)(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)
@@ -406,8 +406,8 @@ importers:
   packages/schemas:
     dependencies:
       zod:
-        specifier: ^4.4.3
-        version: 4.4.3
+        specifier: ^4.5.4
+        version: 4.5.4
     devDependencies:
       typescript:
         specifier: ^6.0.3
@@ -3609,23 +3609,23 @@ packages:
     peerDependencies:
       '@taiga-ui/design-tokens': ~0.315.0
 
-  '@tanstack/query-async-storage-persister@5.102.6':
-    resolution: {integrity: sha512-8Lfd2N1AoWW2Iu4mfHwKTUSR/08YvDxEC07yJZmDohwo8f3mDmaIee2+hSX20DKVZtjn8eFBSOAbLm0d5snEPw==}
+  '@tanstack/query-async-storage-persister@5.102.8':
+    resolution: {integrity: sha512-9smqFJWyhRo+0l3NqaGFo6CQVr+3jpKOVZBQXI/LL+GoTIGhhxq1wTZegeI63dy0oResZx/EyazGzDjW8harbg==}
 
-  '@tanstack/query-core@5.102.6':
-    resolution: {integrity: sha512-jp+GucyQ+fel2ILb8ZLQeqMaAqZL/Bzaj+dKOQiPk4vPdf2rQPEV7heUyEVIhatpY42j4AFHav4DzBa1oTIp/A==}
+  '@tanstack/query-core@5.102.8':
+    resolution: {integrity: sha512-ZNjkJ33CqvPNec/6lZBnHqLc3EVGPZ9ySLhYahU9TcuRFdmwXewuj0c4hwSWcGHqEUwcSrKeZ+oGcvPBqXcQcg==}
 
-  '@tanstack/query-persist-client-core@5.102.6':
-    resolution: {integrity: sha512-F9YKO76vFSBZfUVZxZjr/4xIUjnnYKO+pHfbhkrsIp1je5A1/L/UhIUb4A3VmLGnLJYxJWJmADSx2TAVZVRYsA==}
+  '@tanstack/query-persist-client-core@5.102.8':
+    resolution: {integrity: sha512-t3v4/D6ejo/BrPzM5gm/AT3c4CWPCxFa+0cIjAeHAeanGPG6rCjFS1hZnPZH/rf55qe3qYYgx5U6iBZMY1PQjA==}
 
-  '@tanstack/react-query-persist-client@5.102.6':
-    resolution: {integrity: sha512-l1prWH9kMq8cprv9qvrEPKxKHBvKG4XAM8lknoaBA1tqOx3H2BTPn1jIQNSDr0sfFbkFaYqDl/G1GxPUYxQtAQ==}
+  '@tanstack/react-query-persist-client@5.102.8':
+    resolution: {integrity: sha512-WOZReC+m9klekPtG7eeZ3txJeMA9lg2R0RytSG3yXcZgJItQAVIyoobJdbdIQtlpgcU2tSzsOEBtJacs2vlCOA==}
     peerDependencies:
-      '@tanstack/react-query': ^5.102.6
+      '@tanstack/react-query': ^5.102.8
       react: ^18 || ^19
 
-  '@tanstack/react-query@5.102.6':
-    resolution: {integrity: sha512-ANz4KZ8z80D85fiz5IAHjpb8XBPLrjOb/0natlD9Ascyy/3p96V86Zw8UbOfA0HDLcvK/A4gNd95r723y5UT2w==}
+  '@tanstack/react-query@5.102.8':
+    resolution: {integrity: sha512-TYBea4OuXWD7MhaSHq069TWbFe7rcwWN6kzT7JF0OKi1K6c1gTv2IzD6A6ExJsCMozdkqBWeuIUZmu4KQg0O5A==}
     peerDependencies:
       react: ^18 || ^19
 
@@ -6559,8 +6559,8 @@ packages:
   jimp-compact@0.16.1:
     resolution: {integrity: sha512-dZ6Ra7u1G8c4Letq/B5EzAxj4tLFHL+cGtdpR+PVm4yzPDj+lCk+AbivWt1eOM+ikzkowtyV7qSqX6qr3t71Ww==}
 
-  jose@6.2.9:
-    resolution: {integrity: sha512-XrchZOFZUl/T3vTwRe8XK+cJrGtMF4th1ARnDfwbBXFKThGhlsxEE4Zu03AD/bjJSt/9jT/mxrOCkJWOg77aPA==}
+  jose@6.2.10:
+    resolution: {integrity: sha512-iiW7J9qRFlGxvCOIBDBDxFePQSn7ZMAnrYGhrrOo6siO/MIqwfyilLR27pkfDgUk+raLuzADS8A3S/KLBisc0g==}
 
   js-tokens@10.0.0:
     resolution: {integrity: sha512-lM/UBzQmfJRo9ABXbPWemivdCW8V2G8FHaHdypQaIy523snUjog0W71ayWXTjiR+ixeMyVHN2XcpnTd/liPg/Q==}
@@ -7618,8 +7618,8 @@ packages:
       react-native: '*'
       react-native-nitro-modules: '*'
 
-  react-native-nitro-modules@0.37.0:
-    resolution: {integrity: sha512-ULS2CBZcdwGw5d4Y35EV/tbCOsNsQOnQ9LC9CehMhDNm5c90lwF/LxRamzKuFpjI547G7teTQgD0peqYSGnP9g==}
+  react-native-nitro-modules@0.37.1:
+    resolution: {integrity: sha512-KpW6EQVQ/bfegpCGxN9Be+ndvsfj56t4IESEvCASu9gWpJa/NDfHpIeIwCOvZQ3eXmLEj6YD4wCLqcC1FJPr2w==}
     peerDependencies:
       react: '*'
       react-native: '*'
@@ -9069,6 +9069,9 @@ packages:
   zod@4.4.3:
     resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
 
+  zod@4.5.4:
+    resolution: {integrity: sha512-sC95tT5iHHH9gtpj6A81kh+NEaRAUFN+qlUPDUbRfOMvNf5QCBqsb3WgvnpVtK5Y+4UfA6KqufotuTvMGiTlsA==}
+
   zustand@5.0.15:
     resolution: {integrity: sha512-MpSEjRiBkA9crSYeOUH32rJC7SVqAbm0Fqcqge/bUi2PPoLcBWKOsG+C8mevmpr8TwXHBVkChbbJiyvkE+i/3A==}
     engines: {node: '>=12.20.0'}
@@ -9307,7 +9310,7 @@ snapshots:
       '@standard-schema/spec': 1.1.0
       rxjs: 7.8.2
       tslib: 2.8.1
-      zod: 4.4.3
+      zod: 4.5.4
 
   '@angular/platform-browser@22.1.2(@angular/animations@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2)))(@angular/common@22.1.2(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))(rxjs@7.8.2))(@angular/core@22.1.2(@angular/compiler@22.1.2)(rxjs@7.8.2))':
     dependencies:
@@ -11443,7 +11446,7 @@ snapshots:
       express: 5.2.1(supports-color@5.5.0)
       express-rate-limit: 8.6.2(express@5.2.1)(supports-color@5.5.0)
       hono: 4.13.2
-      jose: 6.2.9
+      jose: 6.2.10
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
       raw-body: 3.0.2
@@ -12577,26 +12580,26 @@ snapshots:
     dependencies:
       '@taiga-ui/design-tokens': 0.303.0
 
-  '@tanstack/query-async-storage-persister@5.102.6':
+  '@tanstack/query-async-storage-persister@5.102.8':
     dependencies:
-      '@tanstack/query-core': 5.102.6
-      '@tanstack/query-persist-client-core': 5.102.6
+      '@tanstack/query-core': 5.102.8
+      '@tanstack/query-persist-client-core': 5.102.8
 
-  '@tanstack/query-core@5.102.6': {}
+  '@tanstack/query-core@5.102.8': {}
 
-  '@tanstack/query-persist-client-core@5.102.6':
+  '@tanstack/query-persist-client-core@5.102.8':
     dependencies:
-      '@tanstack/query-core': 5.102.6
+      '@tanstack/query-core': 5.102.8
 
-  '@tanstack/react-query-persist-client@5.102.6(@tanstack/react-query@5.102.6(react@19.2.3))(react@19.2.3)':
+  '@tanstack/react-query-persist-client@5.102.8(@tanstack/react-query@5.102.8(react@19.2.3))(react@19.2.3)':
     dependencies:
-      '@tanstack/query-persist-client-core': 5.102.6
-      '@tanstack/react-query': 5.102.6(react@19.2.3)
+      '@tanstack/query-persist-client-core': 5.102.8
+      '@tanstack/react-query': 5.102.8(react@19.2.3)
       react: 19.2.3
 
-  '@tanstack/react-query@5.102.6(react@19.2.3)':
+  '@tanstack/react-query@5.102.8(react@19.2.3)':
     dependencies:
-      '@tanstack/query-core': 5.102.6
+      '@tanstack/query-core': 5.102.8
       react: 19.2.3
 
   '@testing-library/react-native@14.0.1(jest@29.7.0(@types/node@26.2.0)(ts-node@10.9.2(@types/node@26.2.0)(typescript@6.0.3)))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)(test-renderer@1.2.0(@types/react@19.2.18)(react@19.2.3))':
@@ -14662,8 +14665,8 @@ snapshots:
       '@babel/parser': 7.29.8
       eslint: 9.39.5(supports-color@5.5.0)
       hermes-parser: 0.25.1
-      zod: 4.4.3
-      zod-validation-error: 4.0.2(zod@4.4.3)
+      zod: 4.5.4
+      zod-validation-error: 4.0.2(zod@4.5.4)
     transitivePeerDependencies:
       - supports-color
 
@@ -16508,7 +16511,7 @@ snapshots:
 
   jimp-compact@0.16.1: {}
 
-  jose@6.2.9: {}
+  jose@6.2.10: {}
 
   js-tokens@10.0.0: {}
 
@@ -17704,13 +17707,13 @@ snapshots:
       react: 19.2.3
       react-native: 0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0)
 
-  react-native-mmkv@4.3.2(react-native-nitro-modules@0.37.0(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3):
+  react-native-mmkv@4.3.2(react-native-nitro-modules@0.37.1(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3))(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3):
     dependencies:
       react: 19.2.3
       react-native: 0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0)
-      react-native-nitro-modules: 0.37.0(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)
+      react-native-nitro-modules: 0.37.1(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3)
 
-  react-native-nitro-modules@0.37.0(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3):
+  react-native-nitro-modules@0.37.1(react-native@0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0))(react@19.2.3):
     dependencies:
       react: 19.2.3
       react-native: 0.86.2(@babel/core@8.0.1)(@react-native/jest-preset@0.86.2(@babel/core@8.0.1)(react@19.2.3))(@react-native/metro-config@0.86.2(@babel/core@8.0.1))(@types/react@19.2.18)(react@19.2.3)(supports-color@5.5.0)
@@ -19291,13 +19294,15 @@ snapshots:
     dependencies:
       zod: 4.4.3
 
-  zod-validation-error@4.0.2(zod@4.4.3):
+  zod-validation-error@4.0.2(zod@4.5.4):
     dependencies:
-      zod: 4.4.3
+      zod: 4.5.4
 
   zod@3.25.76: {}
 
   zod@4.4.3: {}
+
+  zod@4.5.4: {}
 
   zustand@5.0.15(@types/react@19.2.18)(react@19.2.3):
     optionalDependencies:
