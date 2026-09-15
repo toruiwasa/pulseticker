@@ -112,6 +112,12 @@ Supabase Auth → URL Configuration → Redirect URLs must include
 `<vercel-url>/auth/callback` (and `http://localhost:4200/auth/callback` for
 local dev).
 
+If the Render boot log shows `error: (ENOTFOUND) tenant/user postgres.<ref> not found`
+from `WorkerRunnerService`, check first whether the Supabase project is **paused**
+(free-tier inactivity) and restore it from the Supabase dashboard. The message comes
+from Supabase's pooler and is identical to a wrong `DATABASE_URL` host, so only compare
+the host against Supabase → Connect → Session pooler once the project is confirmed active.
+
 ## Scope
 
 - US-listed equities only (Finnhub free tier)
