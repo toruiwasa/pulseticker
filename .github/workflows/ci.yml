@@ -43,7 +43,7 @@ jobs:
       # root package.json, and the Node runtime, in one step. `install: false`
       # keeps the install an explicit step so --frozen-lockfile is visible: it
       # is the gate that catches a lockfile out of sync with any package.json.
-      - uses: pnpm/setup@v2
+      - uses: pnpm/setup@v3
         with:
           runtime: node@24
           cache: true
@@ -85,7 +85,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
 
-      - uses: pnpm/setup@v2
+      - uses: pnpm/setup@v3
         with:
           runtime: node@24
           cache: true
