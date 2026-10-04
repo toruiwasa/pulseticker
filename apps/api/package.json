@@ -36,17 +36,17 @@
     "@pulseticker/schemas": "workspace:*",
     "@pulseticker/trading-utils": "workspace:*",
     "@pulseticker/watchlist-rules": "workspace:*",
-    "@supabase/supabase-js": "^2.112.3",
+    "@supabase/supabase-js": "^2.117.2",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
-    "graphile-worker": "^0.17.3",
-    "jose": "^6.2.8",
+    "graphile-worker": "^0.18.0",
+    "jose": "^6.2.12",
     "luxon": "^3.7.2",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "socket.io": "^4.8.3",
+    "socket.io": "^4.8.4",
     "ws": "^8.21.3",
-    "zod": "^4.4.3"
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.6",
